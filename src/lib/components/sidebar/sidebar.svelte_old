@@ -1,0 +1,16 @@
+<script lang="ts">
+  import { Drawer, Button } from "flowbite-svelte";
+  import { AddressBookOutline   } from "flowbite-svelte-icons";
+  let { children } = $props();
+  let open = $state(false);
+</script>
+
+<Button class="m-1 rounded-full bg-blue-500 hover:bg-blue-700 transition-colors duration-200 text-white text-sm fixed h-10 w-0 top-0 left-0 z-50 opacity-60" onclick={() => (open = true)}>
+     &gt;
+</Button>
+<Drawer bind:open aria-labelledby="drawer-label">
+  <h5 id="drawer-label" class="mb-4 inline-flex items-center text-base font-semibold text-gray-500 dark:text-gray-400">
+    <AddressBookOutline class="me-2.5 h-5 w-5" />Info
+  </h5>
+ {@render children?.()}
+</Drawer>
