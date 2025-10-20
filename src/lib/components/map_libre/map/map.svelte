@@ -2,23 +2,24 @@
   import { onMount } from 'svelte';
   import maplibregl from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
-  import {current_styler, mapper} from "$lib/shared/map_libre/shared.svelte";
+  import {mapper} from "$lib/shared/map_libre/shared.svelte";
+  import { addBaseLayer, Osm } from '../map_libre';
+
   /**
      * @type {HTMLDivElement}
      */
   let mapContainer;
 
   onMount(() => {
+   
     mapper.map = new maplibregl.Map({
       container: mapContainer,
-      style: current_styler.style,
       center: [-43.1729, -22.9068], // Rio de Janeiro
       zoom: 12
     });
-
+    addBaseLayer(mapper.map, Osm);
     // Adiciona controles de navegação
     //mapper.map.addControl(new maplibregl.NavigationControl(), 'top-right');
-
     // Cleanup ao desmontar o componente (com verificação)
     return () => {
       if (mapper.map && typeof mapper.map.remove === 'function') {

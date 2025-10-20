@@ -7,7 +7,7 @@
 
     onMount( async ()  => {});
 </script>
-<Sidebar>
+<Sidebar home={"home"}>
     <ExpansionPanel header={"Camada base"}>
         {#snippet svg()}
             <span>
@@ -16,7 +16,8 @@
             </svg>
             </span>
         {/snippet}
-        <BaseTiles></BaseTiles>
+       <BaseTiles></BaseTiles>
+        
     </ExpansionPanel>
 </Sidebar>
 <Map></Map>

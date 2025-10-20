@@ -1,49 +1,39 @@
 <script lang="ts">
     import { mapper } from '$lib/shared/map_libre/shared.svelte';
     import { onMount } from 'svelte';
+    import { addBaseLayer, Osm, recordTileLayer } from '../map_libre';
 
-    let currentBaseId: string | null = null;
-    let camadaEscolhida = 'osm';
+    let currentBaseId: string | null = $state(null);
+    let camadaEscolhida = $state('osm');
 
-    const baseLayers: Record<string, { id: string; tiles: string }> = {
-        none: {
-            id: 'none',
-            tiles: ''
-        },
-        osm: {
-            id: 'base-osm',
-            tiles: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
-        },
-        esri_world_street: {
-            id: 'base-esri',
-            tiles: 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'
-        }
-    };
-
+    
     function onChangeBaseLayer(event: Event) {
-        const value = (event.currentTarget as HTMLInputElement).value;
-        const baseLayer = baseLayers[value];
-        console.log(`baseLayer: ${baseLayer}`);
-        if (!baseLayer) return;
+        const tileName = (event.currentTarget as HTMLInputElement).value;
+        const baseLayer = recordTileLayer[tileName];
+         if (!mapper.map) return;
 
-        // Remove a base atual, se houver
-        if (currentBaseId && mapper?.map?.getLayer(currentBaseId)) {
+        // Remove base atual se existir
+        if (currentBaseId && mapper.map.getLayer(currentBaseId)) {
             mapper.map.removeLayer(currentBaseId);
         }
-        if (currentBaseId && mapper?.map?.getSource(currentBaseId)) {
+        if (currentBaseId && mapper.map.getSource(currentBaseId)) {
             mapper.map.removeSource(currentBaseId);
         }
 
+        // Se for "none", não adiciona nada
+        if (baseLayer.id === 'none') {
+            currentBaseId = null;
+            return;
+        }
         // Adiciona nova base se não for "none"
         if (baseLayer.id !== 'none' && baseLayer.tiles) {
-            addBaseLayer(baseLayer.id, baseLayer.tiles);
+            addBaseLayer(mapper.map, baseLayer);
             currentBaseId = baseLayer.id;
-        } else {
-            currentBaseId = null;
-        }
+        }       
+        
     }
 
-    function addBaseLayer(id: string, urlTemplate: string) {
+    function addBaseLayer1(id: string, urlTemplate: string) {
         if (!mapper.map) return;
         mapper.map.addSource(id, {
             type: 'raster',
@@ -60,10 +50,13 @@
 
     onMount(() => {
         // Adiciona OSM como camada inicial
-        const osmLayer = baseLayers['osm'];
-        addBaseLayer(osmLayer.id, osmLayer.tiles);
-        currentBaseId = osmLayer.id;
+        // quando o mapa carregar, adiciona a camada OSM inicial
         camadaEscolhida = 'osm';
+        const osmLayer = recordTileLayer['osm'];        
+        //addBaseLayer(osmLayer.id, osmLayer.tiles[0]);
+        currentBaseId = osmLayer.id;
+        
+        
     });
 </script>
 
