@@ -1,25 +1,18 @@
 <script lang="ts">
     import { mapper } from '$lib/shared/map_libre/shared.svelte';
     import { onMount } from 'svelte';
-    import { addBaseLayer, Osm, recordTileLayer } from '../map_libre';
+    import { addBaseLayer, Osm, recordTileLayer, removeBaseLayer } from '../map_libre';
 
     let currentBaseId: string | null = $state(null);
     let camadaEscolhida = $state('osm');
 
-    
     function onChangeBaseLayer(event: Event) {
         const tileName = (event.currentTarget as HTMLInputElement).value;
         const baseLayer = recordTileLayer[tileName];
          if (!mapper.map) return;
 
         // Remove base atual se existir
-        if (currentBaseId && mapper.map.getLayer(currentBaseId)) {
-            mapper.map.removeLayer(currentBaseId);
-        }
-        if (currentBaseId && mapper.map.getSource(currentBaseId)) {
-            mapper.map.removeSource(currentBaseId);
-        }
-
+        removeBaseLayer(mapper.map, currentBaseId);
         // Se for "none", não adiciona nada
         if (baseLayer.id === 'none') {
             currentBaseId = null;
@@ -29,23 +22,7 @@
         if (baseLayer.id !== 'none' && baseLayer.tiles) {
             addBaseLayer(mapper.map, baseLayer);
             currentBaseId = baseLayer.id;
-        }       
-        
-    }
-
-    function addBaseLayer1(id: string, urlTemplate: string) {
-        if (!mapper.map) return;
-        mapper.map.addSource(id, {
-            type: 'raster',
-            tiles: [urlTemplate],
-            tileSize: 256
-        });
-        mapper.map.addLayer({
-            id,
-            type: 'raster',
-            source: id,
-            paint: {}
-        });
+        }         
     }
 
     onMount(() => {
@@ -55,8 +32,6 @@
         const osmLayer = recordTileLayer['osm'];        
         //addBaseLayer(osmLayer.id, osmLayer.tiles[0]);
         currentBaseId = osmLayer.id;
-        
-        
     });
 </script>
 

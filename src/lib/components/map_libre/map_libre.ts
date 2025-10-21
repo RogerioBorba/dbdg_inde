@@ -50,21 +50,14 @@ export function addBaseLayer(map: maplibregl.Map | null | undefined, tileLayer: 
     } catch (error) {
         console.error("addBaseLayer>> Erro ao adicionar camada:", error);
     }
-}
+};
 
-export function removeLayer(map: maplibregl.Map | null | undefined, currentBaseId: string | null) {
-    if (!map || typeof map !== 'object' || typeof map.getLayer !== 'function' || !currentBaseId) {
-        return;
+export function removeBaseLayer(map: maplibregl.Map | null | undefined, currentBaseId: string | null) {
+   // Remove base atual se existir
+    if (currentBaseId && map?.getLayer(currentBaseId)) {
+        map.removeLayer(currentBaseId);
     }
-    
-    try {
-        if (map.getLayer(currentBaseId)) {
-            map.removeLayer(currentBaseId);
-        }
-        if (map.getSource(currentBaseId)) {
-            map.removeSource(currentBaseId);
-        }
-    } catch (error) {
-        console.error("removeLayer>> Erro ao remover camada:", error);
-    }
-}
+    if (currentBaseId && map?.getSource(currentBaseId)) {
+        map.removeSource(currentBaseId);
+    }  
+};
