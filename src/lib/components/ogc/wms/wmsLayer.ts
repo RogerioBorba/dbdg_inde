@@ -27,37 +27,58 @@ export interface IWMSLayer {
   children?: IWMSLayer[];
 };
 
+function textOf(el: Element | null) {
+  return el?.textContent?.trim() ?? "";
+}
+
+function attrHref(el: Element | null) {
+  if (!el) return undefined;
+  // tentar xlink:href (com namespace) ou href (sem)
+  return el.getAttribute('xlink:href') ?? el.getAttribute('href') ?? undefined;
+}
+
 function parseLayer(layerEl: Element): IWMSLayer {
-    const name = layerEl.querySelector("Name")?.textContent ?? "";
-    const title = layerEl.querySelector("Title")?.textContent ?? "";
-    const abstract = layerEl.querySelector("Abstract")?.textContent ?? undefined;
-    const crs = Array.from(layerEl.querySelectorAll("CRS")).map(el => el.textContent ?? "").filter(Boolean);
-    const bboxEl = layerEl.querySelector("BoundingBox");
+    // Usar seletores :scope > ... para garantir pegar apenas filhos diretos
+    const name = textOf(layerEl.querySelector(':scope > Name'));
+    const title = textOf(layerEl.querySelector(':scope > Title')) || name || 'Untitled layer';
+    const abstract = layerEl.querySelector(':scope > Abstract')?.textContent ?? undefined;
+
+    // CRS pode estar em <CRS> (WMS 1.3.0) ou <SRS> (WMS 1.1.1)
+    const crsNodes = Array.from(layerEl.querySelectorAll(':scope > CRS, :scope > SRS'));
+    const crs = crsNodes.map(el => el.textContent?.trim() ?? "").filter(Boolean);
+
+    const bboxEl = layerEl.querySelector(':scope > BoundingBox');
     const bbox = bboxEl
       ? {
-          crs: bboxEl.getAttribute("CRS") ?? "",
-          minx: parseFloat(bboxEl.getAttribute("minx") ?? "0"),
-          miny: parseFloat(bboxEl.getAttribute("miny") ?? "0"),
-          maxx: parseFloat(bboxEl.getAttribute("maxx") ?? "0"),
-          maxy: parseFloat(bboxEl.getAttribute("maxy") ?? "0"),
+          crs: bboxEl.getAttribute('CRS') ?? bboxEl.getAttribute('SRS') ?? "",
+          minx: parseFloat(bboxEl.getAttribute('minx') ?? "0"),
+          miny: parseFloat(bboxEl.getAttribute('miny') ?? "0"),
+          maxx: parseFloat(bboxEl.getAttribute('maxx') ?? "0"),
+          maxy: parseFloat(bboxEl.getAttribute('maxy') ?? "0"),
         }
       : undefined;
 
-    const styles = Array.from(layerEl.querySelectorAll("Style")).map(styleEl => ({
-      name: styleEl.querySelector("Name")?.textContent ?? "",
-      title: styleEl.querySelector("Title")?.textContent ?? undefined,
-      abstract: styleEl.querySelector("Abstract")?.textContent ?? undefined,
-      legendURL: styleEl.querySelector("LegendURL OnlineResource")?.getAttribute("xlink:href") ?? undefined,
-    }));
+    const styles = Array.from(layerEl.querySelectorAll(':scope > Style')).map(styleEl => {
+      const legendUrlEl = styleEl.querySelector(':scope > LegendURL > OnlineResource') ?? styleEl.querySelector(':scope > LegendURL');
+      return {
+        name: textOf(styleEl.querySelector(':scope > Name')),
+        title: textOf(styleEl.querySelector(':scope > Title')) || undefined,
+        abstract: styleEl.querySelector(':scope > Abstract')?.textContent ?? undefined,
+        legendURL: attrHref(legendUrlEl ?? null)
+      };
+    }).filter(s => s.name || s.title || s.legendURL);
 
-    const metadataURLs = Array.from(layerEl.querySelectorAll("MetadataURL")).map(metaEl => ({
-      type: metaEl.getAttribute("type") ?? undefined,
-      format: metaEl.querySelector("Format")?.textContent ?? undefined,
-      url: metaEl.querySelector("OnlineResource")?.getAttribute("xlink:href") ?? "",
-    }));
+    const metadataURLs = Array.from(layerEl.querySelectorAll(':scope > MetadataURL')).map(metaEl => {
+      const online = metaEl.querySelector(':scope > OnlineResource') ?? metaEl.querySelector(':scope > MD_Metadata > OnlineResource');
+      return {
+        type: metaEl.getAttribute('type') ?? undefined,
+        format: metaEl.querySelector(':scope > Format')?.textContent ?? undefined,
+        url: attrHref(online ?? null) ?? ""
+      };
+    }).filter(m => m.url);
 
-    const attribution = layerEl.querySelector("Attribution Title")?.textContent ?? undefined;
-    const children = Array.from(layerEl.querySelectorAll(":scope > Layer")).map(parseLayer);
+    const attribution = layerEl.querySelector(':scope > Attribution > Title')?.textContent ?? undefined;
+    const children = Array.from(layerEl.querySelectorAll(':scope > Layer')).map(parseLayer);
 
     return {
       name,
@@ -81,6 +102,6 @@ export function parseWMSLayers(xml: Document): IWMSLayer[] {
     Converte cada camada XML em um objeto IWMSLayer usando parseLayer.
     Retorna todas essas camadas em um array.
   */
-  const topLayers = Array.from(xml.querySelectorAll("Capability > Layer > Layer")).map(parseLayer);
+  const topLayers = Array.from(xml.querySelectorAll('Capability > Layer > Layer')).map(parseLayer);
   return topLayers;
 };

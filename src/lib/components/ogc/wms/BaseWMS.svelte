@@ -3,10 +3,9 @@
     import {get} from '$lib/request/get';
     import type {IWMSLayer} from './wmsLayer';
     import {parseWMSLayers} from './wmsLayer';
-    //import WMSTreeView from './WMSTreeView.svelte';
-    //import { getWMSCapabilitiesObject } from './GetWMSCapabilities.js'
 	import { error } from '@sveltejs/kit';
     import { onMount } from 'svelte';
+    import WMSTreeView from './WMSTreeView.svelte';
     let promise = $state<undefined | null | Promise<number>| number>(null);
     type IDTEXTIRI = { id: number; text: string; iri: string };
     const firstIDTextIRIObj: IDTEXTIRI = { id: 1, text: "Escolha um catálogo", iri: '' }; //: Record<{id: number, text:string, iri: string}> 
@@ -124,9 +123,7 @@
         {/if}    
        <input class="w-full h-8 pl-3 pr-8 text-base placeholder-gray-600 border rounded-lg focus: outline-none" hidden={wmsLayers.length == 0 ?true:false} type="text" placeholder="Digite para filtrar" bind:value={textEntered} title="Filtro">
     {#each wmsLayersFiltered as layer}
-        <!--<WMSCapabilityLayer wmsLayer={layer} capabilitiesUrl= {selectedIDTextIRI.iri}></WMSCapabilityLayer>-->
-        <!--<WMSTreeView wmsLayer={layer} capabilitiesUrl= {selectedIDTextIRI.iri} onClick={onClick}></WMSTreeView>-->
-        <p>{layer.title}</p>
+         <WMSTreeView wmsLayer={layer} capabilitiesUrl={selectedIDTextIRI.iri}></WMSTreeView>
     {/each}    
     {:catch error}
         <p class="text-red-500 text-xl ">{error.message}</p>

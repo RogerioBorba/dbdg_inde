@@ -14,8 +14,8 @@
    
     mapper.map = new maplibregl.Map({
       container: mapContainer,
-      center: [-43.1729, -22.9068], // Rio de Janeiro
-      zoom: 12
+      center: [-57.90, -16.9068], // Rio de Janeiro
+      zoom: 3
     });
     addBaseLayer(mapper.map, Osm);
     // Adiciona controles de navegação

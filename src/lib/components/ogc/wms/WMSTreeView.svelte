@@ -1,155 +1,140 @@
-<script context="module">
-	import {metadataLink} from '$lib/store/storeVisualizadorMetadata'
-	
-	
-	// retain module scoped expansion state for each tree node
-	const _expansionState = {
-		/* treeNodeId: expanded <boolean> */
-	}
+<script lang="ts">
+    import type { IWMSLayer } from './wmsLayer';
+    import { mapper } from '$lib/shared/map_libre/shared.svelte';
+    import Self from './WMSTreeView.svelte';
 
-	
-</script>
-<script>
-	//import {facadeOL, selectedLayers, removedLayers} from '$lib/store/storeMap';	
-	import { IWMSLayer } from "./WMSLayer";
-//	import { slide } from 'svelte/transition';
-	export let wmsLayer;
-    export let onClick = null;
-    export let capabilitiesUrl;
-	let removed = [];
-	let expanded = false;
-    let display = '';
-	let children = wmsLayer.layers();
-	let source = null;
-	const toggleExpansion = () => {
-		expanded = !expanded;
-		arrow = arrowStyle();
-        //onClick(wmsLayer)
-	}
-	//$: arrowDown = expanded
-    function childLayer(child) {		
-		if (child instanceof WMSLayer)
-			return child
-		return new WMSLayer(child,null,null);
-	}
-	
-	function arrowStyle() {
-		let arStyle = '';
-		if (children.length == 0)
-			arStyle =''
-		else 
-			arStyle = expanded?'-':'+';
-		return 	arStyle;
-		
-	}
-	let arrow = arrowStyle();
-	
-	function url() {
-        let size = capabilitiesUrl.indexOf('?') 
-        if (size == -1)
-            size = capabilitiesUrl.length;
-        return capabilitiesUrl.substring(0, size);
-    }
+    let { wmsLayer, capabilitiesUrl } = $props<{
+        wmsLayer: IWMSLayer;
+        capabilitiesUrl: string;
+    }>();
 
-	function btnAddLayerClicked() {
-        let z_index = $selectedLayers.length + 1
-        if(!wmsLayer.name())
-            return alert("Esta é uma camada de agrupamento. Apenas as camadas interiores podem ser exibidas!")
-		wmsLayer.sourceLayer = url();
-		$facadeOL.addWMSLayerFromCapability(wmsLayer);
-		
+    let expanded = $state(false);
 
+    function addLayerToMap(layer: IWMSLayer) {
+        const map = mapper.map;
+        if (!map || !layer.name) {
+            alert('Mapa não inicializado ou camada sem nome.');
+            return;
+        }
 
+        const sourceId = `wms-source-${layer.name}`;
+        const layerId = `wms-layer-${layer.name}`;
 
-        $selectedLayers = [...$selectedLayers, wmsLayer];
-        display='hidden'
-    }
-	async function btnMetadadoClicked() {
+        if (map.getLayer(layerId) || map.getSource(sourceId)) {
+            alert(`A camada "${layer.title}" já foi adicionada.`);
+            return;
+        }
 
-		//console.log(JSON.stringify(wmsLayer))
-		//console.log("Geographic Bounding box" + JSON.stringify(wmsLayer.exGeographicBoundingBox()))
-
-        if (!wmsLayer.metadataURLs())
-            return alert("A camada não está associada a metadados.")
-
-		wmsLayer.metadataURLs().forEach(metadataURL => {
-			let link = metadataURL.link() //wmsLayer.metadataURL().link()
-			console.log("O link que esta vindo é esse: " + link);
-
-			//Censipam não abre - condição para não quebrar o programa
-			if(link.includes("http://panorama.sipam.gov.br")){
-				window.open(link, "_blank");
-			}else{
-				$metadataLink = link;
-				//goto("/visualizador/metadata")
-				window.open(`/visualizador/metadata?link=${encodeURIComponent(link)}`, '_blank');
-			}
-		});     
-        
-    }
-	function visiableBtnLayer() {
-		return children.length > 0 ? 'invisible':'visible';
-	}
-	
-	function visibilyBtnMetadata() {
-		return (wmsLayer.metadataURLs())?'visiable':'invisible';
-	}
-
-
-	//lógica para voltar com os itens que sairam da lista e foram para a área de camadas selecionadas
-	$: if($removedLayers){
-        removed = $removedLayers;
-        
-        removed.forEach(element => {
-            if (element.oid === wmsLayer.oid) {
-               display = '';
-            }
-            removed = removed.filter(el => el.oid !== wmsLayer.oid);
-            $removedLayers = removed; 
+        const baseUrl = capabilitiesUrl.split('?')[0];
+        const params = new URLSearchParams({
+            SERVICE: 'WMS',
+            VERSION: '1.3.0',
+            REQUEST: 'GetMap',
+            LAYERS: layer.name,
+            STYLES: '',
+            FORMAT: 'image/png',
+            TRANSPARENT: 'true',
+            CRS: 'EPSG:3857'
         });
-	}
 
-	
+        const tileUrl = `${baseUrl}?${params.toString()}&BBOX={bbox-epsg-3857}&WIDTH=256&HEIGHT=256`;
+
+        try {
+            map.addSource(sourceId, {
+                type: 'raster',
+                tiles: [tileUrl],
+                tileSize: 256,
+                attribution: layer.attribution ?? `Fonte: ${new URL(baseUrl).hostname}`
+            });
+
+            map.addLayer(
+                {
+                    id: layerId,
+                    type: 'raster',
+                    source: sourceId,
+                    paint: {}
+                },
+                map.getStyle().layers.find((l) => l.type === 'symbol')?.id
+            );
+
+        } catch (e: any) {
+            console.error('Erro ao adicionar camada WMS:', e);
+            alert(`Não foi possível adicionar a camada: ${e?.message ?? e}`);
+        }
+    }
+
+    function viewMetadata(layer: IWMSLayer) {
+        const metadataUrl = layer.metadataURLs?.[0]?.url;
+        if (metadataUrl) {
+            window.open(metadataUrl, '_blank', 'noopener,noreferrer');
+        } else {
+            alert('Nenhuma URL de metadado encontrada para esta camada.');
+        }
+    }
 </script>
-<div class="flex {display}">
-	<p on:click={toggleExpansion} 
-		class="flex-grow text-grey-darkest hover:bg-red truncate text-left text-xs" 
-		title="{wmsLayer.description()}"><span class="p-1 text-xl font- cursor-pointer" >{arrow}</span>{wmsLayer.description()}
-	</p>
-	<button class="{visibilyBtnMetadata()} focus:outline-none bg-grey-light hover:bg-grey text-grey-darkest font-bold py-1 px-1 rounded inline-flex items-center hover:bg-gray-200 " on:click|preventDefault={btnMetadadoClicked} title="Metadados">
-		<svg xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px" class="h-6 w-6" fill="#FCF3CF" viewBox="0 0 24 24" >
-			<path stroke="#1C2833" stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-		</svg>
-	</button>
-	<button class="{visiableBtnLayer()} focus:outline-none bg-grey-light hover:bg-grey text-grey-darkest font-bold py-1 px-1 rounded inline-flex items-center hover:bg-gray-200"  on:click|preventDefault={btnAddLayerClicked} title="Adicionar camada">
-		<svg xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px" viewBox="0 0 24 24" fill="#FEF9E7">
-			<path stroke="#1C2833" fill-rule="evenodd" d="M12 1.586l-4 4v12.828l4-4V1.586zM3.707 3.293A1 1 0 002 4v10a1 1 0 00.293.707L6 18.414V5.586L3.707 3.293zM17.707 5.293L14 1.586v12.828l2.293 2.293A1 1 0 0018 16V6a1 1 0 00-.293-.707z" clip-rule="evenodd" />
-		</svg>   
-	</button>
-</div>
-{#if children.length > 0  && expanded}
-    <ul><!-- transition:slide -->
-        {#each children as child}
-            <li class="">
-				<svelte:self wmsLayer={childLayer(child)} capabilitiesUrl= {capabilitiesUrl} onClick={onClick} />
-				
-			</li>    
-        {/each}
-    </ul>
 
-{/if}
-<style>
-	ul {
-		margin: 0;
-		list-style: none;
-		padding-left: 1.2rem; 
-		user-select: none;
-	}
-	.no-arrow { padding-left: 1.0rem; }
-	.arrow {
-		cursor: pointer;
-		display: inline-block;
-		/* transition: transform 200ms; */
-	}
-	.arrowDown { transform: rotate(90deg); }
-</style>
+<div class="ml-2 border-l border-gray-200 pl-2">
+    <div class="flex items-center justify-between py-1">
+        <div class="flex items-center">
+            {#if wmsLayer.children && wmsLayer.children.length > 0}
+                <button
+                    type="button"
+                    class="mr-1 text-gray-500 p-1 rounded"
+                    onclick={() => (expanded = !expanded)}
+                    aria-label={expanded ? 'Recolher' : 'Expandir'}
+                >
+                    <svg class="w-4 h-4 transition-transform" class:rotate-90={expanded} viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
+                    </svg>
+                </button>
+            {:else}
+                <span class="w-4 h-4 mr-1"></span>
+            {/if}
+            <span class="text-sm text-gray-800">{wmsLayer.title}</span>
+        </div>
+
+        <!-- Botões sempre visíveis; metadado só aparece se existir; incluir aparece somente se layer.name -->
+        <div class="flex items-center space-x-1">
+            {#if wmsLayer.metadataURLs && wmsLayer.metadataURLs.length > 0}
+                <button
+                    type="button"
+                    class="p-1 text-blue-600 hover:bg-blue-100 rounded-full"
+                    title="Visualizar Metadado"
+                    onclick={() => viewMetadata(wmsLayer)}
+                    aria-label="Visualizar metadado"
+                >
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                            fill="currentColor"
+                            d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M13,9V3.5L18.5,9H13M12,19L8,15H11V12H13V15H16L12,19Z"
+                        />
+                    </svg>
+                </button>
+            {/if}
+
+            {#if wmsLayer.name && wmsLayer.name.trim().length > 0}
+                <button
+                    type="button"
+                    class="p-1 text-green-600 hover:bg-green-200 rounded-full"
+                    title="Adicionar camada ao mapa"
+                    onclick={() => addLayerToMap(wmsLayer)}
+                    aria-label="Adicionar camada ao mapa"
+                >
+                    <!-- ícone 'layers' (stack) -->
+                    <svg xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px" viewBox="0 0 24 24" fill="currentColor">
+						<path d="M12,16L19.36,10.27L21,9L12,2L3,9L4.63,10.27M12,18.54L4.62,12.81L3,14.07L12,21.07L21,14.07L19.37,12.8L12,18.54Z" />
+					</svg>
+                </button>
+			
+            {/if}
+        </div>
+    </div>
+
+    {#if expanded && wmsLayer.children}
+        <div>
+            {#each wmsLayer.children as childLayer}
+                <Self wmsLayer={childLayer} {capabilitiesUrl} />
+            {/each}
+        </div>
+    {/if}
+</div>
