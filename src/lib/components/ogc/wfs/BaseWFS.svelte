@@ -1,45 +1,45 @@
 <script lang="ts">
     import type { IGeoservicoDescricao } from '$lib/inde';
     import {get} from '$lib/request/get';
-    import type {IWMSLayer} from './wmsLayer';
-    import {parseWMSLayers} from './wmsLayer';
+    import type {IFeatureType} from './wfsFeature';
+    import {parseWFSFeatureTypes} from './wfsFeature';
 	import { error } from '@sveltejs/kit';
     import { onMount } from 'svelte';
-    import WMSTreeView from './WMSTreeView.svelte';
+    import WFSFeatureItem from './WFSFeatureItem.svelte';
+    
     let promise = $state<undefined | null | Promise<number>| number>(null);
     type IDTEXTIRI = { id: number; text: string; iri: string };
     const firstIDTextIRIObj: IDTEXTIRI = { id: 1, text: "Escolha um catálogo", iri: '' }; //: Record<{id: number, text:string, iri: string}> 
     let selectedIDTextIRI = $state(firstIDTextIRIObj);
     let i = 1;
     let iriArray = $state<IDTEXTIRI[]>([]);
-    let wmsLayers = $state<IWMSLayer[]>([]); 
+    let wfsFeatures = $state<IFeatureType[]>([]); 
     let answer = $state('');
     let textEntered = $state("");
-    let wmsLayersFiltered = $derived.by(() => {
-        let result: IWMSLayer[] = [];
+    let wfsFeaturesFiltered = $derived.by(() => {
+        let result: IFeatureType[] = [];
         if (textEntered && textEntered.length >= 3) {
-                result = wmsLayers.filter(
-                    (wms_layer: IWMSLayer) => wms_layer.title?.toLowerCase().includes(textEntered.toLowerCase()))
+                result = wfsFeatures.filter(
+                    (wfs_feature: IFeatureType) => wfs_feature.title?.toLowerCase().includes(textEntered.toLowerCase()))
         }
         else {
-            result = [...wmsLayers]
+            result = [...wfsFeatures]
         }
         return result;
     });
-    $inspect(wmsLayers);
+
     function newIRI(obj: IGeoservicoDescricao) {
-        return { id: i++, text: obj.descricao, iri: obj.wmsGetCapabilities }
+        return { id: i++, text: obj.descricao, iri: obj.wfsGetCapabilities }
     }
     
-    async function fetchListWMSLayer(): Promise<number> {
+    async function fetchFeatureTypeList(): Promise<number> {
         const resp =  await get(selectedIDTextIRI.iri);
         const xmlString: string = await resp.text()
         if(!xmlString) throw error(500, `Não foi possível realizar a requisição: ${selectedIDTextIRI}`);
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(xmlString, "application/xml");
-        wmsLayers = parseWMSLayers(xmlDoc);
-        //console.log(wmsLayers);
-        return wmsLayers.length;
+        wfsFeatures = parseWFSFeatureTypes(xmlDoc);
+        return wfsFeatures.length;
     }
 
     async function btnSearchClicked() {
@@ -49,7 +49,7 @@
             return 
         }  
         try {
-            promise = fetchListWMSLayer();           
+            promise = fetchFeatureTypeList();           
         } catch (error) {
             promise = 1;
             throw error
@@ -59,8 +59,8 @@
     function btnClearClicked() {
         selectedIDTextIRI = firstIDTextIRIObj;
         promise = 1;
-        wmsLayers = [];
-        wmsLayersFiltered = [];
+        wfsFeatures = [];
+        wfsFeaturesFiltered = [];
         textEntered = "" ;  
     }
 
@@ -120,9 +120,11 @@
         {:else if layers == -1}
         <p class="text-red-800 text-lg p-1">Problema no xml retornado do GetCapabilities</p>
         {/if}    
-       <input class="w-full h-8 pl-3 pr-8 text-base placeholder-gray-600 border rounded-lg focus: outline-none" hidden={wmsLayers.length == 0 ?true:false} type="text" placeholder="Digite para filtrar" bind:value={textEntered} title="Filtro">
-    {#each wmsLayersFiltered as layer}
-         <WMSTreeView wmsLayer={layer} capabilitiesUrl={selectedIDTextIRI.iri}></WMSTreeView>
+       <input class="w-full h-8 pl-3 pr-8 text-base placeholder-gray-600 border rounded-lg 
+       focus: outline-none" hidden={wfsFeatures.length == 0 ?true:false}
+        type="text" placeholder="Digite para filtrar" bind:value={textEntered} title="Filtro">
+    {#each wfsFeaturesFiltered as feature}
+         <WFSFeatureItem feature={feature} serviceUrl={selectedIDTextIRI.iri}></WFSFeatureItem>
     {/each}    
     {:catch error}
         <p class="text-red-500 text-xl ">{error.message}</p>

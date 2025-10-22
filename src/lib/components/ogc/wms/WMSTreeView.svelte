@@ -98,17 +98,14 @@
             {#if wmsLayer.metadataURLs && wmsLayer.metadataURLs.length > 0}
                 <button
                     type="button"
-                    class="p-1 text-blue-600 hover:bg-blue-100 rounded-full"
+                    class="p-1 text-gray-600 hover:bg-gray-200 rounded-full"
                     title="Visualizar Metadado"
                     onclick={() => viewMetadata(wmsLayer)}
                     aria-label="Visualizar metadado"
                 >
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
-                        <path
-                            fill="currentColor"
-                            d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M13,9V3.5L18.5,9H13M12,19L8,15H11V12H13V15H16L12,19Z"
-                        />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px" fill="#FCF3CF" viewBox="0 0 24 24" >
+			            <path stroke="#1C2833" stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+		            </svg>
                 </button>
             {/if}
 
