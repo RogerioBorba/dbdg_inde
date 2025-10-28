@@ -26,16 +26,16 @@
         }
         return result;
     });
-    $inspect(wmsLayers);
+    //$inspect(wmsLayers);
     function newIRI(obj: IGeoservicoDescricao) {
         return { id: i++, text: obj.descricao, iri: obj.wmsGetCapabilities }
     }
     
     async function fetchListWMSLayer(): Promise<number> {
         const resp =  await get(selectedIDTextIRI.iri);
-        const xmlString: string = await resp.text()
-        if(!xmlString) throw error(500, `Não foi possível realizar a requisição: ${selectedIDTextIRI}`);
-        wmsLayers = iWMSLayers(xmlString);
+        const xmlString: string = await resp.text();
+        if(!xmlString) throw error(500, `Não foi possível realizar a requisição: ${selectedIDTextIRI.iri}`);
+        wmsLayers = iWMSLayers(xmlString, selectedIDTextIRI.iri);
         //console.log(wmsLayers);
         return wmsLayers.length;
     }
@@ -120,7 +120,7 @@
         {/if}    
        <input class="w-full h-8 pl-3 pr-8 text-base placeholder-gray-600 border rounded-lg focus: outline-none" hidden={wmsLayers.length == 0 ?true:false} type="text" placeholder="Digite para filtrar" bind:value={textEntered} title="Filtro">
     {#each wmsLayersFiltered as layer}
-         <WMSTreeView wmsLayer={layer} capabilitiesUrl={selectedIDTextIRI.iri}></WMSTreeView>
+         <WMSTreeView iWMSLayer={layer} capabilitiesUrl={selectedIDTextIRI.iri}></WMSTreeView>
     {/each}    
     {:catch error}
         <p class="text-red-500 text-xl ">{error.message}</p>

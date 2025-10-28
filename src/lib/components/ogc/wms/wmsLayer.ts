@@ -105,3 +105,9 @@ export function parseWMSLayers(xml: Document): IWMSLayer[] {
   const topLayers = Array.from(xml.querySelectorAll('Capability > Layer > Layer')).map(parseLayer);
   return topLayers;
 };
+
+export function iWMSLayers(xmlString: string): IWMSLayer[] {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlString, "application/xml");
+  return  parseWMSLayers(xmlDoc);
+}

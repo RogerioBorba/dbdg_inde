@@ -1,62 +1,25 @@
 <script lang="ts">
-    import type { IWMSLayer } from './wmsCapabilities';;
-    import { mapper } from '$lib/shared/map_libre/shared.svelte';
+    import type { IWMSLayer, IWMSMetadataURL, WMSLayerBase} from '$lib/components/ogc/wms/wmsCapabilities';
+    import { mapper_ol } from '$lib/shared/openlayers/shared.svelte';
     import Self from './WMSTreeView.svelte';
-
-    let { wmsLayer, capabilitiesUrl } = $props<{
-        wmsLayer: IWMSLayer;
+    
+    let { iWMSLayer, capabilitiesUrl } = $props<{
+        iWMSLayer: IWMSLayer;
         capabilitiesUrl: string;
     }>();
-
+    let wmsLayer = $state<WMSLayerBase | null>(null); // para tratar do objeto OL ou maplibre
     let expanded = $state(false);
 
     function addLayerToMap(layer: IWMSLayer) {
-        const map = mapper.map;
-        if (!map || !layer.name) {
+       // const map = mapper_ol.facadeOL?.map;
+        if (!mapper_ol.facadeOL?.map || !layer.name) {
             alert('Mapa não inicializado ou camada sem nome.');
             return;
-        }
+        }       
 
-        const sourceId = `wms-source-${layer.name}`;
-        const layerId = `wms-layer-${layer.name}`;
-
-        if (map.getLayer(layerId) || map.getSource(sourceId)) {
-            alert(`A camada "${layer.title}" já foi adicionada.`);
-            return;
-        }
-
-        const baseUrl = capabilitiesUrl.split('?')[0];
-        const params = new URLSearchParams({
-            SERVICE: 'WMS',
-            VERSION: '1.3.0',
-            REQUEST: 'GetMap',
-            LAYERS: layer.name,
-            STYLES: '',
-            FORMAT: 'image/png',
-            TRANSPARENT: 'true',
-            CRS: 'EPSG:3857'
-        });
-
-        const tileUrl = `${baseUrl}?${params.toString()}&BBOX={bbox-epsg-3857}&WIDTH=256&HEIGHT=256`;
-
-        try {
-            map.addSource(sourceId, {
-                type: 'raster',
-                tiles: [tileUrl],
-                tileSize: 256,
-                //attribution: layer.attribution ?? `Fonte: ${new URL(baseUrl).hostname}`
-            });
-
-            map.addLayer(
-                {
-                    id: layerId,
-                    type: 'raster',
-                    source: sourceId,
-                    paint: {}
-                },
-                map.getStyle().layers.find((l) => l.type === 'symbol')?.id
-            );
-
+        try {       
+            const url: string = capabilitiesUrl.split('?')[0];
+		    wmsLayer = mapper_ol.facadeOL?.addWMSLayer(iWMSLayer, url);
         } catch (e: any) {
             console.error('Erro ao adicionar camada WMS:', e);
             alert(`Não foi possível adicionar a camada: ${e?.message ?? e}`);
@@ -64,9 +27,9 @@
     }
 
     function viewMetadata(layer: IWMSLayer) {
-        const metadataUrl = layer.metadataURLs?.[0]?.url;
+        const metadataUrl: IWMSMetadataURL = layer.metadataURLs?.[0];
         if (metadataUrl) {
-            window.open(metadataUrl, '_blank', 'noopener,noreferrer');
+            window.open(metadataUrl.href, '_blank', 'noopener,noreferrer');
         } else {
             alert('Nenhuma URL de metadado encontrada para esta camada.');
         }
@@ -76,7 +39,7 @@
 <div class="ml-2 border-l border-gray-200 pl-2">
     <div class="flex items-center justify-between py-1">
         <div class="flex items-center">
-            {#if wmsLayer.layers && wmsLayer.layers.length > 0}
+            {#if iWMSLayer.layers && iWMSLayer.layers.length > 0}
                 <button
                     type="button"
                     class="mr-1 text-gray-500 p-1 rounded"
@@ -90,17 +53,17 @@
             {:else}
                 <span class="w-4 h-4 mr-1"></span>
             {/if}
-            <span class="text-sm text-gray-800">{wmsLayer.title}</span>
+            <span class="text-sm text-gray-800">{iWMSLayer.title}</span>
         </div>
 
         <!-- Botões sempre visíveis; metadado só aparece se existir; incluir aparece somente se layer.name -->
         <div class="flex items-center space-x-1">
-            {#if wmsLayer.metadataURLs && wmsLayer.metadataURLs.length > 0}
+            {#if iWMSLayer.metadataURLs && iWMSLayer.metadataURLs.length > 0}
                 <button
                     type="button"
                     class="p-1 text-gray-600 hover:bg-gray-200 rounded-full"
                     title="Visualizar Metadado"
-                    onclick={() => viewMetadata(wmsLayer)}
+                    onclick={() => viewMetadata(iWMSLayer)}
                     aria-label="Visualizar metadado"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px" fill="#FCF3CF" viewBox="0 0 24 24" >
@@ -109,12 +72,12 @@
                 </button>
             {/if}
 
-            {#if wmsLayer.name && wmsLayer.name.trim().length > 0}
+            {#if iWMSLayer.name && iWMSLayer.name.trim().length > 0}
                 <button
                     type="button"
                     class="p-1 text-green-600 hover:bg-green-200 rounded-full"
                     title="Adicionar camada ao mapa"
-                    onclick={() => addLayerToMap(wmsLayer)}
+                    onclick={() => addLayerToMap(iWMSLayer)}
                     aria-label="Adicionar camada ao mapa"
                 >
                     <!-- ícone 'layers' (stack) -->
@@ -127,10 +90,10 @@
         </div>
     </div>
 
-    {#if expanded && wmsLayer.layers}
+    {#if expanded && iWMSLayer.layers}
         <div>
-            {#each wmsLayer.layers as childLayer}
-                <Self wmsLayer={childLayer} {capabilitiesUrl} />
+            {#each iWMSLayer.layers as childLayer}
+                <Self iWMSLayer={childLayer} {capabilitiesUrl} />
             {/each}
         </div>
     {/if}

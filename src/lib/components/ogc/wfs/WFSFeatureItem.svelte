@@ -61,7 +61,8 @@
       try {
         map.addSource(sourceId, {
           type: 'geojson',
-          data: geojson
+          data: geojson,
+         
         });
       } catch (e) {
         console.error('addSource error', e);
