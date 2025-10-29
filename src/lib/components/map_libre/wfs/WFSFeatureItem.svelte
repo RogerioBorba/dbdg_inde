@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { IFeatureType } from './wfsFeature';
+  import type { IFeatureType } from '$lib/ogc/wfs/wfsFeature';
   import { mapper } from '$lib/shared/map_libre/shared.svelte';
 
   let { feature, serviceUrl } = $props<{

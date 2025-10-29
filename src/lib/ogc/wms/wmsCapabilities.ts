@@ -219,7 +219,7 @@ export function parseWMSCapabilities(xml: Document): IWMSCapabilities {
   };
 };
 
-export function iWMSLayers(xmlString: string, urlCapabilities: string | null): IWMSLayer[] {
+export function iWMSLayers(xmlString: string): IWMSLayer[] {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlString, "application/xml");
   const iwms_capabilties = parseWMSCapabilities(xmlDoc);
@@ -227,12 +227,3 @@ export function iWMSLayers(xmlString: string, urlCapabilities: string | null): I
   return layers
 };
 
-export class WMSLayerBase {
-  iwmsLayer: IWMSLayer;
-  url: string;
-
-  constructor(iwmsLayer: IWMSLayer, url: string) {
-    this.iwmsLayer= iwmsLayer;
-    this.url = url;
-  };
-}

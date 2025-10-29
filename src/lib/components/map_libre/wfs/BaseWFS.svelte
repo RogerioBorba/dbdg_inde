@@ -1,8 +1,8 @@
 <script lang="ts">
     import type { IGeoservicoDescricao } from '$lib/inde';
     import {get} from '$lib/request/get';
-    import type {IFeatureType} from './wfsFeature';
-    import {parseWFSFeatureTypes} from './wfsFeature';
+    import {iWFSFeatureTypes} from '../../../ogc/wfs/wfsCapabilities';
+    import type {IFeatureType, IWFSGetCapabilities} from '../../../ogc/wfs/wfsCapabilities';
 	import { error } from '@sveltejs/kit';
     import { onMount } from 'svelte';
     import WFSFeatureItem from './WFSFeatureItem.svelte';
@@ -36,9 +36,7 @@
         const resp =  await get(selectedIDTextIRI.iri);
         const xmlString: string = await resp.text()
         if(!xmlString) throw error(500, `Não foi possível realizar a requisição: ${selectedIDTextIRI}`);
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(xmlString, "application/xml");
-        wfsFeatures = parseWFSFeatureTypes(xmlDoc);
+        wfsFeatures = iWFSFeatureTypes(xmlString);
         return wfsFeatures.length;
     }
 

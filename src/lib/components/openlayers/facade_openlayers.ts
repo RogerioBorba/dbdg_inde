@@ -26,9 +26,8 @@ import {get} from '$lib/request/get.ts';
 import VectorSource from 'ol/source/Vector';
 import { Polygon } from 'ol/geom';
 import { Feature } from 'ol';
-import type BaseLayer from 'ol/layer/Base';
-import { Esri_world_street } from '../map_libre/map_libre';
-import { WMSLayerBase, type IWMSLayer } from '../ogc/wms/wmsCapabilities';
+import type { IWMSLayer } from '$lib/ogc/wms/wmsCapabilities';
+import  {WMSLayerBase} from '$lib/components/openlayers/wms/wmsLayer';
 
 export const osmBaseTile = new TileLayer({ source: new XYZ({url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png'}), zIndex: 0 })
 export const googleBaseTile = new TileLayer({source: new XYZ({url: 'http://mt{0-3}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}'}), zIndex: 0})

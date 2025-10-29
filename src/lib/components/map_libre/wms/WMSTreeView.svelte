@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { IWMSLayer } from './wmsCapabilities';;
+    import type { IWMSLayer } from '../../../ogc/wms/wmsCapabilities';;
     import { mapper } from '$lib/shared/map_libre/shared.svelte';
     import Self from './WMSTreeView.svelte';
 

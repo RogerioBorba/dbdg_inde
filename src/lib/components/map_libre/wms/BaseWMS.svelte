@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { IGeoservicoDescricao } from '$lib/inde';
-    import type {IWMSLayer} from '$lib/components/ogc/wms/wmsCapabilities';
-    import {iWMSLayers} from '$lib/components/ogc/wms/wmsCapabilities';
+    import type {IWMSLayer} from '$lib/ogc/wms/wmsCapabilities';
+    import {iWMSLayers} from '$lib/ogc/wms/wmsCapabilities';
     import {get} from '$lib/request/get';
     import { error } from '@sveltejs/kit';
     import { onMount } from 'svelte';

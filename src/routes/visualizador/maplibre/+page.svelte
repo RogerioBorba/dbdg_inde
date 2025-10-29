@@ -4,8 +4,8 @@
     import Sidebar from "$lib/components/sidebar/sidebar.svelte";
     import BaseTiles from "$lib/components/map_libre/baseTile/baseTiles.svelte";
     import ExpansionPanel from "$lib/components/expansionpanel/ExpansionPanel.svelte";
-    import TabWMS from "$lib/components/ogc/wms/TabWMS.svelte";
-    import TabWFS from "$lib/components/ogc/wfs/TabWFS.svelte";
+    import TabWMS from "$lib/components/map_libre/wms/TabWMS.svelte";
+    import TabWFS from "$lib/components/map_libre/wfs/TabWFS.svelte";
 
     onMount( async ()  => {});
 </script>
