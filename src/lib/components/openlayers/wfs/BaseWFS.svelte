@@ -17,6 +17,7 @@
     let wfsFeatures = $state<IFeatureType[]>([]); 
     let answer = $state('');
     let textEntered = $state("");
+    
     let wfsFeaturesFiltered = $derived.by(() => {
         let result: IFeatureType[] = [];
         if (textEntered && textEntered.length >= 3) {

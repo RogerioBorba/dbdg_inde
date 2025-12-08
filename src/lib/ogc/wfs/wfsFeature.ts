@@ -148,4 +148,9 @@ export function parseWFSFeatureTypes(xml: Document): IFeatureType[] {
   });
 
   return  featureTypes;
-}
+};
+
+export function featureCounted(xmlDoc: Document): number {
+  const numberMatched: number = parseInt(xmlDoc.documentElement.getAttribute("numberMatched") ?? '0', 10);
+  return numberMatched;
+};

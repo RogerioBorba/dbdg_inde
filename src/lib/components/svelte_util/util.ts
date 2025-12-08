@@ -4,3 +4,9 @@ export function preventDefault(fn: (event: Event) => void) {
         fn.call(this, event);
     };
 };     
+export  function stopPropagation(handler: any) {
+    return (e: Event) => {
+      e.stopPropagation();
+      handler(e);
+    };
+};

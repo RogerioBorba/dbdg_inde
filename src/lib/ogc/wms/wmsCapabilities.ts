@@ -201,8 +201,8 @@ export function parseWMSCapabilities(xml: Document): IWMSCapabilities {
       styles,
       metadataURLs,
       layers: sublayers,
-      url: null,
-      layerApp: null
+      //url: null,
+      //layerApp: null
     };
   }
 

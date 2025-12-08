@@ -1,15 +1,14 @@
 <script lang="ts">
-    import type { IWMSLayer, IWMSMetadataURL, WMSLayerBase} from '$lib/ogc/wms/wmsCapabilities';
-    import { mapper_ol } from '$lib/shared/openlayers/shared.svelte';
+    import type { IWMSLayer, IWMSMetadataURL} from '$lib/ogc/wms/wmsCapabilities';
+    import { layerManager, mapper_ol } from '$lib/shared/openlayers/shared.svelte';
+    import { WMSLayerOL } from '../layerOL';
     import Self from './WMSTreeView.svelte';
     
     let { iWMSLayer, capabilitiesUrl } = $props<{
         iWMSLayer: IWMSLayer;
         capabilitiesUrl: string;
     }>();
-    let wmsLayer = $state<WMSLayerBase | null>(null); // para tratar do objeto OL ou maplibre
     let expanded = $state(false);
-
     function addLayerToMap(layer: IWMSLayer) {
        // const map = mapper_ol.facadeOL?.map;
         if (!mapper_ol.facadeOL?.map || !layer.name) {
@@ -18,8 +17,11 @@
         }       
 
         try {       
-            const url: string = capabilitiesUrl.split('?')[0];
-		    wmsLayer = mapper_ol.facadeOL?.addWMSLayer(iWMSLayer, url);
+            const url: string = capabilitiesUrl.split('?')[0];      
+            const layerExiste = layerManager.selectedLayers.some(layer => layer.name === iWMSLayer.name && layer.url === url);
+            if (layerExiste) return alert(`A camada ${iWMSLayer.name} já foi carregada`);    
+		    let wmsLayerOL: WMSLayerOL =   mapper_ol.facadeOL?.addWMSLayer(iWMSLayer, url);
+            layerManager.selectedLayers.push(wmsLayerOL);
         } catch (e: any) {
             console.error('Erro ao adicionar camada WMS:', e);
             alert(`Não foi possível adicionar a camada: ${e?.message ?? e}`);

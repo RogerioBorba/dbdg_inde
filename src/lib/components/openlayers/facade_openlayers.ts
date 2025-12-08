@@ -22,13 +22,13 @@ import WMSCapabilities from 'ol/format/WMSCapabilities';
 import GeoJSON from 'ol/format/GeoJSON';
 //import { WMSCapabilityLayer} from './LayerResource';
 import { browser} from '$app/environment';
-import {get} from '$lib/request/get.ts';
 import VectorSource from 'ol/source/Vector';
 import { Polygon } from 'ol/geom';
 import { Feature } from 'ol';
 import type { IWMSLayer } from '$lib/ogc/wms/wmsCapabilities';
-import  {WMSLayerBase} from '$lib/components/openlayers/wms/wmsLayer';
-
+import CircleStyle from 'ol/style/Circle';
+import { WFSLayerOL, WMSLayerOL } from './layerOL';
+import type { IFeatureType } from '$lib/ogc/wfs/wfsCapabilities';
 export const osmBaseTile = new TileLayer({ source: new XYZ({url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png'}), zIndex: 0 })
 export const googleBaseTile = new TileLayer({source: new XYZ({url: 'http://mt{0-3}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}'}), zIndex: 0})
 //returns a google satelite TileLayer as baselayer
@@ -67,15 +67,6 @@ export const BaseTiles: Record<string, TileLayer| null> = {
   none: null,
 };
 
-class WMSLayerOL extends WMSLayerBase {
-  imageLayer: any | null;
-  url: string;
-  constructor(iwmsLayer: IWMSLayer, url: string, imageLayer: any) {
-    super(iwmsLayer, url);
-    this.imageLayer = imageLayer;
-    this.url = url;
-  }
-};
 
 export class FacadeOL {
     map: Map;
@@ -173,30 +164,27 @@ export class FacadeOL {
       //console.log(featureList[indexOftheFeature].getProperties())
     } 
 
-    
-
-    addWMSLayer(iwmsLayer : IWMSLayer, url: string): WMSLayerBase {
-      const wmsLayerOL = new WMSLayerOL(iwmsLayer, url, null );
-      let wmsSource = new ImageWMS({url: wmsLayerOL.url, params: {'LAYERS': iwmsLayer.name}});
+    addWMSLayer(iwmsLayer : IWMSLayer, url: string): WMSLayerOL {
+      const wmsLayerOL = new WMSLayerOL(iwmsLayer, url);
+      let wmsSource = new ImageWMS({url: url, params: {'LAYERS': iwmsLayer.name}});
       let image_layer = new ImageLayer({ source: wmsSource});
-      //image_layer.map = this.map;
       this.map.addLayer(image_layer);
-      wmsLayerOL.imageLayer = image_layer;
+      wmsLayerOL.layer = image_layer;
       return wmsLayerOL
     };
 
-    removeWMSLayer(wmsLayer: IWMSLayer) {
-      if (!wmsLayer.layerApp) return console.log("FacadeOL>>removeWMSLayer -- wmsLayer.layerAp null");
-      this.map.removeLayer(wmsLayer.layerApp);
-      wmsLayer.layerApp = null
+    removeWMSLayer(wmsLayerOL: WMSLayerOL) {
+      if (!wmsLayerOL.layer) return console.log("FacadeOL>>removeWMSLayer -- wmsLayer.layerAp null");
+      this.map.removeLayer(wmsLayerOL.layer);
+      wmsLayerOL.layer = null;
     }
     // End - These operations above are related to the WMS
     // Begin - Base operations to add GeoJson
     
-    async addGeoJSONLayer(geojson, style = null) {
+    async addGeoJSONLayerOLD(geojson: any, style: Style | null = null): Promise<VectorImageLayer> {
       const geo_json = new GeoJSON();
       //const gjson_format = geo_json.readFeatures(geojson, {featureProjection: this.map.getView().getProjection()});
-      const gjson_format = geo_json.readFeatures(geojson, {dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857'});
+      const gjson_format = geo_json.readFeatures(geojson, {featureProjection: 'EPSG:3857'});
       const vector_source = new Vector({features: gjson_format});
       const vector_layer = new VectorImageLayer({ source: vector_source });
       //const vector_layer = new VectorLayer({ source: vector_source });
@@ -208,12 +196,58 @@ export class FacadeOL {
 
       //vector_layer.render('image');
       this.map.addLayer(vector_layer);
-      return vector_layer;
-      
+      return vector_layer; 
+    }
+
+    addGeoJSONLayer(iFeatureType: IFeatureType, geojson: any, properties: any, url: string): WFSLayerOL {
+      const geo_json = new GeoJSON();
+      const gjson_format = geo_json.readFeatures(geojson, {dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857'});
+      const vector_source = new Vector({features: gjson_format});
+      const vectorlayerImage = new VectorImageLayer({ source: vector_source });
+      const vector_layer = new VectorLayer({ source: vector_source });
+      const geoJsonType: string = geojson.features[0].geometry.type;
+      const style = this.styleforGeojsonType(geoJsonType, properties.color);
+      vectorlayerImage.setStyle(style);
+      //vector_layer.render('image');
+      this.map.addLayer(vectorlayerImage);
+      const numCamadas = this.map.getLayers().getLength();
+      //new WFSLayerOL()
+      const wfsLayerOL = new WFSLayerOL(iFeatureType, url);
+      wfsLayerOL.layer = vectorlayerImage;
+      return wfsLayerOL; 
     }
     
+    styleForLine(color: string) {
+      return new Style({ stroke: new Stroke({color: color, width: 3}),});
+    };
+    
+    styleForPolygon(color: string ) {
+      const strokePolygon = new Stroke({color: color, width: 2,});
+      const fillPolygon = new Fill({ color: 'rgba(0, 0, 255, 0.1)', });
+      return new Style({ stroke: strokePolygon, fill: fillPolygon});
+    };
 
-   
+    styleForPoint(color: string ) {
+      const fill = new Fill({ color: color,});
+      const stroke = new Stroke({color: '#000', width: 1,});
+      const image =  new CircleStyle({ radius: 5,fill: fill, stroke: stroke});
+      return new Style({image: image, fill: fill, stroke: stroke});
+    };
+
+   styleforGeojsonType(geojsonType: string, a_color: string) {
+
+      if (geojsonType === "LineString" || geojsonType === "MultiLineString") return this.styleForLine(a_color);
+      
+      if (geojsonType === "Polygon" || geojsonType === "MultiPolygon") return this.styleForLine(a_color);
+      
+      return this.styleForPoint(a_color);
+   };
+
+   removeWFSLayerOL(a_layer: WFSLayerOL) {
+      if (!a_layer.layer) return console.log("FacadeOL>>removeWMSLayer -- wfsLayer.layerAp null");
+      this.map.removeLayer(a_layer.layer);
+      a_layer.layer = null;
+    }
     
     addWFSLayerFromCapability(wfsLayer) {
       this.map.addLayer(vectorLayer);
