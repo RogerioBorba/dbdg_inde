@@ -1,6 +1,7 @@
 export async function GET() {
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; 
-    const res = await fetch('https://inde.gov.br/api/catalogo/get');
+    const urlGeoservicosINDE = 'https://inde.gov.br/api/catalogo/get';
+    const res = await fetch(urlGeoservicosINDE);
     const data = await res.json();
     let catalogos: { descricao: string; sigla?: string; url?: string; wmsAvailable?: boolean; wfsAvailable?: boolean; wcsAvailable?: boolean; wmsGetCapabilities?: string; wfsGetCapabilities?: string; wcsGetCapabilities?: string; url_metadados?: string; cswGetCapabilities?: string; }[] = []
     data.forEach((cat: { descricao: string; }) => {

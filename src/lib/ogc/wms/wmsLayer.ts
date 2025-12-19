@@ -110,4 +110,5 @@ export function iWMSLayers(xmlString: string): IWMSLayer[] {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlString, "application/xml");
   return  parseWMSLayers(xmlDoc);
-}
+};
+

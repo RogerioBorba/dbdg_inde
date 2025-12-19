@@ -76,6 +76,7 @@ export interface IWMSLayer {
   name?: string;
   title: string;
   abstract?: string;
+  keywords?: string[];
   crs: string[];
   bbox?: IWMSBoundingBox[];
   styles: IWMSStyle[];
@@ -111,6 +112,12 @@ function parseMetadataURLs(layerEl: Element): IWMSMetadataURL[] {
     format: textOf(metaEl.querySelector(":scope > Format")),
     href: metaEl.querySelector(":scope > OnlineResource")?.getAttribute("xlink:href") || "",
   }));
+}
+
+function parseKeywords(parentEl: Element): string[] {
+  return Array.from(
+    parentEl.querySelectorAll(":scope > KeywordList > Keyword")
+  ).map(k => k.textContent?.trim() || "");
 }
 
 // ----------------------------------------------------------------------
@@ -196,13 +203,12 @@ export function parseWMSCapabilities(xml: Document): IWMSCapabilities {
       name: textOf(layerEl.querySelector(":scope > Name")),
       title: textOf(layerEl.querySelector(":scope > Title")) || "",
       abstract: textOf(layerEl.querySelector(":scope > Abstract")),
+      keywords: parseKeywords(layerEl),
       crs: Array.from(layerEl.querySelectorAll(":scope > CRS")).map(c => c.textContent?.trim() || ""),
       bbox: bboxes,
       styles,
       metadataURLs,
       layers: sublayers,
-      //url: null,
-      //layerApp: null
     };
   }
 
@@ -226,4 +232,52 @@ export function iWMSLayers(xmlString: string): IWMSLayer[] {
   let layers: IWMSLayer[] = iwms_capabilties.capability.layers;
   return layers
 };
+
+export function iWMSCapabilities(xmlString: string): IWMSCapabilities {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlString, "application/xml");
+  const iwms_capabilties = parseWMSCapabilities(xmlDoc);
+  return iwms_capabilties;
+};
+
+
+export interface IWMSLayerStats {
+  withName: number;
+  withNameWithoutMetadata: number;
+  withNameWithoutKeywords: number;
+};
+
+export function countWMSLayers(layers: IWMSLayer[]): IWMSLayerStats {
+  const stats: IWMSLayerStats = {
+    withName: 0,
+    withNameWithoutMetadata: 0,
+    withNameWithoutKeywords: 0,
+  };
+
+  function visit(layer: IWMSLayer) {
+    const hasName = layer.name !== undefined && layer.name !== null;
+
+    if (hasName) {
+      stats.withName++;
+
+      if (!layer.metadataURLs || layer.metadataURLs.length === 0) {
+        stats.withNameWithoutMetadata++;
+      }
+
+      if (!layer.keywords || layer.keywords.length === 0) {
+        stats.withNameWithoutKeywords++;
+      }
+    }
+
+    // percorre sublayers
+    if (layer.layers && layer.layers.length > 0) {
+      layer.layers.forEach(visit);
+    }
+  }
+
+  layers.forEach(visit);
+
+  return stats;
+}
+
 

@@ -1,0 +1,62 @@
+import type { RequestHandler } from './$types';
+
+const ALLOWED_HOSTS = [
+  'inde.gov.br',
+  'treinamento.inde.gov.br',
+  'metadadosgeo.ibge.gov.br'
+];
+
+export const GET: RequestHandler = async ({ url, request }) => {
+  const target = url.searchParams.get('url');
+
+  if (!target) {
+    return new Response('Missing "url" query parameter', { status: 400 });
+  }
+
+  let targetUrl: URL;
+
+  try {
+    targetUrl = new URL(target);
+  } catch {
+    return new Response('Invalid URL', { status: 400 });
+  }
+
+  const isAllowed = ALLOWED_HOSTS.some(h =>
+    targetUrl.hostname === h || targetUrl.hostname.endsWith(`.${h}`)
+  );
+
+  if (!isAllowed) {
+    return new Response('Host not allowed', { status: 403 });
+  }
+
+  console.log(`api/get >> Proxy fetch: ${targetUrl.toString()}`);
+
+  try {
+    const response = await fetch(targetUrl.toString(), {
+      headers: {
+        'Accept': request.headers.get('accept') ?? '*/*'
+      }
+    });
+
+    if (!response.ok) {
+      return new Response(
+        `Failed to fetch (${response.status})`,
+        { status: response.status }
+      );
+    }
+
+    const contentType = response.headers.get('content-type') ?? 'application/octet-stream';
+    const body = await response.arrayBuffer();
+
+    return new Response(body, {
+      headers: {
+        'Content-Type': contentType,
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+
+  } catch (err: any) {
+    console.error(err);
+    return new Response(`Proxy error: ${err.message}`, { status: 500 });
+  }
+};

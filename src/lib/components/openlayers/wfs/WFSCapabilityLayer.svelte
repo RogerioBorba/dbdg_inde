@@ -95,17 +95,8 @@
         //console.log("wfsLayer.metadataURLs()>", wfsLayer.metadataURLs());
         //let link = wfsLayer.metadataURLs()[0].link() //wmsLayer.metadataURL().link()
         iWFSLayer.metadataURLs.forEach((metadataURL: IMetadataUrl) => {
-            let link = metadataURL.href;
-            console.log("LINK"  + link);
-            if(link.includes("http://panorama.sipam.gov.br")){
-				window.open(link, "_blank");
-            }else{
-				//$metadataLink = link;
-				//goto("/visualizador/metadata")
-                //console.log("teste")
-                window.open(`/visualizador/metadata?link=${encodeURIComponent(link)}`, '_blank');
-			}
-
+            let link = metadataURL.href         
+            window.open(`/visualizador/metadata?link=${encodeURIComponent(link)}`, '_blank');
         })
     };
 

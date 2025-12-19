@@ -1,42 +1,61 @@
 import type { RequestHandler } from './$types';
-export const GET: RequestHandler = async (event) => {
-  const targetUrl = event.url.search.substring(5);
-  if (targetUrl.toLowerCase().includes("https://inde.gov.br") ||
-     targetUrl.toLowerCase().includes("https://treinamento.inde.gov.br")) {
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
+const UPSTREAM_TIMEOUT =   65000; // 65s
+const ALLOWED_HOSTS = [
+  'inde.gov.br',
+  'treinamento.inde.gov.br',
+  'metadadosgeo.ibge.gov.br'
+];
+
+export const GET: RequestHandler = async ({ url, request }) => {
+  const targetURL= url instanceof URL ? url : new URL(url);
+  const target = targetURL.searchParams.get('url');
+  if (!target) { return new Response('Missing "url" query parameter', { status: 400 }); }
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT);
+
+  // Se o cliente abortar, aborta o upstream
+  request.signal.addEventListener('abort', () => { controller.abort(); } );
+
+  let targetUrl: URL;
+  try {
+    targetUrl = new URL(target);
+  } catch {
+    return new Response('Invalid URL', { status: 400 });
   }
-  console.log(`api/get >> Fetch: ${targetUrl}`)
-  if (!targetUrl) {
-    return new Response('Missing "url" query parameter', { status: 400 });
+
+  const isAllowed = ALLOWED_HOSTS.some(h => targetUrl.hostname === h || targetUrl.hostname.endsWith(`.${h}`) );
+  if (isAllowed) {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    //return new Response('Host not allowed', { status: 403 });
   }
+
+  console.log(`api/get >> Proxy fetch: ${targetUrl}`);
+
+  // Repassa apenas headers seguros
+  const headers = new Headers();
+  headers.set('Accept', request.headers.get('accept') ?? '*/*');
+  const range = request.headers.get('range');
+  if (range) headers.set('Range', range);
 
   try {
-    let response = await fetch(targetUrl);
-    console.log(`Requisição no proxy. Response status: ${response.status}` );
-    if (!response.ok) {
-      console.log("response não OK");
-      if (response.status == 403) {
-        console.log("refazendo a requisição no proxy - erro 403");
-        response = await fetch(targetUrl);
-        if (!response.ok)
-          return new Response(`Failed to fetch: ${response.status}`, { status: 403 });  
-      } else return new Response(`Failed to fetch: ${response.status}`, { status: 500 });
-    }
-      
-    const contentType = response.headers.get('Content-Type');
-    if (contentType?.includes('application/json') || (contentType?.includes('application/geo+json')))  {
-      const a_json = await response.json();
-      console.log("retornando JSON");
-      return new Response(JSON.stringify(a_json), { headers: {'Content-Type': `${contentType}`}});
-    }
-    if (contentType?.includes('application/xml') || contentType?.includes('text/xml')) {
-      const xml = await response.text();
-      console.log("retornando XML");
-      return new Response(xml, { headers: {'Content-Type': `${contentType}`}});
-    }
+    const upstream = await fetch(targetUrl, { headers, signal: controller.signal });
+    // Proxy quase transparente
+    return new Response(upstream.body, 
+        {
+            status: upstream.status, 
+            statusText: upstream.statusText, 
+            headers: {
+            // repasse apenas o que faz sentido
+            'content-type': upstream.headers.get('content-type') ?? 'text/xml',
+            'access-control-allow-origin': '*'}
+        });
 
   } catch (err: any) {
-    console.log(err)
-    return new Response(`Error: ${err.message}`, { status: 500 });
+    console.error(err);
+    if (err.name === 'AbortError') { return new Response( `Upstream request aborted or timed out`, { status: 504 } ); }
+    return new Response(`Proxy error: ${err.message}`, { status: 500 });
+  } finally {
+    clearTimeout(timeoutId);
   }
 };
