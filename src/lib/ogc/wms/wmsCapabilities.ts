@@ -257,7 +257,7 @@ export function countWMSLayers(layers: IWMSLayer[]): IWMSLayerStats {
   function visit(layer: IWMSLayer) {
     const hasName = layer.name !== undefined && layer.name !== null;
 
-    if (hasName) {
+    if (hasName) { // conta apenas layers com nome. Camadas sem nome são grupos(LayerGroups)
       stats.withName++;
 
       if (!layer.metadataURLs || layer.metadataURLs.length === 0) {

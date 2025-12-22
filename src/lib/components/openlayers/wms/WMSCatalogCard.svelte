@@ -3,7 +3,7 @@
     import { goto } from '$app/navigation';
     import {countWMSLayers, iWMSCapabilities} from '$lib/ogc/wms/wmsCapabilities';
     import type {IWMSCapabilities, IWMSLayer, IWMSLayerStats} from '$lib/ogc/wms/wmsCapabilities';
-    import { Spinner} from 'flowbite-svelte';
+    import { Spinner } from "flowbite-svelte";
     import { fade } from 'svelte/transition'
     import { onMount } from 'svelte';
     import { get } from "$lib/request/get";
@@ -77,7 +77,7 @@
         onclick={linkClicked}>Mais detalhes</button>
         <!-- <a class="text-xs text-blue-500 underline underline-offset-4 uppercase" href="{metadadoAssociado()}">{metadadoText}</a> -->
         <div class="bg-slate-300 text-slate-600 rounded-md text-center p-1">
-            <Spinner class="{spinHidden} mr-3" size="4" color="white" />
+            <Spinner class="{spinHidden} mr-3" size="4" color="red" />
             {spinMessage}
             
         </div>
