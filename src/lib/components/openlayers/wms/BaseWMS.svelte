@@ -75,7 +75,7 @@
     
     onMount(async() => {
         try {
-            const response = await get("/api/inde/catalogos-servicos/ibge");
+            const response = await fetch("/api/inde/catalogos-servicos/ibge");
             const data: any[] = await response.json(); // better: replace any[] with actual type
             iriArray = [selectedIDTextIRI].concat(
                 data.map((catalogoGeoInde: IGeoservicoDescricao) => newIRI(catalogoGeoInde))

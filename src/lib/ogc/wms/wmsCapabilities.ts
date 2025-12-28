@@ -134,17 +134,17 @@ export function parseWMSCapabilities(xml: Document): IWMSCapabilities {
   // --------------------------------------------------------------------
   const serviceEl = root.querySelector("Service");
   const service: IWMSService = {
-    name: textOf(serviceEl?.querySelector("Name")) || "",
-    title: textOf(serviceEl?.querySelector("Title")) || "",
-    abstract: textOf(serviceEl?.querySelector("Abstract")),
-    keywords: Array.from(serviceEl?.querySelectorAll("KeywordList > Keyword") || []).map(k => k.textContent?.trim() || ""),
-    onlineResource: parseOnlineResource(serviceEl?.querySelector("OnlineResource")),
+    name: textOf(serviceEl?.querySelector("Name") ?? null) || "",
+    title: textOf(serviceEl?.querySelector("Title") ?? null) || "",
+    abstract: textOf(serviceEl?.querySelector("Abstract") ?? null),
+    keywords: Array.from((serviceEl?.querySelectorAll("KeywordList > Keyword") as NodeListOf<Element>) || []).map(k => k.textContent?.trim() || ""),
+    onlineResource: parseOnlineResource(serviceEl?.querySelector("OnlineResource") ?? null),
     contactInformation: {
-      organization: textOf(serviceEl?.querySelector("ContactOrganization")),
-      email: textOf(serviceEl?.querySelector("ContactElectronicMailAddress")),
+      organization: textOf(serviceEl?.querySelector("ContactOrganization") ?? null),
+      email: textOf(serviceEl?.querySelector("ContactElectronicMailAddress") ?? null),
     },
-    fees: textOf(serviceEl?.querySelector("Fees")),
-    accessConstraints: textOf(serviceEl?.querySelector("AccessConstraints")),
+    fees: textOf(serviceEl?.querySelector("Fees") ?? null),
+    accessConstraints: textOf(serviceEl?.querySelector("AccessConstraints") ?? null),
   };
 
   // --------------------------------------------------------------------

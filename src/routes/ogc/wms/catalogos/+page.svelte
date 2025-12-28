@@ -3,22 +3,23 @@
     import WMSCatalogCard from '$lib/components/openlayers/wms/WMSCatalogCard.svelte';
     import { preventDefault } from '$lib/components/svelte_util/util';
     import type { IGeoservicoDescricao } from '$lib/inde/catalogos/ICatalogoGeoservico';
-    import {counterWMS} from '$lib/shared/ogc/wms/shared.svelte';
     import { onMount } from 'svelte';
+    import type { OGCProcessRecord } from '$lib/ogc/commom/OGCRecord';
     interface Props {id: number, descricao: string, iri: string};
     let selectedItems = $state<Props[]>([]);
     let selectedCatalogs = $state<Props[]>([]);
     let checked = $state(false);
+    let records: OGCProcessRecord[] = $state([]);
+    let hiddenBtnCSV = $derived(  records.length == 0 ? 'hidden' : 'inline-flex');
     let i = 1;
     let nameCatalog = $state('');
     let adressCatalog = $state('');
     let qtdCatalog = $derived(selectedItems.length);
     let disableButtonAddNewCatalog = $derived( nameCatalog.length == 0 || adressCatalog.length == 0);
-    function resetStores() {
-        counterWMS.totalLayers = 0;
-        counterWMS.totalLayersWithoutMetadata = 0;
-        counterWMS.totalWMSProcessado = 0;
-    }
+    let totalLayers = $state(0);
+    let totalLayersWithoutMetadata = $state(0);
+    let countWMSProcessado = $state(0);
+        
     const newObjIdDescricaoIRI = (obj: IGeoservicoDescricao) => {
         return { id: i++, descricao: obj.descricao, iri: obj.wmsGetCapabilities}
     }      
@@ -52,7 +53,6 @@
 
     onMount(async() => {
         try{
-            resetStores()
             const response = await fetch("/api/inde/catalogos-servicos/ibge");
             const data = await response.json();
             objIdDescricaoIRIArray = data.map(newObjIdDescricaoIRI);
@@ -60,6 +60,75 @@
             console.error('Failed to fetch catalogos_servicos:', error);
         }
     })
+
+    // usando store global `csvRecords: OGCProcessRecord[]`
+
+    function escapeCSV(value: any) {
+        if (value === null || value === undefined) return '""';
+        const s = String(value);
+        return '"' + s.replace(/"/g, '""') + '"';
+    }
+
+    function downloadCSV() {
+        function dateNowAsString() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
+        }
+
+        if (!records.length || records.length === 0) {
+            return alert('Nenhum registro para exportar');
+        }
+        const header = [
+            'tipo_de_servico',
+            'operacao_do_servico',
+            'data_e_hora_da_requisicao',
+            'tempo_da_requisicao_em_segundos',
+            'nome',
+            'quantidade_de_camadas',
+            'quantidade_de_camadas_sem_metadados_associados',
+            'quantidade_de_camadas_sem_palavras_chave',
+            'url',
+            'processadoSemErro'
+        ];
+
+        const rows = records.map(r => [
+            r.serviceType,
+            r.operation,
+            r.datetime,
+            r.requestTimeSeconds,
+            r.name,
+            r.numLayers,
+            r.numLayersWithoutMetadata,
+            r.numLayersWithoutKeywords,
+            r.url,
+            r.processadoSemErro
+        ].map(escapeCSV).join(','));
+
+        const csv = [header.map(escapeCSV).join(','), ...rows].join('\r\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `wms_catalogs_${dateNowAsString()}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    }
+    
+    // chamado por cada WMSCatalogCard quando um registro é criado
+    function handleRecordCreated(record: OGCProcessRecord) {  
+        records = [...records, record];
+        totalLayers += record.numLayers;
+        totalLayersWithoutMetadata += record.numLayersWithoutMetadata;
+        countWMSProcessado += 1;
+  }
 </script>
 <Navbar brand="OGC/WMS Checker"></Navbar>
 <form class="m-2">
@@ -77,12 +146,20 @@
             <input class="mr-1 rounded w-4 h-4 focus:outline-none border-gray-300" type="checkbox" {checked} onclick={isChecking}> 
             <span class="mr-2">selecione todos</span>
         </div>
-        <button class="mr-4 focus:outline-none bg-grey-light hover:bg-grey font-bold rounded inline-flex items-center hover:bg-gray-100" onclick={preventDefault(btnSearchClicked)} title="Realizar requisição">
+        <button class="mr-4 focus:outline-none bg-grey-light hover:bg-grey font-bold rounded inline-flex items-center hover:bg-gray-100" 
+        onclick={preventDefault(btnSearchClicked)} title="Realizar requisição">
             <svg  class="text-indigo-500 fill-current border rounded border-gray-400" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="20" height="20" color='green' viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" /></svg>
         </button>
-        <p class="mr-2"> Quantidade de catálogos processados: {counterWMS.totalWMSProcessado}/{qtdCatalog} </p>
-        <p> Quantidade de camadas sem metadados: {counterWMS.totalLayersWithoutMetadata}</p>
-        <p class="ml-auto text-sm ">Qtd de camadas: {counterWMS.totalLayers}</p>
+       <button 
+            class="{hiddenBtnCSV} mr-4 focus:outline-none bg-green-500 hover:bg-green-600 text-white font-bold rounded items-center px-3 py-1"
+            onclick={preventDefault(downloadCSV)} 
+            title="Exportar CSV">
+            Exportar CSV ({records.length})
+        </button>
+        
+        <p class="mr-2"> Quantidade de catálogos processados: {countWMSProcessado}/{qtdCatalog} </p>
+        <p> Quantidade de camadas sem metadados: {totalLayersWithoutMetadata}</p>
+        <p class="ml-auto text-sm ">Qtd de camadas: {totalLayers}</p>
         
     </div>
 {/snippet}
@@ -104,9 +181,9 @@
     </div>
 {/snippet}
 {#snippet exibirCards()}
-    <div class = "m-2 grid gap-2 md:grid-cols-3 grid-cols-1">
-        {#each selectedCatalogs as objIdDescricaoIri}
-           <WMSCatalogCard objIdDescricaoIri={objIdDescricaoIri} ></WMSCatalogCard>
+    <div class="m-2 grid gap-2 md:grid-cols-3 grid-cols-1">
+        {#each selectedCatalogs as objIdDescricaoIri (objIdDescricaoIri.id)}
+            <WMSCatalogCard objIdDescricaoIri={objIdDescricaoIri} onRecordCreated={handleRecordCreated} />
         {/each}
-    </div>
+</div>
 {/snippet}

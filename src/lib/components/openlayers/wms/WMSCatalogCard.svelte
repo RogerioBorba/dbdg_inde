@@ -1,14 +1,15 @@
 <script lang="ts">
-    import {counterWMS} from '$lib/shared/ogc/wms/shared.svelte';
     import { goto } from '$app/navigation';
-    import {countWMSLayers, iWMSCapabilities} from '$lib/ogc/wms/wmsCapabilities';
+    import {countWMSLayers, iWMSCapabilities}from '$lib/ogc/wms/wmsCapabilities';
     import type {IWMSCapabilities, IWMSLayer, IWMSLayerStats} from '$lib/ogc/wms/wmsCapabilities';
+    import { counterWMS } from '$lib/shared/ogc/wms/shared.svelte';
+    import type { OGCProcessRecord } from '$lib/ogc/commom/OGCRecord';
     import { Spinner } from "flowbite-svelte";
     import { fade } from 'svelte/transition'
     import { onMount } from 'svelte';
     import { get } from "$lib/request/get";
     let wmsCapabilities: IWMSCapabilities;
-    let { objIdDescricaoIri }: {objIdDescricaoIri: {id: number, descricao: string, iri: string}} = $props();
+    let { objIdDescricaoIri, onRecordCreated }: {objIdDescricaoIri: {id: number, descricao: string, iri: string}, onRecordCreated?: (record: OGCProcessRecord) => void} = $props();
     let tempoRequisicao = $state(0);
     let qtdCamada = $state(0);
     let qtdCamadaSemMetadadosAssociado = $state(0);
@@ -21,7 +22,7 @@
     
     function linkClicked() {
         counterWMS.currentWMSCapability = wmsCapabilities;
-        goto("/wms/capabilities")
+        goto("/ogc/wms/capabilities")
     }
     function initializeVariablesOnMount(wmsLayers: IWMSLayer[]) {
         const stats: IWMSLayerStats = countWMSLayers(wmsLayers);
@@ -45,12 +46,25 @@
             wmsCapabilities = iWMSCapabilities(xmlText);
             const wmsLayers: IWMSLayer[] = wmsCapabilities.capability.layers;
             initializeVariablesOnMount(wmsLayers);
-            counterWMS.totalLayers += qtdCamada;
-            counterWMS.totalLayersWithoutMetadata += qtdCamadaSemMetadadosAssociado;
-            counterWMS.countWMSProcessado = counterWMS.countWMSProcessado + 1
             tempoRequisicao = parseFloat(((new Date().getTime() - tempo) / 1000).toFixed(2));
             spinHidden = 'hidden'
             spinMessage = 'processado com sucesso'
+                // cria registro tipado e atualiza store global csvRecords
+                const record: OGCProcessRecord = {
+                    id: objIdDescricaoIri.id,
+                    serviceType: 'WMS',
+                    operation: 'GetCapabilities',
+                    datetime: new Date().toISOString(),
+                    requestTimeSeconds: tempoRequisicao,
+                    name: objIdDescricaoIri.descricao,
+                    numLayers: qtdCamada,
+                    numLayersWithoutMetadata: qtdCamadaSemMetadadosAssociado,
+                    numLayersWithoutKeywords: qtdCamadaSemPalavraChave,
+                    url: objIdDescricaoIri.iri,
+                    processadoSemErro: true
+                };
+                //upsertRecord(record);
+                onRecordCreated?.(record);
         } catch (error: any) {
             console.log("Erro na chamada da requisição")
             console.log(error, error.statusText, error.status)
@@ -59,7 +73,23 @@
             spinHidden = 'hidden'
             spinMessage = `processado com erro`
             showMaisDetalhesHidden = 'hidden'
-            counterWMS.countWMSProcessado = counterWMS.countWMSProcessado + 1
+            // envia evento DOM mesmo em caso de erro
+                // cria registro tipado e atualiza store global mesmo em caso de erro
+                const recordErr: OGCProcessRecord = {
+                    id: objIdDescricaoIri.id,
+                    serviceType: 'WMS',
+                    operation: 'GetCapabilities',
+                    datetime: new Date().toISOString(),
+                    requestTimeSeconds: tempoRequisicao,
+                    name: objIdDescricaoIri.descricao,
+                    numLayers: qtdCamada,
+                    numLayersWithoutMetadata: qtdCamadaSemMetadadosAssociado,
+                    numLayersWithoutKeywords: qtdCamadaSemPalavraChave,
+                    url: objIdDescricaoIri.iri,
+                    processadoSemErro: false
+                };
+                //upsertRecord(recordErr);
+                onRecordCreated?.(recordErr);
         }
 		
 	});
