@@ -1,10 +1,10 @@
 <script lang="ts">
     import Navbar from '$lib/components/navbar/navbar.svelte'
-    import WMSCatalogCard from '$lib/components/openlayers/wms/WMSCatalogCard.svelte';
     import { preventDefault } from '$lib/components/svelte_util/util';
     import type { IGeoservicoDescricao } from '$lib/inde/catalogos/ICatalogoGeoservico';
     import { onMount } from 'svelte';
     import type { OGCProcessRecord } from '$lib/ogc/commom/OGCRecord';
+    import WMSCatalogCard from '$lib/components/openlayers/wms/WMSCatalogCard.svelte';
     interface Props {id: number, descricao: string, iri: string};
     let selectedItems = $state<Props[]>([]);
     let selectedCatalogs = $state<Props[]>([]);

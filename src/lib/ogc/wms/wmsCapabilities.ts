@@ -247,6 +247,13 @@ export interface IWMSLayerStats {
   withNameWithoutKeywords: number;
 };
 
+export interface IWMSKeywordStats {
+  countTotalLayer: number; 
+  countWMSProcessado: number; 
+  allKeywords: string[];
+  keywordCountByName: Record<string, number>;
+};
+
 export function countWMSLayers(layers: IWMSLayer[]): IWMSLayerStats {
   const stats: IWMSLayerStats = {
     withName: 0,

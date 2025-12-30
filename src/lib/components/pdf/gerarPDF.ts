@@ -7,7 +7,7 @@ import {jsPDF} from "jspdf"
  * @returns {void} 
  */
 
-export function dataToPdf(elements: any) {
+export function dataToPdf(elements: any, fileName: string = "relatorio.pdf"): void {
     let pdf = new jsPDF();
     let y = 5;
     const pageHeight = pdf.internal.pageSize.height;
@@ -36,7 +36,7 @@ export function dataToPdf(elements: any) {
         y += 10;
     }
 
-    pdf.save("relatorio.pdf");
+    pdf.save(fileName);
 }
 
 

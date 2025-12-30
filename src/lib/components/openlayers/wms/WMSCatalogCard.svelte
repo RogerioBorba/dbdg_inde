@@ -103,8 +103,8 @@
         <h2> Qtd de camadas sem metadado associado: {qtdCamadaSemMetadadosAssociado}</h2>
         <h2> Qtd de camadas sem palavras chaves: {qtdCamadaSemPalavraChave}</h2>
 
-        <button class="{showMaisDetalhesHidden} text-green-600 text-left font-semibold hover:bg-gray-200 hover:underline py-1"  
-        onclick={linkClicked}>Mais detalhes</button>
+        <button class="{showMaisDetalhesHidden} text-green-600 text-left font-semibold hover:bg-gray-200 hover:underline py-1 hover:cursor-pointer"  
+        onclick ={linkClicked}>Mais detalhes</button>
         <!-- <a class="text-xs text-blue-500 underline underline-offset-4 uppercase" href="{metadadoAssociado()}">{metadadoText}</a> -->
         <div class="bg-slate-300 text-slate-600 rounded-md text-center p-1">
             <Spinner class="{spinHidden} mr-3" size="4" color="red" />

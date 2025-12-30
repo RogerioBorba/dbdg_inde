@@ -5,7 +5,7 @@ function escapeCSV(value: any) {
         return '"' + s.replace(/"/g, '""') + '"';
  }
 
-export function listToCSV(elements: object[], fileName: string) {
+export function listToCSV(elements: object[], fileName: string='') {
     if (elements.length === 0) {
         console.warn("Nenhum elemento para converter em CSV.");
         return;
