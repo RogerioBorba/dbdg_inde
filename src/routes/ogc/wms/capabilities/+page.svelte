@@ -46,7 +46,6 @@
         return filteredLayers;
     });
 
-    let wmsArrayToCSV = $derived.by(() => xmlToArray(filteredWMSLayers));
 
 const xmlToArray = (filteredLayers: IWMSLayer[]): ICSVLayer[] => {
     const arrayToCSV: ICSVLayer[] = [];
@@ -85,7 +84,7 @@ const xmlToArray = (filteredLayers: IWMSLayer[]): ICSVLayer[] => {
     });
     return arrayToCSV;
 };
-
+let wmsArrayToCSV = $derived.by(() => xmlToArray(filteredWMSLayers));
 </script>
 
 <div>

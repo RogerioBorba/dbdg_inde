@@ -1,4 +1,40 @@
 // ----------------------------------------------------------------------
+// Namespaces OGC
+// ----------------------------------------------------------------------
+
+const OWS_NS = "http://www.opengis.net/ows/1.1";
+const FES_NS = "http://www.opengis.net/fes/2.0";
+
+// ----------------------------------------------------------------------
+// Helpers namespace-safe
+// ----------------------------------------------------------------------
+
+function textNS(
+  parent: Element | Document,
+  ns: string,
+  tag: string
+): string | undefined {
+  return parent.getElementsByTagNameNS(ns, tag)[0]?.textContent?.trim();
+}
+
+function textsNS(
+  parent: Element | Document,
+  ns: string,
+  tag: string
+): string[] {
+  return Array.from(parent.getElementsByTagNameNS(ns, tag))
+    .map(el => el.textContent?.trim() || "")
+    .filter(Boolean);
+}
+
+function firstLocal(
+  parent: Element | Document,
+  tag: string
+): Element | undefined {
+  return Array.from(parent.getElementsByTagName(tag))[0];
+}
+
+// ----------------------------------------------------------------------
 // Tipos base e utilitários
 // ----------------------------------------------------------------------
 
@@ -161,6 +197,26 @@ export function parseWFSGetCapabilities(xml: Document): IWFSGetCapabilities {
     )
   }));
 
+  function parseKeywords(parentEl: Element): string[] {
+  const OWS_NS = "http://www.opengis.net/ows/1.1";
+
+  const keywordsEl = Array.from(parentEl.children)
+    .find(el =>
+      el.localName === "Keywords" &&
+      el.namespaceURI === OWS_NS
+    );
+
+  if (!keywordsEl) return [];
+
+  return Array.from(keywordsEl.children)
+    .filter(el =>
+      el.localName === "Keyword" &&
+      el.namespaceURI === OWS_NS
+    )
+    .map(el => el.textContent?.trim() || "");
+};
+
+
   // ------------------ FeatureTypeList ------------------
   const featureTypes: IFeatureType[] = Array.from(xml.querySelectorAll("FeatureType")).map(ft => {
     const lowerCorner = text(ft.querySelector("ows\\:LowerCorner"));
@@ -169,7 +225,7 @@ export function parseWFSGetCapabilities(xml: Document): IWFSGetCapabilities {
       name: text(ft.querySelector("Name")) ?? "",
       title: text(ft.querySelector("Title")) ?? "",
       abstract: text(ft.querySelector("Abstract")),
-      keywords: Array.from(ft.querySelectorAll("ows\\:Keyword")).map(k => text(k) ?? ""),
+      keywords: parseKeywords(ft), //Array.from(ft.querySelectorAll(":scope > Keywords > Keyword")).map(k => text(k) ?? ""),
       defaultCRS: text(ft.querySelector("DefaultCRS")),
       bbox: lowerCorner && upperCorner
         ? {
@@ -253,7 +309,39 @@ export function iWFSFeatureTypes(xmlString: string): IFeatureType[] {
   return layers
 };
 
+export function capabilities(xmlString: string): IWFSGetCapabilities {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlString, "application/xml");
+  const iwfs_capabilties = parseWFSGetCapabilities(xmlDoc);
+  return iwfs_capabilties
+};
 
+export interface ILayerStats {
+  withName: number;
+  withNameWithoutMetadata: number;
+  withNameWithoutKeywords: number;
+};
+
+export function layerStats(layers: IFeatureType[]): ILayerStats {
+  const stats: ILayerStats = {
+    withName: 0,
+    withNameWithoutMetadata: 0,
+    withNameWithoutKeywords: 0,
+  };
+  for (const layer of layers) {
+      
+        stats.withName++;
+        if (!layer.metadataURLs || layer.metadataURLs.length === 0) {
+          stats.withNameWithoutMetadata++;
+        }
+        console.log("Layer  keywords: " + layer.keywords);
+        if (!layer.keywords || layer.keywords.length === 0) {
+          
+          stats.withNameWithoutKeywords++;
+        }   
+  }
+  return stats;
+};
 // ----------------------------------------------------------------------
 // Exemplo de uso
 // ----------------------------------------------------------------------

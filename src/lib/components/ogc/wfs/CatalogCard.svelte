@@ -1,14 +1,13 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
-    import {countWMSLayers, iWMSCapabilities}from '$lib/ogc/wms/wmsCapabilities';
-    import type {IWMSCapabilities, IWMSLayer, IWMSLayerStats} from '$lib/ogc/wms/wmsCapabilities';
-    import { counterWMS } from '$lib/shared/ogc/wms/shared.svelte';
+    import { capabilities, layerStats, type IFeatureType, type ILayerStats, type IWFSGetCapabilities}from '$lib/ogc/wfs/wfsCapabilities';
     import type { OGCProcessRecord } from '$lib/ogc/commom/OGCRecord';
     import { Spinner } from "flowbite-svelte";
     import { fade } from 'svelte/transition'
     import { onMount } from 'svelte';
     import { get } from "$lib/request/get";
-    let wmsCapabilities: IWMSCapabilities;
+    import { counterWFS } from '$lib/shared/ogc/wfs/shared.svelte';
+    let ows_capabilities: IWFSGetCapabilities;
     let { objIdDescricaoIri, onRecordCreated }: {objIdDescricaoIri: {id: number, descricao: string, iri: string}, onRecordCreated?: (record: OGCProcessRecord) => void} = $props();
     let tempoRequisicao = $state(0);
     let qtdCamada = $state(0);
@@ -21,11 +20,11 @@
     let showMaisDetalhesHidden = $state(''); 
     
     function linkClicked() {
-        counterWMS.currentWMSCapability = wmsCapabilities;
-        goto("/ogc/wms/capabilities")
+        counterWFS.currentCapability = ows_capabilities;
+        goto("/ogc/wfs/capabilities")
     }
-    function initializeVariablesOnMount(wmsLayers: IWMSLayer[]) {
-        const stats: IWMSLayerStats = countWMSLayers(wmsLayers);
+    function initializeVariablesOnMount(layers: IFeatureType[]) {
+        const stats: ILayerStats = layerStats(layers);
         qtdCamada = stats.withName || 0;
         qtdCamadaSemMetadadosAssociado = stats.withNameWithoutMetadata || 0 ;
         qtdCamadaSemPalavraChave = stats.withNameWithoutKeywords || 0 ;
@@ -35,24 +34,25 @@
         try {
             if(!objIdDescricaoIri.iri) {
                 spinHidden = 'hidden'
-                spinMessage = 'Sem catálogo WMS para processamento'
+                spinMessage = 'Sem catálogo WFS para processamento'
                 return 
             }
             
             const tempo = new Date().getTime();
-            console.log("link wms: " + objIdDescricaoIri.iri);
+            console.log("link wfs: " + objIdDescricaoIri.iri);
             const res = await get(objIdDescricaoIri.iri, { timeout: 60000 });
             const xmlText = await res.text();
-            wmsCapabilities = iWMSCapabilities(xmlText);
-            const wmsLayers: IWMSLayer[] = wmsCapabilities.capability.layers;
-            initializeVariablesOnMount(wmsLayers);
+            ows_capabilities = capabilities(xmlText);
+            const layers: IFeatureType[] = ows_capabilities.featureTypes;
+            console.log("Qtd de camadas WFS: " + layers.length);
+            initializeVariablesOnMount(layers);
             tempoRequisicao = parseFloat(((new Date().getTime() - tempo) / 1000).toFixed(2));
             spinHidden = 'hidden'
             spinMessage = 'processado com sucesso'
                 // cria registro tipado e atualiza store global csvRecords
                 const record: OGCProcessRecord = {
                     id: objIdDescricaoIri.id,
-                    serviceType: 'WMS',
+                    serviceType: 'WFS',
                     operation: 'GetCapabilities',
                     datetime: new Date().toISOString(),
                     requestTimeSeconds: tempoRequisicao,

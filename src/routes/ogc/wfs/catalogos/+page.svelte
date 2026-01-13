@@ -4,7 +4,7 @@
     import type { IGeoservicoDescricao } from '$lib/inde/catalogos/ICatalogoGeoservico';
     import { onMount } from 'svelte';
     import type { OGCProcessRecord } from '$lib/ogc/commom/OGCRecord';
-    import WMSCatalogCard from '$lib/components/openlayers/wms/WMSCatalogCard.svelte';
+    import CatalogCard from '$lib/components/ogc/wfs/CatalogCard.svelte';
     interface Props {id: number, descricao: string, iri: string};
     let selectedItems = $state<Props[]>([]);
     let selectedCatalogs = $state<Props[]>([]);
@@ -18,10 +18,10 @@
     let disableButtonAddNewCatalog = $derived( nameCatalog.length == 0 || adressCatalog.length == 0);
     let totalLayers = $state(0);
     let totalLayersWithoutMetadata = $state(0);
-    let countWMSProcessado = $state(0);
+    let countProcessado = $state(0);
         
     const newObjIdDescricaoIRI = (obj: IGeoservicoDescricao) => {
-        return { id: i++, descricao: obj.descricao, iri: obj.wmsGetCapabilities}
+        return { id: i++, descricao: obj.descricao, iri: obj.wfsGetCapabilities}
     }      
 
     let objIdDescricaoIRIArray = $state<Props[]>([]);
@@ -115,31 +115,31 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `wms_catalogs_${dateNowAsString()}.csv`;
+        a.download = `wfs_catalogs_${dateNowAsString()}.csv`;
         document.body.appendChild(a);
         a.click();
         a.remove();
         URL.revokeObjectURL(url);
     }
     
-    // chamado por cada WMSCatalogCard quando um registro é criado
+    // chamado por cada WFSCatalogCard quando um registro é criado
     function handleRecordCreated(record: OGCProcessRecord) {  
         records = [...records, record];
         totalLayers += record.numLayers;
         totalLayersWithoutMetadata += record.numLayersWithoutMetadata;
-        countWMSProcessado += 1;
+        countProcessado += 1;
   }
 </script>
-<Navbar brand="OGC/WMS Checker"></Navbar>
+<Navbar brand="OGC/WFS Checker"></Navbar>
 <form class="m-2">
-    {@render counterWMSGlobal()}
+    {@render counterGlobal()}
     {@render selecionarInstituicoes()}
-    {@render adiconarNovoWMSGetCapabilities()}
+    {@render adiconarNovoGetCapabilities()}
 </form>
 {@render exibirCards()}
 
 
-{#snippet counterWMSGlobal()}
+{#snippet counterGlobal()}
     <div class="flex items-center flex-col sm:flex-row mb-1 text-sm font-medium text-gray-900 dark:text-gray-400">
         <label for="instituicoes_multiple" class="mr-4">Escolha as instituições</label>
         <div>
@@ -159,7 +159,7 @@
             Exportar CSV ({records.length})
         </button>
         
-        <p class="mr-2"> Quantidade de catálogos processados: {countWMSProcessado}/{qtdCatalog} </p>
+        <p class="mr-2"> Quantidade de catálogos processados: {countProcessado}/{qtdCatalog} </p>
         <p> Quantidade de camadas sem metadados: {totalLayersWithoutMetadata}</p>
         <p class="ml-auto text-sm ">Qtd de camadas: {totalLayers}</p>
         
@@ -174,7 +174,7 @@
         {/each}
     </select>
 {/snippet}
-{#snippet adiconarNovoWMSGetCapabilities()}
+{#snippet adiconarNovoGetCapabilities()}
     <div class="mt-2 w-full p1 flex flex-col md:flex-row">
         <input class="border-gray-300 focus:outline-none w-full rounded md:w-2/5 mr-1" type="text"  bind:value={nameCatalog} placeholder="Informe o nome do catálogo"> 
         <input class="border-gray-300 focus:outline-none rounded w-full md:w-2/5 mr-1" type="text"  bind:value={adressCatalog} placeholder="Informe o endereço/link WMS do GetCapabilities"> 
@@ -185,7 +185,7 @@
 {#snippet exibirCards()}
     <div class="m-2 grid gap-2 md:grid-cols-3 grid-cols-1">
         {#each selectedCatalogs as objIdDescricaoIri (objIdDescricaoIri.id)}
-            <WMSCatalogCard objIdDescricaoIri={objIdDescricaoIri} onRecordCreated={handleRecordCreated} />
+            <CatalogCard objIdDescricaoIri={objIdDescricaoIri} onRecordCreated={handleRecordCreated} />
         {/each}
 </div>
 {/snippet}
