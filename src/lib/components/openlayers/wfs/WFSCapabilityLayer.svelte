@@ -30,7 +30,7 @@
     let sourceLayer = $state(null);
     let display = $state('');
     let visibilytMetadata =$state('visible');
-    let featureCount = $state(0);
+    let featureCount = $state<number | string>(0);
     let color = $state(HTMLInputElement);
     let userColor = $state('');
     let colorInput = $state<HTMLInputElement>();
@@ -102,7 +102,12 @@
 
      // Função para buscar o número de feições
      async function fetchFeatureCount() {
-        const url: string = wfsLayer.urlGetFeatureCount();
+        const url: string|null = wfsLayer.urlGetFeatureCount();
+        if (!url) {
+            featureCount = 'N/A';
+            console.warn("URL inválida para contagem de feições. Versão 1.0.0 do WFS não suporta esta funcionalidade.");
+            return;
+        }
         try {
             let response = await get(url);
             let data = await response.text();

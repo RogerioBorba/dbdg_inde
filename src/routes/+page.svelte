@@ -7,7 +7,8 @@
     ];
   let menuWFS = [
       {name: 'Catálogos', href: '/ogc/wfs/catalogos'},
-      
+      {name: 'Palavras Chaves', href: '/ogc/wfs/palavras-chaves'}, 
+      {name: '  Tipo de Feições', href: '/ogc/wfs/tipo-de-feicoes'}, 
     ];
 </script>
 
@@ -32,7 +33,7 @@
     </NavLi>
     <MegaMenu items={menuWFS}>
       {#snippet children({ item })}
-        <a href={item.href} class="hover:text-primary-600 dark:hover:text-primary-500">{item.name}</a>
+        <a href={item.href} class="hover:text-primary-600 p-2">{item.name} </a>
       {/snippet}
     </MegaMenu>
     <NavLi href="/visualizador/ol">visualizador</NavLi>
