@@ -10,6 +10,11 @@
       {name: 'Palavras Chaves', href: '/ogc/wfs/palavras-chaves'}, 
       {name: '  Tipo de Feições', href: '/ogc/wfs/tipo-de-feicoes'}, 
     ];
+  let menuWCS = [
+      {name: 'Catálogos', href: '/ogc/wcs/catalogos'},
+      {name: 'Palavras Chaves', href: '/ogc/wcs/palavras-chaves'}, 
+      
+    ];  
 </script>
 
 <Navbar>
@@ -32,6 +37,14 @@
       WFS <ChevronDownOutline class="text-primary-800 ms-2 inline h-6 w-6 dark:text-white" />
     </NavLi>
     <MegaMenu items={menuWFS}>
+      {#snippet children({ item })}
+        <a href={item.href} class="hover:text-primary-600 p-2">{item.name} </a>
+      {/snippet}
+    </MegaMenu>
+    <NavLi class="cursor-pointer">
+      WCS <ChevronDownOutline class="text-primary-800 ms-2 inline h-6 w-6 dark:text-white" />
+    </NavLi>
+    <MegaMenu items={menuWCS}>
       {#snippet children({ item })}
         <a href={item.href} class="hover:text-primary-600 p-2">{item.name} </a>
       {/snippet}
