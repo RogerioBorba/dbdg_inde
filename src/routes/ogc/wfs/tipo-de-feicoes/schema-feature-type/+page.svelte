@@ -217,6 +217,7 @@
     <!-- Feature Types Grid -->
     <div class="bg-amber-100 grid gap-4 md:grid-cols-3 grid-cols-1">
         {#each filteredFeatureTypes as featureType (featureType.name)}
+            {console.log('Renderizando featureType: ', featureType)}            
             <div class="border border-gray-300 rounded-lg p-4 bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-shadow">
                 <div class="flex justify-between items-start mb-2">
                     <h3 class="font-semibold text-lg text-gray-900 dark:text-white flex-1">

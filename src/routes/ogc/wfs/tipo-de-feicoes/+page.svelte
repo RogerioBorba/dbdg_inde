@@ -84,8 +84,9 @@
                 class="mr-1 rounded w-4 h-4 focus:outline-none border-gray-300" 
                 type="checkbox" 
                 {checked}
-                onclick={preventDefault(isChecking)} 
+                onclick={isChecking} 
             > 
+            
             <span class="mr-2">selecione todos</span>
         </div>
         <button 

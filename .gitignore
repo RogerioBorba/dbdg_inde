@@ -4,6 +4,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+tmpclaude-*
 package-lock.json
 yarn.lock
 pnpm-lock.yaml

@@ -174,6 +174,10 @@
             const url: string = capabilitiesUrl.split('?')[0]; 
             let urlFeature = wfsLayer.urlGetFeature();
             let dados = await get(urlFeature);
+            
+            dados.headers.forEach((valor, chave) => {
+  console.log(`${chave}: ${valor} `, urlFeature);
+});
             let dadosJson = await dados.json();
         
             // Criando a cor da feição antes de definir o estilo padronizado

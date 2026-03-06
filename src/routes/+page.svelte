@@ -15,6 +15,13 @@
       {name: 'Palavras Chaves', href: '/ogc/wcs/palavras-chaves'}, 
       
     ];  
+  let menuCSW = [
+      {name: 'Catálogos ', href: '/ogc/csw/catalogos'},
+      {name: 'Palavras Chaves ', href: '/ogc/csw/palavras-chaves'}, 
+      {name: ' Quantidade WMS ', href: '/ogc/csw/metadados/protocolo-wms/quantidade'}, 
+      {name: ' Quantidade WFS ', href: '/ogc/csw/metadados/protocolo-wfs/quantidade'}, 
+      {name: 'Links Quebrados', href: '/ogc/csw/links-quebrados'}
+    ];
 </script>
 
 <Navbar>
@@ -45,6 +52,14 @@
       WCS <ChevronDownOutline class="text-primary-800 ms-2 inline h-6 w-6 dark:text-white" />
     </NavLi>
     <MegaMenu items={menuWCS}>
+      {#snippet children({ item })}
+        <a href={item.href} class="hover:text-primary-600 p-2">{item.name} </a>
+      {/snippet}
+    </MegaMenu>
+    <NavLi class="cursor-pointer">
+      CSW <ChevronDownOutline class="text-primary-800 ms-2 inline h-6 w-6 dark:text-white" />
+    </NavLi>
+    <MegaMenu items={menuCSW}>
       {#snippet children({ item })}
         <a href={item.href} class="hover:text-primary-600 p-2">{item.name} </a>
       {/snippet}
