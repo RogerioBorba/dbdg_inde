@@ -61,6 +61,13 @@
 </script>
 <Navbar brand="OGC/CSW Checker"></Navbar>
 <form class="m-2">
+    {@render counterWMSGlobal()}
+    {@render selecionarInstituicoes()}
+    {@render adiconarNovoGetCapabilities()}
+</form>
+{@render exibirCards()}
+
+{#snippet counterWMSGlobal()}
     <div class="flex items-center flex-col sm:flex-row mb-1 text-sm font-medium text-gray-900 dark:text-gray-400">
         <label for="instituicoes_multiple" class="mr-4">Escolha as instituições</label>
         <div>
@@ -74,8 +81,9 @@
         </button>
         <p class="mr-2"> Quantidade de catálogos processados por selecionados: {countProcessado}/{qtdCatalog} </p>
         <p> Quantidade de metadados: {countMetadata}</p>
-        
     </div>
+{/snippet}
+{#snippet selecionarInstituicoes()}
     <select size=6 multiple id="instituicoes_multiple" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" bind:value={selectedItems}>
         {#each objIdDescricaoIRINoCentralCategoriaArray as obj}   
             <option value={obj}>
@@ -83,6 +91,8 @@
             </option>
         {/each}
     </select>
+{/snippet}
+{#snippet adiconarNovoGetCapabilities()}
     <div class="mt-2 w-full p1 flex flex-col md:flex-row">
         <input class="border-gray-300 focus:outline-none w-full rounded md:w-2/5 mr-1" type="text"  bind:value={nameCatalog} placeholder="Informe o nome do catálogo"> 
         <input class="border-gray-300 focus:outline-none rounded w-full md:w-2/5 mr-1" type="text"  bind:value={adressCatalog} placeholder="Informe o endereço CSW do GetCapabilities"> 
@@ -90,12 +100,11 @@
             onclick={preventDefault(addNewCatalog)} disabled={disableButtonAddNewCatalog}>Adicionar novo catálogo
         </button>
     </div>
-</form>
-<div class = "m-2 grid gap-2 md:grid-cols-3 grid-cols-1">
-       
+{/snippet}
+{#snippet exibirCards()}
+    <div class = "m-2 grid gap-2 md:grid-cols-3 grid-cols-1"> 
         {#each selectedCatalogs as objIdDescricaoIri}
-           <CSWCatalogCard id_descricao_iri_noCentralCategoria={objIdDescricaoIri} onMetadaddoProcessado={handleMetadadoProcessado} ></CSWCatalogCard>
+            <CSWCatalogCard id_descricao_iri_noCentralCategoria={objIdDescricaoIri} onMetadaddoProcessado={handleMetadadoProcessado} ></CSWCatalogCard>
         {/each}
-    
-
-</div>
+    </div>
+{/snippet}

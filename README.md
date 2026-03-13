@@ -1,39 +1,99 @@
-# sv
+# DBDG INDE
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Aplicacao web em **SvelteKit** para consulta, analise e visualizacao de servicos geoespaciais (OGC), com foco em catalogos e servicos da INDE.
 
-## Creating a project
+Repositorio oficial:
+`https://github.com/RogerioBorba/dbdg_inde`
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Aviso Importante
 
-```sh
-# create a new project in the current directory
-npx sv create
+Este projeto esta em **desenvolvimento ativo**.
 
-# create a new project in my-app
-npx sv create my-app
+- Nao ha garantias de estabilidade, disponibilidade ou compatibilidade.
+- Nao ha garantias de adequacao para uso em producao.
+- Funcionalidades, rotas e comportamento podem mudar sem aviso previo.
+
+Use por sua conta e risco.
+
+## Requisitos
+
+- Git
+- Node.js 20 ou superior
+- npm 10 ou superior
+
+## Instalacao (passo a passo)
+
+1. Clonar o repositorio:
+
+```bash
+git clone https://github.com/RogerioBorba/dbdg_inde.git
 ```
 
-## Developing
+2. Entrar na pasta do projeto:
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+```bash
+cd dbdg_inde
+```
 
-```sh
+3. Instalar dependencias:
+
+```bash
+npm install
+```
+
+4. Sincronizar arquivos do SvelteKit (opcional, recomendado):
+
+```bash
+npm run prepare
+```
+
+## Executar em desenvolvimento
+
+```bash
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+Servidor padrao do Vite:
+`http://localhost:5173`
 
-To create a production version of your app:
+Para expor na rede local:
 
-```sh
+```bash
+npm run dev -- --host
+```
+
+## Verificacao de tipos e Svelte
+
+```bash
+npm run check
+```
+
+## Gerar build de producao
+
+```bash
 npm run build
 ```
 
-You can preview the production build with `npm run preview`.
+## Pre-visualizar build local
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
-"# dbdg_inde" 
+```bash
+npm run preview
+```
+
+## Scripts disponiveis
+
+- `npm run dev`: inicia ambiente de desenvolvimento
+- `npm run build`: gera build de producao
+- `npm run preview`: sobe servidor para preview do build
+- `npm run prepare`: roda `svelte-kit sync`
+- `npm run check`: validacao de tipos e Svelte
+- `npm run check:watch`: validacao continua em modo watch
+
+## Stack principal
+
+- SvelteKit
+- Svelte 5
+- Vite
+- Tailwind CSS 4
+- Flowbite / Flowbite Svelte
+- OpenLayers / MapLibre / deck.gl
