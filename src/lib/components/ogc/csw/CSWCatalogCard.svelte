@@ -5,9 +5,9 @@
     import { onMount } from 'svelte';
     import { get } from "$lib/request/get";
     import { preventDefault } from '$lib/components/svelte_util/util';
-    interface Id_Descricao_IRI_NoCentralCategoria {id: number, descricao: string, iri: string, noCentralCategoria: string | null};
-    let { id_descricao_iri_noCentralCategoria, onMetadaddoProcessado }: 
-    {id_descricao_iri_noCentralCategoria: Id_Descricao_IRI_NoCentralCategoria, onMetadaddoProcessado?: (record: any) => void} = $props();
+    import type { CSWCatalog } from '$lib/ogc/csw/CSWCatalog';
+    let { catalog, onMetadaddoProcessado }: 
+    {catalog: CSWCatalog, onMetadaddoProcessado?: (record: any) => void} = $props();
     let tempoRequisicao = $state(0);
     let qtdMetadados = $state(0)
     let qtdMetadadosComWMS = $state(0)
@@ -21,7 +21,7 @@
 
     function urlWithParametersOGCService( protocolo: string | null): URL {
         // Cria um objeto URL a partir da string base
-        const baseUrl = id_descricao_iri_noCentralCategoria.iri.split('?')[0];
+        const baseUrl = catalog.iri.split('?')[0];
         const url = new URL(baseUrl);
         // Define os parâmetros comuns baseados no getRecordsParams fornecido
         url.searchParams.set('service', 'CSW');
@@ -34,15 +34,15 @@
         //url.searchParams.set('outputSchema', 'http://www.isotc211.org/2005/gmd');
     
         // Constrói o filtro baseado no protocolo e categoria
-        if (protocolo || id_descricao_iri_noCentralCategoria.noCentralCategoria) {
+        if (protocolo || catalog.noCentralCategoria) {
             url.searchParams.set('constraintLanguage', 'CQL_TEXT');
             url.searchParams.set('CONSTRAINT_LANGUAGE_VERSION', '1.1.0');
             const filterParts = [];
             if (protocolo) {
                 filterParts.push(`protocol = '${protocolo}'`);
             }
-            if (id_descricao_iri_noCentralCategoria.noCentralCategoria) {
-                filterParts.push(`_cat = '${id_descricao_iri_noCentralCategoria.noCentralCategoria}'`);
+            if (catalog.noCentralCategoria) {
+                filterParts.push(`_cat = '${catalog.noCentralCategoria}'`);
             }
             const filter = filterParts.length > 1 ? filterParts.join(' AND ') : filterParts[0];
             url.searchParams.set('constraint', filter);
@@ -68,8 +68,16 @@
     }
 
     function linkClicked() {
-        
-        goto('/ogc/csw/metadados')
+        const params = new URLSearchParams({
+            descricao: catalog.descricao,
+            iri: catalog.iri
+        });
+
+        if (catalog.noCentralCategoria) {
+            params.set('noCentralCategoria', catalog.noCentralCategoria);
+        }
+
+        goto(`/ogc/csw/metadados?${params.toString()}`)
     }
 
     onMount(async () => {
@@ -99,7 +107,7 @@
 </script>
 <div class= "p-2 {bgColor} text-sm text-left text-gray-800  rounded-md shadow-sm hover:shadow-md flex flex-col"  transition:fade>
     <h2 class="font-semibold"> {requestGetRecordsTextOrError}</h2>
-    <h2 class="font-semibold"> {id_descricao_iri_noCentralCategoria.descricao}</h2>
+    <h2 class="font-semibold"> {catalog.descricao}</h2>
     <h2> Quantidade de registros de metadados: {qtdMetadados}</h2>
     <h2> Quantidade de registros de metadados com WMS: {qtdMetadadosComWMS}</h2>
     <h2> Quantidade de registros de metadados com WFS: {qtdMetadadosComWFS}</h2>

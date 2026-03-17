@@ -8,6 +8,7 @@ const ALLOWED_HOSTS = [
 ];
 
 export const GET: RequestHandler = async ({ url, request }) => {
+  
   const targetURL= url instanceof URL ? url : new URL(url);
   const target = targetURL.searchParams.get('url');
   if (!target) { return new Response('Missing "url" query parameter', { status: 400 }); }
