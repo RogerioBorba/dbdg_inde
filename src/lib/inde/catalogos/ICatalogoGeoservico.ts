@@ -220,6 +220,13 @@ export type IGeoservicoDescricao = {
             "noCentralCategoria": "SPM"
         },
         {
+            "descricao": "SPU - Secretaria de Patrimônio da União",
+            "sigla": "SPU",
+            "url": "https://metadados.inde.gov.br/geonetwork",
+            "cswGetCapabilities": "https://metadados.inde.gov.br/geonetwork/srv/eng/csw?service=CSW&version=2.0.2&request=GetCapabilities",
+            "noCentralCategoria": "SPU"
+        },
+        {
             "descricao": "UFABC/SP - Universidade Federal do ABC",
             "sigla": "UFABC",            
             "url_metadados": "https://metadados.inde.gov.br/geonetwork",

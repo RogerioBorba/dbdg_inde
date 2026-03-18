@@ -38,7 +38,8 @@
     }
 
     function viewMetadata(metadataURL: string) {
-         window.open(metadataURL, '_blank', 'noopener,noreferrer');
+         const viewerUrl = `/visualizador/metadata?link=${encodeURIComponent(metadataURL)}`;
+         window.open(viewerUrl, '_blank', 'noopener,noreferrer');
         
     }
     

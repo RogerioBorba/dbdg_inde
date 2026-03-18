@@ -31,7 +31,8 @@
     function viewMetadata(layer: IWMSLayer) {
         const metadataUrl: IWMSMetadataURL = layer.metadataURLs?.[0];
         if (metadataUrl) {
-            window.open(metadataUrl.href, '_blank', 'noopener,noreferrer');
+            const viewerUrl = `/visualizador/metadata?link=${encodeURIComponent(metadataUrl.href)}`;
+            window.open(viewerUrl, '_blank', 'noopener,noreferrer');
         } else {
             alert('Nenhuma URL de metadado encontrada para esta camada.');
         }
