@@ -7,10 +7,19 @@
     import TabWMS from "$lib/components/openlayers/wms/TabWMS.svelte";
     import TabWFS from "$lib/components/openlayers/wfs/TabWFS.svelte";
     import BaseSelectedLayer from '$lib/components/openlayers/selectLayers/selectLayers.svelte'
+    import BoundingBoxCoordinates from "$lib/components/openlayers/boundingBox/BoundingBoxCoordinates.svelte";
   
     onMount( async ()  => {});
 </script>
 <Sidebar home={"home"}>
+    <ExpansionPanel header={"Retângulo envolvente"}>
+        {#snippet svg()}
+            <svg class="text-red-500 fill-current h-6 w-6" viewBox="0 0 24 24">
+                <path d="M5 5H19V19H5V5M7 7V17H17V7H7Z" />
+            </svg>
+        {/snippet}
+        <BoundingBoxCoordinates />
+    </ExpansionPanel>
     <ExpansionPanel header={"Camada base"}>
         {#snippet svg()}
             <span>
@@ -21,6 +30,7 @@
         {/snippet}
         <BaseTiles></BaseTiles>
     </ExpansionPanel>
+    
     <ExpansionPanel header={"WMS - buscar camadas nos geosserviços"}>
 		{#snippet svg()}
         <svg  class=" text-green-500 fill-current h-6 w-6" viewBox="0 0 24 24">

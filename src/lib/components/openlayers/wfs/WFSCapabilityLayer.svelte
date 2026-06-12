@@ -169,9 +169,22 @@
         try {
             loading = true;
             if (!facadeOL) throw new Error('Mapa não inicializado.');
-            const layerExiste = layerManager.selectedLayers.some(layer => layer.name === iWFSLayer.name && layer.url === url);
+            const serviceUrl = capabilitiesUrl.split('?')[0];
+            const layerExiste = layerManager.selectedLayers.some(
+                layer => layer.type === 'WFS' && layer.name === iWFSLayer.name && layer.url === serviceUrl
+            );
             if (layerExiste) return alert(`A camada ${iWFSLayer.name} já foi carregada`);    
-            const url: string = capabilitiesUrl.split('?')[0]; 
+
+            // Remove apenas a última camada WFS carregada anteriormente.
+            const wfsLayersAtuais = layerManager.selectedLayers.filter(layer => layer.type === 'WFS') as WFSLayerOL[];
+            const ultimaWfsCarregada = wfsLayersAtuais.at(-1);
+            if (ultimaWfsCarregada) {
+                facadeOL.removeWFSLayerOL(ultimaWfsCarregada);
+                layerManager.selectedLayers = layerManager.selectedLayers.filter(
+                    layer => layer.id !== ultimaWfsCarregada.id
+                );
+            }
+
             let urlFeature = wfsLayer.urlGetFeature();
             let dados = await get(urlFeature);
             
@@ -183,7 +196,7 @@
             // Criando a cor da feição antes de definir o estilo padronizado
             let a_color: string = getRandomColor();
             const styleProperties = {color: a_color};       
-            let wfsLayerOL: WFSLayerOL = facadeOL.addGeoJSONLayer(iWFSLayer, dadosJson, styleProperties, url);
+            let wfsLayerOL: WFSLayerOL = facadeOL.addGeoJSONLayer(iWFSLayer, dadosJson, styleProperties, serviceUrl);
             const camada: any | null = wfsLayerOL?.layer ?? null;
 
             // Obtendo a extensão (bounding box) das feições adicionadas

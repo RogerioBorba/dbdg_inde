@@ -58,6 +58,13 @@ export interface IWMSBoundingBox {
   maxy: number;
 }
 
+export interface IWMSGeographicBoundingBox {
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+}
+
 export interface IWMSLegendURL {
   format: string;
   width?: number;
@@ -79,6 +86,7 @@ export interface IWMSLayer {
   keywords?: string[];
   crs: string[];
   bbox?: IWMSBoundingBox[];
+  geographicBoundingBox?: IWMSGeographicBoundingBox;
   styles: IWMSStyle[];
   metadataURLs: IWMSMetadataURL[];
   layers: IWMSLayer[]; // subcamadas
@@ -199,6 +207,14 @@ export function parseWMSCapabilities(xml: Document): IWMSCapabilities {
       maxy: Number(bboxEl.getAttribute("maxy")),
     }));
 
+    const geographicBoundingBoxEl = layerEl.querySelector(":scope > EX_GeographicBoundingBox");
+    const geographicBoundingBox = geographicBoundingBoxEl ? {
+      west: Number(textOf(geographicBoundingBoxEl.querySelector(":scope > westBoundLongitude"))),
+      south: Number(textOf(geographicBoundingBoxEl.querySelector(":scope > southBoundLatitude"))),
+      east: Number(textOf(geographicBoundingBoxEl.querySelector(":scope > eastBoundLongitude"))),
+      north: Number(textOf(geographicBoundingBoxEl.querySelector(":scope > northBoundLatitude"))),
+    } : undefined;
+
     return {
       name: textOf(layerEl.querySelector(":scope > Name")),
       title: textOf(layerEl.querySelector(":scope > Title")) || "",
@@ -206,6 +222,7 @@ export function parseWMSCapabilities(xml: Document): IWMSCapabilities {
       keywords: parseKeywords(layerEl),
       crs: Array.from(layerEl.querySelectorAll(":scope > CRS")).map(c => c.textContent?.trim() || ""),
       bbox: bboxes,
+      geographicBoundingBox,
       styles,
       metadataURLs,
       layers: sublayers,

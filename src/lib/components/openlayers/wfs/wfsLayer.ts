@@ -49,6 +49,18 @@ export class WFSLayer {
     return this.iwfsLayer.title || "";
   }
 
+  crs(): string | undefined {
+    const defaultCRS = this.iwfsLayer.defaultCRS?.trim();
+    if (!defaultCRS) return undefined;
+
+    const epsgUrnMatch = defaultCRS.match(/EPSG(?:::|:)(\d+)$/i);
+    if (epsgUrnMatch) {
+      return `EPSG:${epsgUrnMatch[1]}`;
+    }
+
+    return defaultCRS;
+  }
+
   // =========================
   // Helpers internos
   // =========================
@@ -68,8 +80,10 @@ export class WFSLayer {
     const request = "GetFeature";
     const typeNameParam = this.typeNameParam(version);
     const typeName = this.name();
+    const srsName = this.crs();
 
-    return `${this.url}?service=${service}&version=${version}&request=${request}&${typeNameParam}=${typeName}`;
+    const baseUrl = `${this.url}?service=${service}&version=${version}&request=${request}&${typeNameParam}=${typeName}`;
+    return srsName ? `${baseUrl}&srsName=${encodeURIComponent(srsName)}` : baseUrl;
   }
 
   urlGetFeature(version: string = this.version,outputFormat: string = "application/json"): string {

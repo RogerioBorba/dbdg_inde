@@ -64,7 +64,7 @@
  
 </script>
 
-{#each layerManager.selectedLayers as layerOL, index (index)}
+{#each layerManager.selectedLayers as layerOL, index (layerOL.id)}
   <div class= "border rounded-bl-md active:bg-slate-400 mt-1 px-1" animate:flip
     draggable={true} 
     role="button"

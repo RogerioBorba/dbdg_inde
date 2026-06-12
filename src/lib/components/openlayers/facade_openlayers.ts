@@ -15,6 +15,7 @@ import ImageLayer from 'ol/layer/Image';
 import VectorLayer from 'ol/layer/Vector';
 import VectorImageLayer from 'ol/layer/VectorImage.js';
 import Draw from 'ol/interaction/Draw';
+import { createBox } from 'ol/interaction/Draw';
 
 import { ImageStatic, ImageWMS, Vector, XYZ, ImageTile } from 'ol/source';
 import { Style, Icon, Stroke } from 'ol/style';
@@ -74,6 +75,8 @@ export class FacadeOL {
     currentBaseLayerName: string;
     currentBaseLayer: TileLayer | null;
     vectorSource: any;
+    boundingBoxLayer: VectorLayer<any> | null;
+    drawInteraction: Draw | null;
 
     constructor(id_map='id_map', coordinates_center=[-4331024.58685793, -1976355.8033415168], a_zoom_value = 4, a_baseLayer_name='OSM' ) {
       this.map = new Map({ target: id_map,  controls:[]});
@@ -85,6 +88,8 @@ export class FacadeOL {
       //this.addOverlay()  
       //this.onClickMap();
       this.vectorSource = new VectorSource();
+      this.boundingBoxLayer = null;
+      this.drawInteraction = null;
     }
     //returns a TileLayer based on name(a_baseLayer_name) or null
     baseLayer(a_baseLayer_name: string): TileLayer | null{
@@ -201,7 +206,15 @@ export class FacadeOL {
 
     addGeoJSONLayer(iFeatureType: IFeatureType, geojson: any, properties: any, url: string): WFSLayerOL {
       const geo_json = new GeoJSON();
-      const gjson_format = geo_json.readFeatures(geojson, {dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857'});
+      const defaultCRS = iFeatureType.defaultCRS?.trim();
+      const epsgUrnMatch = defaultCRS?.match(/EPSG(?:::|:)(\d+)$/i);
+      const dataProjection = epsgUrnMatch
+        ? `EPSG:${epsgUrnMatch[1]}`
+        : (defaultCRS || 'EPSG:4326');
+      const gjson_format = geo_json.readFeatures(geojson, {
+        dataProjection,
+        featureProjection: 'EPSG:3857'
+      });
       const vector_source = new Vector({features: gjson_format});
       const vectorlayerImage = new VectorImageLayer({ source: vector_source });
       const vector_layer = new VectorLayer({ source: vector_source });
@@ -478,6 +491,103 @@ export class FacadeOL {
 
       // Adiciona a camada ao mapa
       this.map.addLayer(vectorLayer);
+  }
+
+  addBoundingBoxByCoordinates(
+    westBoundLongitude: number,
+    southBoundLatitude: number,
+    eastBoundLongitude: number,
+    northBoundLatitude: number,
+    fitToExtent = true
+  ) {
+    this.clearBoundingBox();
+
+    const coordinates = [
+      [
+        [westBoundLongitude, southBoundLatitude],
+        [eastBoundLongitude, southBoundLatitude],
+        [eastBoundLongitude, northBoundLatitude],
+        [westBoundLongitude, northBoundLatitude],
+        [westBoundLongitude, southBoundLatitude]
+      ]
+    ];
+
+    const polygon = new Polygon(coordinates).transform('EPSG:4326', 'EPSG:3857');
+    const feature = new Feature({ geometry: polygon });
+    const vectorSource = new VectorSource({ features: [feature] });
+
+    this.boundingBoxLayer = new VectorLayer({
+      source: vectorSource,
+      style: new Style({
+        stroke: new Stroke({
+          color: '#dc2626',
+          width: 3
+        }),
+        fill: new Fill({
+          color: 'rgba(220, 38, 38, 0.16)'
+        })
+      }),
+      zIndex: 1000
+    });
+
+    this.map.addLayer(this.boundingBoxLayer);
+
+    if (fitToExtent) {
+      this.view.fit(polygon.getExtent(), {
+        padding: [80, 80, 80, 80],
+        duration: 300,
+        maxZoom: 12
+      });
+    }
+  }
+
+  clearBoundingBox() {
+    if (!this.boundingBoxLayer) return;
+    this.map.removeLayer(this.boundingBoxLayer);
+    this.boundingBoxLayer = null;
+  }
+
+  startBoundingBoxDraw(callback) {
+    this.removeDrawInteraction();
+    this.vectorSource.clear();
+
+    const draw = new Draw({
+      source: this.vectorSource,
+      type: 'Circle',
+      geometryFunction: createBox()
+    });
+
+    this.drawInteraction = draw;
+    this.map.addInteraction(draw);
+
+    draw.on('drawstart', () => {
+      this.clearBoundingBox();
+      this.vectorSource.clear();
+    });
+
+    draw.on('drawend', (event) => {
+      const geometry = event.feature.getGeometry();
+      const extent = geometry.getExtent();
+      const transformedExtent = transformExtent(extent, 'EPSG:3857', 'EPSG:4326');
+      const [westBoundLongitude, southBoundLatitude, eastBoundLongitude, northBoundLatitude] = transformedExtent;
+
+      this.removeDrawInteraction();
+      this.vectorSource.clear();
+      this.addBoundingBoxByCoordinates(
+        westBoundLongitude,
+        southBoundLatitude,
+        eastBoundLongitude,
+        northBoundLatitude,
+        false
+      );
+
+      callback({
+        westBoundLongitude,
+        southBoundLatitude,
+        eastBoundLongitude,
+        northBoundLatitude
+      });
+    });
   }
 
 
