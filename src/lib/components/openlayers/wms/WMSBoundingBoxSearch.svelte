@@ -422,13 +422,12 @@
             <div class="flex items-start justify-between gap-2">
                 <div class="min-w-0">
                     <p class="font-semibold text-gray-900">{result.layer.title}</p>
-                    <p class="text-xs text-gray-500">{result.catalog.descricao}</p>
                     {#if result.layer.name}
                         <p class="text-xs text-gray-600">Nome: {result.layer.name}</p>
                     {/if}
-                    <p class="text-xs text-gray-600">
-                        BBOX: O {formatCoordinate(result.bounds.west)}, S {formatCoordinate(result.bounds.south)}, L {formatCoordinate(result.bounds.east)}, N {formatCoordinate(result.bounds.north)}
-                    </p>
+                    <p class="text-xs text-gray-500">{result.catalog.descricao}</p>
+                    
+                    
                 </div>
                 <div class="flex items-center gap-1">
                     {#if result.layer.metadataURLs && result.layer.metadataURLs.length > 0}

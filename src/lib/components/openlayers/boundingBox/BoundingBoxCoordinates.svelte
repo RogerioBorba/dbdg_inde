@@ -120,7 +120,7 @@
 
     {#if drawing}
       <p class="rounded border border-green-200 bg-green-50 px-2 py-1 text-green-800">
-        Clique no mapa, arraste e solte para criar o retângulo.
+        Clique no mapa e puxe o mouse para desenhar retângulo. Clique novamente para finalizar.
       </p>
     {/if}
   </div>

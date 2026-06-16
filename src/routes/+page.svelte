@@ -24,10 +24,10 @@
     ];
 </script>
 
-<Navbar>
+<Navbar class="bg-gray-100 hover:text-primary-600">
   <NavBrand href="/">
     <!--<img src="/images/flowbite-svelte-icon-logo.svg" class="me-3 h-6 sm:h-9" alt="Flowbite Logo" />-->
-    <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Monitora DBDG</span>
+    <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white ">Monitora DBDG</span>
   </NavBrand>
   <NavHamburger />
   <NavUl>
@@ -64,6 +64,6 @@
         <a href={item.href} class="hover:text-primary-600 p-2">{item.name} </a>
       {/snippet}
     </MegaMenu>
-    <NavLi href="/visualizador/ol">visualizador</NavLi>
+    <NavLi href="/visualizador/ol">Visualizador</NavLi>
   </NavUl>
 </Navbar>
