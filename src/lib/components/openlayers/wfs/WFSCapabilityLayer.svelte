@@ -176,6 +176,7 @@
             if (layerExiste) return alert(`A camada ${iWFSLayer.name} já foi carregada`);    
 
             // Remove apenas a última camada WFS carregada anteriormente.
+            /*
             const wfsLayersAtuais = layerManager.selectedLayers.filter(layer => layer.type === 'WFS') as WFSLayerOL[];
             const ultimaWfsCarregada = wfsLayersAtuais.at(-1);
             if (ultimaWfsCarregada) {
@@ -184,7 +185,7 @@
                     layer => layer.id !== ultimaWfsCarregada.id
                 );
             }
-
+            */
             let urlFeature = wfsLayer.urlGetFeature();
             let dados = await get(urlFeature);
             

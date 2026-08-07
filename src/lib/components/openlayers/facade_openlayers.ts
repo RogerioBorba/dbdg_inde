@@ -493,12 +493,7 @@ export class FacadeOL {
       this.map.addLayer(vectorLayer);
   }
 
-  addBoundingBoxByCoordinates(
-    westBoundLongitude: number,
-    southBoundLatitude: number,
-    eastBoundLongitude: number,
-    northBoundLatitude: number,
-    fitToExtent = true
+  addBoundingBoxByCoordinates(westBoundLongitude: number, southBoundLatitude: number,  eastBoundLongitude: number, northBoundLatitude: number,fitToExtent = true
   ) {
     this.clearBoundingBox();
 
