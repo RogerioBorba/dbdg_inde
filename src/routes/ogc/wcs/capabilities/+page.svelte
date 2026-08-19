@@ -164,6 +164,11 @@ let wcsArrayToCSV = $derived.by(() => xmlToArray(filteredCoverages));
 <!-- Grid de cards responsivo -->
 <div class="m-2 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
     {#each filteredCoverages as coverage (coverage.identifier)}
-        <WCSCoverageCard {coverage}></WCSCoverageCard>
+        <WCSCoverageCard
+            {coverage}
+            serviceUrl={counterWCS.currentWCSCapability?.serviceUrl}
+            operationUrl={counterWCS.currentWCSCapability?.describeCoverageUrl}
+            version={counterWCS.currentWCSCapability?.version}
+        ></WCSCoverageCard>
     {/each}    
 </div>

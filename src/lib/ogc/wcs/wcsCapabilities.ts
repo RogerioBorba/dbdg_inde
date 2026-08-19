@@ -61,6 +61,9 @@ export interface IWCSSummary {
 
 export interface IWCSGetCapabilities {
   version: string;
+  /** Endereço usado no GetCapabilities, necessário para as demais operações WCS. */
+  serviceUrl?: string;
+  describeCoverageUrl?: string;
   updateSequence?: string;
   serviceIdentification?: IWCSServiceIdentification;
   serviceProvider?: IWCSServiceProvider;
@@ -233,6 +236,14 @@ function parseSummary(doc: Document, version: string): IWCSSummary | undefined {
   };
 }
 
+function parseOperationUrl(doc: Document, operationName: string): string | undefined {
+  const operation = Array.from(doc.getElementsByTagNameNS('*', 'Operation'))
+    .find((element) => element.getAttribute('name')?.toLowerCase() === operationName.toLowerCase());
+  if (!operation) return undefined;
+  const getElement = operation.getElementsByTagNameNS('*', 'Get')[0];
+  return attr(getElement, 'xlink:href') || attr(getElement, 'href');
+}
+
 // Função principal de parsing
 export function capabilities(xmlText: string): IWCSGetCapabilities {
   const parser = new DOMParser();
@@ -243,6 +254,7 @@ export function capabilities(xmlText: string): IWCSGetCapabilities {
 
   return {
     version,
+    describeCoverageUrl: parseOperationUrl(doc, 'DescribeCoverage'),
     updateSequence: attr(root, 'updateSequence'),
     serviceIdentification: parseServiceIdentification(doc),
     serviceProvider: parseServiceProvider(doc),

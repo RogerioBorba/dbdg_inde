@@ -43,6 +43,7 @@
             const res = await get(objIdDescricaoIri.iri, { timeout: 60000 });
             const xmlText = await res.text();
             ows_capabilities = capabilities(xmlText);
+            ows_capabilities.serviceUrl = objIdDescricaoIri.iri;
             const coverages: IWCSCoverageDescription[] = ows_capabilities.summary?.coverages || [];
             initializeVariablesOnMount(coverages);
             tempoRequisicao = parseFloat(((new Date().getTime() - tempo) / 1000).toFixed(2));
