@@ -97,7 +97,8 @@ function inferDimensionsFromEnvelope(
       0
     );
     const resolution = Math.abs(vector[axis]);
-    return resolution && spans[axis] !== undefined ? Math.round(spans[axis] / resolution) + 1 : 0;
+    // Em WCS 1.1 o BoundingBox descreve as bordas externas dos pixels.
+    return resolution && spans[axis] !== undefined ? Math.round(spans[axis] / resolution) : 0;
   });
   return dimensions.length && dimensions.every((dimension) => dimension > 0) ? dimensions : undefined;
 }
@@ -111,10 +112,37 @@ function parseFields(doc: Document): string[] {
 }
 
 function parseBoundingBox(doc: Document): IWCSCoverageDetails['boundingBox'] {
-  const envelope = first(doc, 'Envelope', 'EnvelopeWithTimePeriod');
+  const envelope = first(doc, 'Envelope', 'EnvelopeWithTimePeriod', 'BoundingBox');
   const lowerCorner = numbers(text(first(envelope || doc, 'lowerCorner')));
   const upperCorner = numbers(text(first(envelope || doc, 'upperCorner')));
   return lowerCorner.length && upperCorner.length ? { lowerCorner, upperCorner } : undefined;
+}
+
+function parseGridOffsets(doc: Document | Element, coordinateDimensions: number): number[][] {
+  const offsetVectors = elements(doc, 'offsetVector').map((element) => numbers(text(element)));
+  if (offsetVectors.length) return offsetVectors;
+
+  // WCS 1.1 publica a matriz 2D achatada em um único GridOffsets:
+  // dx 0 0 dy -> [[dx, 0], [0, dy]].
+  return elements(doc, 'GridOffsets').flatMap((element) => {
+    const values = numbers(text(element));
+    if (coordinateDimensions > 0 && values.length % coordinateDimensions === 0) {
+      return Array.from(
+        { length: values.length / coordinateDimensions },
+        (_, index) => values.slice(index * coordinateDimensions, (index + 1) * coordinateDimensions)
+      );
+    }
+    return values.length ? [values] : [];
+  });
+}
+
+function inferredBytesPerSample(fields: string[]): { bytes: number; explanation: string } {
+  const normalizedFields = fields.map((field) => field.toUpperCase());
+  const colorBands = new Set(['RED_BAND', 'GREEN_BAND', 'BLUE_BAND', 'ALPHA_BAND', 'RED', 'GREEN', 'BLUE', 'ALPHA']);
+  if (normalizedFields.length > 0 && normalizedFields.every((field) => colorBands.has(field))) {
+    return { bytes: 1, explanation: 'bandas de cor RGBA de 8 bits inferidas pelos identificadores' };
+  }
+  return { bytes: 4, explanation: 'tipo de dado omitido pelo serviço; adotado fallback de 32 bits' };
 }
 
 export function describeCoverage(xmlText: string): IWCSCoverageDetails {
@@ -129,16 +157,15 @@ export function describeCoverage(xmlText: string): IWCSCoverageDetails {
   const fields = parseFields(doc);
   const grid = first(doc, 'RectifiedGrid', 'Grid');
   const origin = numbers(text(first(grid || doc, 'GridOrigin', 'pos', 'origin')));
-  const offsets = [
-    ...elements(grid || doc, 'offsetVector'),
-    ...elements(grid || doc, 'GridOffsets')
-  ].map((element) => numbers(text(element))).filter((values) => values.length);
   const boundingBox = parseBoundingBox(doc);
+  const coordinateDimensions = boundingBox?.lowerCorner.length || origin.length || 2;
+  const offsets = parseGridOffsets(grid || doc, coordinateDimensions);
   const dimensions = parsedGrid.dimensions || inferDimensionsFromEnvelope(boundingBox, offsets);
   const axisLabels = parsedGrid.axisLabels;
   const bandCount = Math.max(fields.length, 1);
   const cellCount = dimensions?.reduce((total, dimension) => total * dimension, 1);
-  const bytesPerSampleForEstimate = dataType.bytesPerSample || 4;
+  const inferredSample = inferredBytesPerSample(fields);
+  const bytesPerSampleForEstimate = dataType.bytesPerSample || inferredSample.bytes;
   const estimatedSizeMB = cellCount
     ? (cellCount * bandCount * bytesPerSampleForEstimate) / 1_000_000
     : undefined;
@@ -171,7 +198,7 @@ export function describeCoverage(xmlText: string): IWCSCoverageDetails {
     estimatedSizeMB,
     sizeEstimateAssumption: dataType.bytesPerSample
       ? `${bandCount} banda(s) × ${dataType.bytesPerSample} byte(s) por amostra`
-      : `${bandCount} banda(s) × 4 bytes por amostra (tipo de dado omitido pelo serviço)`,
+      : `${bandCount} banda(s) × ${inferredSample.bytes} byte(s) por amostra (${inferredSample.explanation})`,
     estimateUnavailableReason: estimatedSizeMB
       ? undefined
       : 'dimensões da grade não informadas pelo serviço'
