@@ -1,10 +1,19 @@
 <script lang="ts">
     import type { IWCSCoverageDescription } from "$lib/ogc/wcs/wcsCapabilities";
-    import { cachedCoverageDetails, describeCoverage, describeCoverageUrl, type IWCSCoverageDetails } from "$lib/ogc/wcs/wcsDescribeCoverage";
-    import { get } from "$lib/request/get";
+    import { loadCoverageDetails, type IWCSCoverageDetails } from "$lib/ogc/wcs/wcsDescribeCoverage";
     import { onMount } from "svelte";
 
-    let { coverage, serviceUrl, operationUrl, version }: { coverage: IWCSCoverageDescription; serviceUrl?: string; operationUrl?: string; version?: string } = $props();
+    let {
+        coverage,
+        serviceUrl,
+        operationUrl,
+        version
+    }: {
+        coverage: IWCSCoverageDescription;
+        serviceUrl?: string;
+        operationUrl?: string;
+        version?: string;
+    } = $props();
     let metadados = $state(coverage.metadataURLs || []);
     let details = $state<IWCSCoverageDetails>();
     let detailsStatus = $state<'loading' | 'success' | 'error' | 'unavailable'>('loading');
@@ -17,11 +26,7 @@
             return;
         }
         try {
-            const requestUrl = describeCoverageUrl(operationUrl || serviceUrl, version, coverage.identifier);
-            details = await cachedCoverageDetails(requestUrl, async () => {
-                const response = await get(requestUrl, { timeout: 60000 });
-                return describeCoverage(await response.text());
-            });
+            details = await loadCoverageDetails(serviceUrl, operationUrl, version, coverage.identifier);
             detailsStatus = 'success';
         } catch (error) {
             detailsError = error instanceof Error ? error.message : 'Falha desconhecida';

@@ -6,18 +6,37 @@
     import PdfJsObject from '$lib/components/pdf/pdfJSObject.svelte';
     import type { IWCSCoverageDescription, IWCSMetadataURL } from '$lib/ogc/wcs/wcsCapabilities';
     import type { ICSVLayer } from '$lib/components/csv/icsv';
+    import { loadCoverageDetails } from '$lib/ogc/wcs/wcsDescribeCoverage';
 
     let wcsCoverages = $state<IWCSCoverageDescription[]>([]);
     let textEntered = $state('');
     let metadataFilter = $state<'all' | 'with' | 'without'>('all');
     let withoutKeywordChecked = $state(false);
     let identifierEqualTitleChecked = $state(false);
+    // null representa uma resposta concluída sem estimativa disponível.
+    let coverageSizesMB = $state<Record<string, number | null>>({});
     
     onMount(async () => {
         let current = counterWCS.currentWCSCapability;
         if (!current)
             return
-        wcsCoverages = current.summary?.coverages || [];  
+        wcsCoverages = current.summary?.coverages || [];
+        if (!current.serviceUrl) return;
+        for (const coverage of wcsCoverages) {
+            void loadCoverageDetails(
+                current.serviceUrl,
+                current.describeCoverageUrl,
+                current.version,
+                coverage.identifier
+            ).then((details) => {
+                coverageSizesMB = {
+                    ...coverageSizesMB,
+                    [coverage.identifier]: details.estimatedSizeMB ?? null
+                };
+            }).catch(() => {
+                coverageSizesMB = { ...coverageSizesMB, [coverage.identifier]: null };
+            });
+        }
     });
 
     let filteredCoverages = $derived.by( () => {
@@ -44,6 +63,23 @@
             filteredItems = filteredItems.filter((e: IWCSCoverageDescription) => e.title == e.identifier)   
         return filteredItems;
     });
+
+    let filteredCoverageSizeSummary = $derived.by(() => {
+        const results = filteredCoverages
+            .filter((coverage) => Object.prototype.hasOwnProperty.call(coverageSizesMB, coverage.identifier))
+            .map((coverage) => coverageSizesMB[coverage.identifier]);
+        const totalMB = results.reduce((total, size) => total + (size || 0), 0);
+        return {
+            totalGB: totalMB / 1000,
+            resolved: results.length,
+            unavailable: results.filter((size) => size === null).length
+        };
+    });
+
+    function gigabytes(value: number) {
+        if (value > 0 && value < 0.001) return '< 0,001';
+        return new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 3 }).format(value);
+    }
 
 
 const xmlToArray = (filteredItems: IWCSCoverageDescription[]): ICSVLayer[] => {
@@ -148,9 +184,22 @@ let wcsArrayToCSV = $derived.by(() => xmlToArray(filteredCoverages));
 
         <!-- Contador e botões de exportação -->
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1">
-            <div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-6">
                 <p class="text-sm font-medium dark:text-gray-300">
                     Quantidade de coberturas: <span class="font-bold text-xl text-gray-700 dark:text-gray-100">{filteredCoverages.length}</span>
+                </p>
+                <p class="text-sm font-medium dark:text-gray-300">
+                    Tamanho total estimado:
+                    <span class="font-bold text-xl text-blue-700 dark:text-blue-300">{gigabytes(filteredCoverageSizeSummary.totalGB)} GB</span>
+                    {#if filteredCoverageSizeSummary.resolved < filteredCoverages.length}
+                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                            (calculando {filteredCoverageSizeSummary.resolved}/{filteredCoverages.length})
+                        </span>
+                    {:else if filteredCoverageSizeSummary.unavailable > 0}
+                        <span class="text-xs text-amber-700 dark:text-amber-300">
+                            (parcial: {filteredCoverageSizeSummary.unavailable} sem estimativa)
+                        </span>
+                    {/if}
                 </p>
             </div>
             <div class="flex gap-0">

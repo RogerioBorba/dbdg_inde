@@ -252,3 +252,17 @@ export function cachedCoverageDetails(
   coverageDetailsCache.set(key, pending);
   return pending;
 }
+
+export function loadCoverageDetails(
+  serviceUrl: string,
+  operationUrl: string | undefined,
+  version: string,
+  identifier: string
+): Promise<IWCSCoverageDetails> {
+  const requestUrl = describeCoverageUrl(operationUrl || serviceUrl, version, identifier);
+  return cachedCoverageDetails(requestUrl, async () => {
+    const response = await get(requestUrl, { timeout: 60000 });
+    return describeCoverage(await response.text());
+  });
+}
+import { get } from '$lib/request/get';
