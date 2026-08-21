@@ -406,7 +406,7 @@
             <div class="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
                 <section class="space-y-6">
                     <article class="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
-                        <h2 class="text-lg font-semibold text-slate-900">Resumo</h2>
+                        <h2 class="text-lg font-semibold text-slate-900">Informações do metadado</h2>
                         <div class="mt-4 grid gap-4 md:grid-cols-2">
                             {#if metadata.purpose}
                                 <div>
@@ -515,7 +515,7 @@
 
                     {#if metadata.dates.length > 0}
                         <article class="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
-                            <h2 class="text-lg font-semibold text-slate-900">Datas relevantes</h2>
+                            <h2 class="text-lg font-semibold text-slate-900">Datas relevantes do recurso</h2>
                             <div class="mt-4 space-y-3">
                                 {#each metadata.dates as date}
                                     <div class="rounded-2xl bg-slate-50 p-4">
