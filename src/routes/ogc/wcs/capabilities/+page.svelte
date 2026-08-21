@@ -1,5 +1,5 @@
 <script lang="ts">
-    import WCSCoverageCard from '$lib/components/openlayers/wcs/WCSCoverageCard.svelte';
+    import WCSCoverageCard from '$lib/components/ogc/wcs/WCSCoverageCard.svelte';
     import { onMount } from 'svelte';
     import { counterWCS } from '$lib/shared/ogc/wcs/shared.svelte';
     import CsvWcs from '$lib/components/csv/csvWCS.svelte';

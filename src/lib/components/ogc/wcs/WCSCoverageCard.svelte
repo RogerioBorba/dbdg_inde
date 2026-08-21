@@ -65,7 +65,20 @@
     function megabytes(value: number) {
         return new Intl.NumberFormat('pt-BR', { maximumFractionDigits: value < 10 ? 2 : 1 }).format(value);
     }
+
+    function parseScientific(texto: string): number | null {
+        const n = Number(texto);
+        return Number.isNaN(n) ? null : n;
+    }
     
+    function resolucaoEspacial(arrayDeArray: [number, number][]) : number | null {
+        const umGrauEmMetro = 111320;
+        if (!Array.isArray(arrayDeArray) || arrayDeArray.length === 0 || !Array.isArray(arrayDeArray[0])) return null;
+        const value = arrayDeArray[0][0];
+        return Number.isNaN(value) ? null : (value*umGrauEmMetro).toFixed(2);
+        
+    }
+
 </script>
 <div bind:this={cardElement} class="font-semibold p-3 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg shadow-sm hover:shadow-md hover:bg-gray-100 dark:hover:bg-gray-600 flex flex-col break-words text-sm text-left transition-shadow">
     <h2 class="font-bold text-base mb-2 text-gray-900 dark:text-white">{coverage.identifier}</h2>
@@ -95,6 +108,10 @@
             {#if details.dimensions}
                 <p><span class="font-semibold">Dimensões da grade:</span> {details.dimensions.join(' × ')} células</p>
             {/if}
+            {#if details.offsets}
+                <p><span class="font-semibold">Resolução espacial aproximada:</span> {resolucaoEspacial(details.offsets)} m</p>
+            {/if}
+           
             {#if details.axisLabels?.length}
                 <p><span class="font-semibold">Eixos:</span> {details.axisLabels.join(', ')}</p>
             {/if}
