@@ -3,6 +3,8 @@
 // ----------------------------------------------------------------------
 
 const OWS_NS = "http://www.opengis.net/ows/1.1";
+const OWS_1_0_NS = "http://www.opengis.net/ows";
+const WFS_NS = "http://www.opengis.net/wfs";
 const FES_NS = "http://www.opengis.net/fes/2.0";
 
 // ----------------------------------------------------------------------
@@ -198,41 +200,41 @@ export function parseWFSGetCapabilities(xml: Document): IWFSGetCapabilities {
   }));
 
   function parseKeywords(parentEl: Element): string[] {
-  const OWS_NS = "http://www.opengis.net/ows/1.1";
-
+  const isSupportedOWSNamespace = (namespace: string | null) =>
+    namespace === OWS_NS || namespace === OWS_1_0_NS || namespace === WFS_NS || namespace === null;
   const keywordsEl = Array.from(parentEl.children)
-    .find(el =>
-      el.localName === "Keywords" &&
-      el.namespaceURI === OWS_NS
-    );
+    .find(el => el.localName === "Keywords" && isSupportedOWSNamespace(el.namespaceURI));
 
   if (!keywordsEl) return [];
 
   return Array.from(keywordsEl.children)
-    .filter(el =>
-      el.localName === "Keyword" &&
-      el.namespaceURI === OWS_NS
-    )
+    .filter(el => el.localName === "Keyword" && isSupportedOWSNamespace(el.namespaceURI))
     .map(el => el.textContent?.trim() || "");
 };
 
 
   // ------------------ FeatureTypeList ------------------
-  const featureTypes: IFeatureType[] = Array.from(xml.querySelectorAll("FeatureType")).map(ft => {
-    const lowerCorner = text(ft.querySelector("ows\\:LowerCorner"));
-    const upperCorner = text(ft.querySelector("ows\\:UpperCorner"));
+  const featureTypes: IFeatureType[] = Array.from(xml.getElementsByTagNameNS("*", "FeatureType")).map(ft => {
+    const child = (localName: string) => Array.from(ft.children).find(el => el.localName === localName);
+    const lowerCorner = text(child("WGS84BoundingBox")?.getElementsByTagNameNS("*", "LowerCorner")[0]);
+    const upperCorner = text(child("WGS84BoundingBox")?.getElementsByTagNameNS("*", "UpperCorner")[0]);
+    const legacyBox = child("LatLongBoundingBox");
+    const legacyBounds = legacyBox ? {
+      lowerCorner: [Number(legacyBox.getAttribute("minx")), Number(legacyBox.getAttribute("miny"))] as [number, number],
+      upperCorner: [Number(legacyBox.getAttribute("maxx")), Number(legacyBox.getAttribute("maxy"))] as [number, number],
+    } : undefined;
     return {
-      name: text(ft.querySelector("Name")) ?? "",
-      title: text(ft.querySelector("Title")) ?? "",
-      abstract: text(ft.querySelector("Abstract")),
+      name: text(child("Name")) ?? "",
+      title: text(child("Title")) ?? "",
+      abstract: text(child("Abstract")),
       keywords: parseKeywords(ft), //Array.from(ft.querySelectorAll(":scope > Keywords > Keyword")).map(k => text(k) ?? ""),
-      defaultCRS: text(ft.querySelector("DefaultCRS")),
+      defaultCRS: text(child("DefaultCRS")) ?? text(child("DefaultSRS")) ?? text(child("SRS")),
       bbox: lowerCorner && upperCorner
         ? {
-            lowerCorner: lowerCorner.split(" ").map(Number) as [number, number],
-            upperCorner: upperCorner.split(" ").map(Number) as [number, number],
+            lowerCorner: lowerCorner.split(/\s+/).map(Number) as [number, number],
+            upperCorner: upperCorner.split(/\s+/).map(Number) as [number, number],
           }
-        : undefined,
+        : legacyBounds,
       metadataURLs: Array.from(ft.querySelectorAll("MetadataURL")).map(m => ({
         type: m.getAttribute("type") ?? undefined,
         format: text(m.querySelector("Format")),

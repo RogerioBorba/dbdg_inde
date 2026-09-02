@@ -5,10 +5,10 @@ export type IGeoservicoDescricao = {
     nivel_no: string, 
     wcsAvalaible: boolean, 
     wcsGetCapabilities: string, 
-    wfsAvalaible: boolean,
+    wfsAvalaible?: boolean,
+    wfsAvailable?: boolean,
     wfsGetCapabilities: string, 
     wmsAvalaible: boolean,
     wmsGetCapabilities: string, 
 
  };
- 

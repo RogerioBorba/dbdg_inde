@@ -1,26 +1,18 @@
-<script>
-    import {  Tabs, TabItem} from 'flowbite-svelte';
-    import BaseWFS from './BaseWFS.svelte'  
-    //import WfsSearchByNomeTitulo from './WFSSearchByNomeTitulo.svelte';
-	//import WfsPesquisaEspacial from './WFSPesquisaEspacial.svelte';
-    //import WfsSearchByPalavraChave from './WFSSearchByPalavraChave.svelte'
+<script lang="ts">
+    import { Tabs, TabItem } from 'flowbite-svelte';
+    import BaseWFS from './BaseWFS.svelte';
+    import WFSKeywordSearch from './WFSKeywordSearch.svelte';
+    import WFSBoundingBoxSearch from './WFSBoundingBoxSearch.svelte';
 </script>
     
 <Tabs style="underline" >
-    <TabItem open title='Por instituição'>
-        <BaseWFS></BaseWFS>
-        
+    <TabItem open title="Por instituição">
+        <BaseWFS />
     </TabItem>
-    <!--<TabItem title='Por nome ou título'>
-        <WfsSearchByNomeTitulo/>
-        
+    <TabItem title="Por palavra-chave">
+        <WFSKeywordSearch />
     </TabItem>
-    <TabItem title='Por palavra chave'>
-        <WfsSearchByPalavraChave/>
+    <TabItem title="Por retângulo">
+        <WFSBoundingBoxSearch />
     </TabItem>
-
-    <TabItem title='Pesquisa espacial'>
-        <WfsPesquisaEspacial/>
-    </TabItem>
-    -->
 </Tabs>

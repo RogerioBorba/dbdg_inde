@@ -3,7 +3,7 @@
 
     let {
         items = [],
-        selectedItems = [],
+        selectedItems = $bindable([]),
         checked = false,
         nameCatalog = '',
         adressCatalog = '',
@@ -31,14 +31,8 @@
         onAddCatalog?: () => void;
     } = $props();
 
-    let currentSelection = $state<CSWCatalog[]>(selectedItems);
-
-    $effect(() => {
-        currentSelection = selectedItems;
-    });
-
     function handleSelectionChange() {
-        onSelectedItemsChange?.(currentSelection);
+        onSelectedItemsChange?.(selectedItems);
     }
 </script>
 
@@ -61,7 +55,7 @@
         multiple
         id={selectId}
         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-        bind:value={currentSelection}
+        bind:value={selectedItems}
         onchange={handleSelectionChange}
     >
         {#each items as item}
