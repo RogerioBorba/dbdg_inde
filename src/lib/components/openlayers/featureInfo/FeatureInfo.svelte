@@ -2,9 +2,6 @@
   import { onDestroy } from 'svelte';
   import type MapBrowserEvent from 'ol/MapBrowserEvent';
   import type { EventsKey } from 'ol/events';
-  import GeoJSON from 'ol/format/GeoJSON';
-  import type Geometry from 'ol/geom/Geometry';
-  import type { ProjectionLike } from 'ol/proj';
   import ImageWMS from 'ol/source/ImageWMS';
   import { unByKey } from 'ol/Observable';
   import { get } from '$lib/request/get';
@@ -32,7 +29,6 @@
   let results = $state<LayerResult[]>([]);
   let clickKey: EventsKey | null = null;
   let requestNumber = 0;
-  const geoJSONFormat = new GeoJSON();
 
   function wmsLayers(): WMSLayerOL[] {
     return layerManager.selectedLayers.filter((entry): entry is WMSLayerOL =>
@@ -82,31 +78,19 @@
     });
   }
 
-  function parseWFSFeature(feature: unknown, featureProjection: ProjectionLike): FeatureResult {
+  function parseWFSFeature(feature: unknown): FeatureResult {
     const candidate = feature as {
       getId?: () => string | number | undefined;
       getProperties?: () => Record<string, unknown>;
       getGeometryName?: () => string;
-      getGeometry?: () => Geometry | undefined;
     };
     const geometryName = candidate.getGeometryName?.() ?? 'geometry';
     const properties = candidate.getProperties?.() ?? {};
-    const geometry = candidate.getGeometry?.();
     const displayProperties = Object.fromEntries(
       Object.entries(properties)
         .filter(([key]) => key !== geometryName)
         .map(([key, value]) => [key, scalar(value)])
     );
-
-    if (geometry) {
-      displayProperties[geometryName] = scalar(
-        geoJSONFormat.writeGeometryObject(geometry, {
-          featureProjection,
-          dataProjection: 'EPSG:4326',
-          decimals: 6
-        })
-      );
-    }
 
     return {
       id: candidate.getId?.() === undefined ? undefined : String(candidate.getId?.()),
@@ -135,9 +119,7 @@
       layerId: layer.id,
       layerName: layer.name,
       layerTitle: layer.title,
-      features: features.map((feature) =>
-        parseWFSFeature(feature, event.map.getView().getProjection())
-      )
+      features: features.map(parseWFSFeature)
     };
   }
 
