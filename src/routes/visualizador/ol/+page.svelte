@@ -7,7 +7,7 @@
     import TabWMS from "$lib/components/openlayers/wms/TabWMS.svelte";
     import TabWFS from "$lib/components/openlayers/wfs/TabWFS.svelte";
     import BaseSelectedLayer from '$lib/components/openlayers/selectLayers/selectLayers.svelte'
-    import TabTools from "$lib/components/openlayers/tabtools/tabtools.svelte";
+    import TabTools from "$lib/components/openlayers/tabtools/TabTools.svelte";
 
     onMount( async ()  => {});
 </script>
