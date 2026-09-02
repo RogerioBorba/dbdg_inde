@@ -2,6 +2,8 @@ import type { IFeatureType, IMetadataUrl } from "$lib/ogc/wfs/wfsCapabilities";
 
 export class WFSLayer {
   static readonly GEOJSON_CRS = "EPSG:4326";
+  static readonly DEFAULT_VERSION = "2.0.0";
+  static readonly SUPPORTED_VERSIONS = new Set(["1.0.0", "1.1.0", "2.0.0"]);
   iwfsLayer: IFeatureType;
   url: string;
   version: string;
@@ -22,10 +24,13 @@ export class WFSLayer {
     // 1) parâmetro explícito
     // 2) parâmetro version da URL do GetCapabilities
     // 3) fallback
-    this.version =
+    const requestedVersion =
       version ||
       urlObj.searchParams.get("version") ||
-      "2.0.0";
+      WFSLayer.DEFAULT_VERSION;
+    this.version = WFSLayer.SUPPORTED_VERSIONS.has(requestedVersion)
+      ? requestedVersion
+      : WFSLayer.DEFAULT_VERSION;
 
     this.tipoGeometria = "";
   }
