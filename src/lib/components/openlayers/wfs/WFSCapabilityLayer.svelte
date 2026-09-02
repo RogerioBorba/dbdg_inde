@@ -104,7 +104,7 @@
      async function fetchFeatureCount() {
         const url: string|null = wfsLayer.urlGetFeatureCount();
         if (!url) {
-            featureCount = 'N/A';
+            featureCount = 'sem acesso';
             console.warn("URL inválida para contagem de feições. Versão 1.0.0 do WFS não suporta esta funcionalidade.");
             return;
         }
@@ -113,14 +113,27 @@
             let data = await response.text();
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(data, "text/xml");
-            featureCount = featureCounted(xmlDoc);
+            const countAttribute = xmlDoc.documentElement.getAttribute("numberMatched")
+                || xmlDoc.documentElement.getAttribute("numberOfFeatures");
+            if (!countAttribute?.trim()) {
+                throw new Error('Resposta WFS sem a quantidade de feições.');
+            }
+            const count = featureCounted(xmlDoc);
+            if (!Number.isFinite(count)) {
+                throw new Error(`Quantidade de feições inválida: ${countAttribute}`);
+            }
+            featureCount = count;
             
         } catch (error) {
             const msg = `Erro ao buscar contagem de feições, url: ${url}`;
             console.error(msg, error);
-            alert(msg);
-            featureCount = 0;
+            featureCount = 'sem acesso';
         }
+    }
+
+    function featureCountLabel(): string {
+        if (typeof featureCount !== 'number') return featureCount;
+        return `${featureCount} ${featureCount > 1 ? 'feições' : 'feição'}`;
     }
     
     function visibilityBtnMetadata():  'visible'| 'invisible' {
@@ -247,8 +260,8 @@
 -->
 {#snippet descricao_com_quantidade()}
         <p class=" mt-1 flex-grow text-grey-darkest hover:bg-red truncate text-left text-xs" 
-        title="{`${wfsLayer.description()} - ${featureCount} ${featureCount > 1 ? 'feições' : 'feição'}`}">
-        {`${wfsLayer.description()} - ${featureCount} ${featureCount > 1 ? 'feições' : 'feição'}`}</p>
+        title="{`${wfsLayer.description()} - ${featureCountLabel()}`}">
+        {`${wfsLayer.description()} - ${featureCountLabel()}`}</p>
 {/snippet}
 
 {#snippet botao_metadados()}
