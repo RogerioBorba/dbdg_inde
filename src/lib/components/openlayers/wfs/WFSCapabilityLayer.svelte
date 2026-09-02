@@ -204,7 +204,9 @@
             
             if (camada) {
                 const extent = (camada as any).getSource().getExtent();
-                facadeOL?.map.getView().fit(extent, { 
+                const extentValida = extent.length === 4 && extent.every(Number.isFinite)
+                    && extent[0] <= extent[2] && extent[1] <= extent[3];
+                if (extentValida) facadeOL?.map.getView().fit(extent, {
                     size: facadeOL.map?.getSize?.(), 
                     padding: [50, 50, 50, 50], // Padding para ajustar margens
                     maxZoom: 18 // Define um zoom máximo

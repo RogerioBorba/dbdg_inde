@@ -30,6 +30,7 @@ import type { IWMSLayer } from '$lib/ogc/wms/wmsCapabilities';
 import CircleStyle from 'ol/style/Circle';
 import { WFSLayerOL, WMSLayerOL } from './layerOL';
 import type { IFeatureType } from '$lib/ogc/wfs/wfsCapabilities';
+import { WFSLayer } from './wfs/wfsLayer';
 export const osmBaseTile = new TileLayer({ source: new XYZ({url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png'}), zIndex: 0 })
 export const googleBaseTile = new TileLayer({source: new XYZ({url: 'http://mt{0-3}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}'}), zIndex: 0})
 //returns a google satelite TileLayer as baselayer
@@ -206,19 +207,15 @@ export class FacadeOL {
 
     addGeoJSONLayer(iFeatureType: IFeatureType, geojson: any, properties: any, url: string): WFSLayerOL {
       const geo_json = new GeoJSON();
-      const defaultCRS = iFeatureType.defaultCRS?.trim();
-      const epsgUrnMatch = defaultCRS?.match(/EPSG(?:::|:)(\d+)$/i);
-      const dataProjection = epsgUrnMatch
-        ? `EPSG:${epsgUrnMatch[1]}`
-        : (defaultCRS || 'EPSG:4326');
       const gjson_format = geo_json.readFeatures(geojson, {
-        dataProjection,
-        featureProjection: 'EPSG:3857'
+        dataProjection: WFSLayer.GEOJSON_CRS,
+        featureProjection: this.map.getView().getProjection()
       });
       const vector_source = new Vector({features: gjson_format});
       const vectorlayerImage = new VectorImageLayer({ source: vector_source });
       const vector_layer = new VectorLayer({ source: vector_source });
-      const geoJsonType: string = geojson.features[0].geometry.type;
+      const geoJsonType: string = geojson.features?.find((feature: any) => feature.geometry)?.geometry.type;
+      if (!geoJsonType) throw new Error('O serviço WFS não retornou geometrias válidas.');
       const style = this.styleforGeojsonType(geoJsonType, properties.color);
       vectorlayerImage.setStyle(style);
       //vector_layer.render('image');

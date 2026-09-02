@@ -1,6 +1,7 @@
 import type { IFeatureType, IMetadataUrl } from "$lib/ogc/wfs/wfsCapabilities";
 
 export class WFSLayer {
+  static readonly GEOJSON_CRS = "EPSG:4326";
   iwfsLayer: IFeatureType;
   url: string;
   version: string;
@@ -49,18 +50,6 @@ export class WFSLayer {
     return this.iwfsLayer.title || "";
   }
 
-  crs(): string | undefined {
-    const defaultCRS = this.iwfsLayer.defaultCRS?.trim();
-    if (!defaultCRS) return undefined;
-
-    const epsgUrnMatch = defaultCRS.match(/EPSG(?:::|:)(\d+)$/i);
-    if (epsgUrnMatch) {
-      return `EPSG:${epsgUrnMatch[1]}`;
-    }
-
-    return defaultCRS;
-  }
-
   // =========================
   // Helpers internos
   // =========================
@@ -80,7 +69,10 @@ export class WFSLayer {
     const request = "GetFeature";
     const typeNameParam = this.typeNameParam(version);
     const typeName = this.name();
-    const srsName = this.crs();
+    // GeoJSON is the interchange format used by the viewer. Request it in a
+    // projection OpenLayers supports natively instead of relying on each
+    // service's default CRS (for example, SIRGAS 2000 / EPSG:4674).
+    const srsName = WFSLayer.GEOJSON_CRS;
 
     const baseUrl = `${this.url}?service=${service}&version=${version}&request=${request}&${typeNameParam}=${typeName}`;
     return srsName ? `${baseUrl}&srsName=${encodeURIComponent(srsName)}` : baseUrl;
