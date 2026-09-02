@@ -1,7 +1,7 @@
 <script lang="ts">
     import {Tabs, TabItem} from 'flowbite-svelte';
     import BoundingBoxCoordinates from "$lib/components/openlayers/boundingBox/BoundingBoxCoordinates.svelte";
-    import WMSFeatureInfo from '$lib/components/openlayers/featureInfo/WMSFeatureInfo.svelte';
+    import FeatureInfo from '$lib/components/openlayers/featureInfo/FeatureInfo.svelte';
 
    // import WMSSearchByNomeTitulo from './WMSSearchByNomeTitulo.svelte'
    //import WmsSearchByPalavraChave from './WMSSearchByPalavraChave.svelte';
@@ -13,7 +13,7 @@
         <BoundingBoxCoordinates />
     </TabItem>
     <TabItem title='Informação da camada'>
-        <WMSFeatureInfo />
+        <FeatureInfo />
     </TabItem>
         
     <!--

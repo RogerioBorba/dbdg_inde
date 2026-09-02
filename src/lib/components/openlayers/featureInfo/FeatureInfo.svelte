@@ -2,10 +2,13 @@
   import { onDestroy } from 'svelte';
   import type MapBrowserEvent from 'ol/MapBrowserEvent';
   import type { EventsKey } from 'ol/events';
+  import GeoJSON from 'ol/format/GeoJSON';
+  import type Geometry from 'ol/geom/Geometry';
+  import type { ProjectionLike } from 'ol/proj';
   import ImageWMS from 'ol/source/ImageWMS';
   import { unByKey } from 'ol/Observable';
   import { get } from '$lib/request/get';
-  import type { WMSLayerOL } from '$lib/components/openlayers/layerOL';
+  import type { WFSLayerOL, WMSLayerOL } from '$lib/components/openlayers/layerOL';
   import { layerManager, mapper_ol } from '$lib/shared/openlayers/shared.svelte';
 
   type PropertyValue = string | number | boolean | null;
@@ -25,14 +28,21 @@
 
   let active = $state(false);
   let loading = $state(false);
-  let message = $state('Ative a ferramenta e clique sobre uma camada WMS visível.');
+  let message = $state('Ative a ferramenta e clique sobre uma camada WMS ou WFS visível.');
   let results = $state<LayerResult[]>([]);
   let clickKey: EventsKey | null = null;
   let requestNumber = 0;
+  const geoJSONFormat = new GeoJSON();
 
   function wmsLayers(): WMSLayerOL[] {
     return layerManager.selectedLayers.filter((entry): entry is WMSLayerOL =>
       entry.type === 'WMS' && Boolean(entry.layer?.getVisible?.())
+    );
+  }
+
+  function wfsLayers(): WFSLayerOL[] {
+    return layerManager.selectedLayers.filter((entry): entry is WFSLayerOL =>
+      entry.type === 'WFS' && Boolean(entry.layer?.getVisible?.())
     );
   }
 
@@ -72,7 +82,66 @@
     });
   }
 
-  async function queryLayer(
+  function parseWFSFeature(feature: unknown, featureProjection: ProjectionLike): FeatureResult {
+    const candidate = feature as {
+      getId?: () => string | number | undefined;
+      getProperties?: () => Record<string, unknown>;
+      getGeometryName?: () => string;
+      getGeometry?: () => Geometry | undefined;
+    };
+    const geometryName = candidate.getGeometryName?.() ?? 'geometry';
+    const properties = candidate.getProperties?.() ?? {};
+    const geometry = candidate.getGeometry?.();
+    const displayProperties = Object.fromEntries(
+      Object.entries(properties)
+        .filter(([key]) => key !== geometryName)
+        .map(([key, value]) => [key, scalar(value)])
+    );
+
+    if (geometry) {
+      displayProperties[geometryName] = scalar(
+        geoJSONFormat.writeGeometryObject(geometry, {
+          featureProjection,
+          dataProjection: 'EPSG:4326',
+          decimals: 6
+        })
+      );
+    }
+
+    return {
+      id: candidate.getId?.() === undefined ? undefined : String(candidate.getId?.()),
+      properties: displayProperties
+    };
+  }
+
+  function queryWFSLayer(layer: WFSLayerOL, event: MapBrowserEvent): LayerResult {
+    const mapLayer = layer.layer;
+    if (!mapLayer) {
+      return {
+        layerId: layer.id,
+        layerName: layer.name,
+        layerTitle: layer.title,
+        features: [],
+        error: 'A camada WFS não está disponível no mapa.'
+      };
+    }
+
+    const features = event.map.getFeaturesAtPixel(event.pixel, {
+      hitTolerance: 5,
+      layerFilter: (candidate) => candidate === mapLayer
+    });
+
+    return {
+      layerId: layer.id,
+      layerName: layer.name,
+      layerTitle: layer.title,
+      features: features.map((feature) =>
+        parseWFSFeature(feature, event.map.getView().getProjection())
+      )
+    };
+  }
+
+  async function queryWMSLayer(
     layer: WMSLayerOL,
     event: MapBrowserEvent
   ): Promise<LayerResult> {
@@ -144,17 +213,22 @@
 
   async function handleMapClick(event: MapBrowserEvent) {
     const currentRequest = ++requestNumber;
-    const layers = wmsLayers();
+    const visibleWMSLayers = wmsLayers();
+    const visibleWFSLayers = wfsLayers();
     results = [];
 
-    if (layers.length === 0) {
-      message = 'Adicione e deixe visível ao menos uma camada WMS para consultar.';
+    if (visibleWMSLayers.length === 0 && visibleWFSLayers.length === 0) {
+      message = 'Adicione e deixe visível ao menos uma camada WMS ou WFS para consultar.';
       return;
     }
 
     loading = true;
-    message = 'Consultando as camadas WMS visíveis…';
-    const queryResults = await Promise.all(layers.map((layer) => queryLayer(layer, event)));
+    message = 'Consultando as camadas WMS e WFS visíveis…';
+    const wfsResults = visibleWFSLayers.map((layer) => queryWFSLayer(layer, event));
+    const wmsResults = await Promise.all(
+      visibleWMSLayers.map((layer) => queryWMSLayer(layer, event))
+    );
+    const queryResults = [...wfsResults, ...wmsResults];
 
     if (currentRequest !== requestNumber) return;
 
@@ -182,7 +256,7 @@
   function toggle() {
     if (active) {
       deactivate();
-      message = 'Ative a ferramenta e clique sobre uma camada WMS visível.';
+      message = 'Ative a ferramenta e clique sobre uma camada WMS ou WFS visível.';
       return;
     }
 
@@ -193,7 +267,7 @@
     }
 
     active = true;
-    message = 'Clique no mapa para consultar as camadas WMS visíveis.';
+    message = 'Clique no mapa para consultar as camadas WMS e WFS visíveis.';
     map.getTargetElement().style.cursor = 'crosshair';
     clickKey = map.on('singleclick', handleMapClick);
   }
@@ -203,7 +277,7 @@
 
 <section class="space-y-3 px-3 py-2 text-sm" aria-live="polite">
   <p class="text-gray-700">
-    Consulte os atributos das feições no ponto selecionado do mapa.
+    Consulte os atributos das feições WMS e WFS no ponto selecionado do mapa.
   </p>
 
   <button
