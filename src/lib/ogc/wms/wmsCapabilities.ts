@@ -2,6 +2,8 @@
 // Interfaces principais do WMS GetCapabilities 1.3.0
 // ----------------------------------------------------------------------
 
+import type { ILayerStats } from "../wfs/wfsCapabilities";
+
 export interface IWMSOnlineResource {
   href: string;
   type?: string;
@@ -304,4 +306,18 @@ export function countWMSLayers(layers: IWMSLayer[]): IWMSLayerStats {
   return stats;
 }
 
-
+export function layersAndGroupKayers(layer: IWMSLayer): IWMSLayer[] {
+    let layers: IWMSLayer[] = [];
+    
+    subLayers(layer);
+    // percorre sublayers
+    function subLayers(layer: IWMSLayer): IWMSLayer[] {
+      
+      if (layer.layers && layer.layers.length > 0) {
+        layer.layers.forEach(subLayers);
+      } 
+      layers.push(layer);
+    }
+    
+    return layers;
+}

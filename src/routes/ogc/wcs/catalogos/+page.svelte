@@ -53,7 +53,7 @@
 
     onMount(async() => {
         try{
-            const response = await fetch("/api/inde/catalogos-servicos");
+            const response = await fetch("/api/inde/catalogos-servicos/ibge");
             const data = await response.json();
             objIdDescricaoIRIArray = data.map(newObjIdDescricaoIRI);
         } catch (error) {

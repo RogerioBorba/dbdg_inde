@@ -4,7 +4,7 @@
     import {dataToPdf} from '$lib/components/pdf/gerarPDF'
     import { preventDefault } from '$lib/components/svelte_util/util';
     import type { IGeoservicoDescricao } from '$lib/inde';
-    import { iWMSCapabilities, type IWMSLayer } from '$lib/ogc/wms/wmsCapabilities';
+    import { iWMSCapabilities,  layersAndGroupKayers,  type IWMSLayer } from '$lib/ogc/wms/wmsCapabilities';
     import { get } from '$lib/request/get';
     import { FileCsvSolid, FilePdfSolid } from 'flowbite-svelte-icons';
     import { onMount } from 'svelte';
@@ -43,9 +43,11 @@
             const url = new URL(objIdDescricaoIri.iri);
             const res = await get(url);
             const xmlText = await res.text();
+            
             const wmsCapabilities = iWMSCapabilities(xmlText);
             const wmsLayers: IWMSLayer[] = wmsCapabilities.capability.layers;
-            await processLayersRequested(wmsLayers);
+            const all_layers = wmsLayers.map(layersAndGroupKayers).flat();
+            await processLayersRequested(all_layers);
         } catch (error) {
             console.error('Failed to process WMS for', objIdDescricaoIri.descricao, error);
         }
@@ -87,11 +89,10 @@
     };
     
     onMount(async() => {
-        try {
-            const response = await fetch("/api/inde/catalogos-servicos")
+        try{
+            const response = await fetch("/api/inde/catalogos-servicos/ibge");
             const data = await response.json();
-            let i = 1;
-            objIdDescricaoIRIArray = data.map((obj: IGeoservicoDescricao) => newObjIdDescricaoIRI(obj, i++));
+            objIdDescricaoIRIArray = data.map(newObjIdDescricaoIRI);
         } catch (error) {
             console.error('Failed to fetch catalogos_servicos:', error);
         }
