@@ -18,6 +18,7 @@ Antes de alterar comportamento relevante, consulte:
 - Instale dependências com `npm install`.
 - Inicie o ambiente local com `npm run dev`.
 - Execute a verificação de Svelte e TypeScript com `npm run check`.
+- Execute a validação de padrões de código com `npm run lint` (quando configurado no repositório).
 - Gere a versão de produção com `npm run build`.
 - Os testes existentes usam `node:test` e ficam em `tests/`. Ao alterar os módulos cobertos, execute o arquivo de teste correspondente em um runtime Node com suporte à execução de TypeScript.
 

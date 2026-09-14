@@ -159,39 +159,42 @@ flowchart TD
 | **RF-011** | Agregação de Keywords | Contabilizar e ranquear palavras-chave declaradas nas camadas WMS dos nós selecionados. | `Implementado` |
 | **RF-012** | Busca por BBOX | Selecionar camadas WMS cuja extensão geográfica intercepte uma BBOX desenhada no mapa. | `Implementado` |
 | **RF-013** | Legenda e Visualização | Carregar graficamente a legenda (`GetLegendGraphic`) e adicionar a camada ao OpenLayers. | `Implementado` |
+| **RF-014** | WMS GetFeatureInfo | Consultar feições e atributos de camadas WMS ao clicar sobre o mapa interativo. | `Implementado` |
 
 ### 6.4 Módulo WFS (Web Feature Service)
 | ID | Requisito | Descrição | Status |
 | :--- | :--- | :--- | :--- |
-| **RF-014** | WFS GetCapabilities | Interpretar documentos `GetCapabilities` WFS e listar os Feature Types disponíveis. | `Implementado` |
-| **RF-015** | DescribeFeatureType | Consultar o esquema XSD da feição para apresentar nome, tipo e restrição dos atributos. | `Implementado` |
-| **RF-016** | Carregamento Vetorial | Adicionar feições WFS em camada vetorial interativa com suporte a popups de atributos. | `Implementado` |
+| **RF-015** | WFS GetCapabilities | Interpretar documentos `GetCapabilities` WFS e listar os Feature Types disponíveis. | `Implementado` |
+| **RF-016** | DescribeFeatureType | Consultar o esquema XSD da feição para apresentar nome, tipo e restrição dos atributos. | `Implementado` |
+| **RF-017** | Carregamento Vetorial | Adicionar feições WFS em camada vetorial interativa com suporte a popups e inspeção de atributos. | `Implementado` |
+| **RF-018** | Filtro WFS (BBOX e Keywords) | Filtrar e buscar Feature Types por palavras-chave e retângulo envolvente (BBOX), com contagem de feições. | `Implementado` |
 
 ### 6.5 Módulo WCS (Web Coverage Service)
 | ID | Requisito | Descrição | Status |
 | :--- | :--- | :--- | :--- |
-| **RF-017** | WCS GetCapabilities | Listar dados de coberturas matriciais (raster), seus formatos de saída e bounding boxes. | `Implementado` |
-| **RF-018** | Construtor de Requisições | Gerar URLs de consulta `DescribeCoverage` e `GetCoverage` com parâmetros selecionados. | `Implementado` |
+| **RF-019** | WCS GetCapabilities | Listar dados de coberturas matriciais (raster), seus formatos de saída e bounding boxes. | `Implementado` |
+| **RF-020** | Construtor de Requisições | Gerar URLs de consulta `DescribeCoverage` e `GetCoverage` com parâmetros selecionados. | `Implementado` |
 
 ### 6.6 Módulo CSW & Metadados (ISO 19115)
 | ID | Requisito | Descrição | Status |
 | :--- | :--- | :--- | :--- |
-| **RF-019** | Varredura CSW | Executar buscas paginadas (`GetRecords`) em catálogos CSW da INDE. | `Implementado` |
-| **RF-020** | Parser ISO 19115 | Extrair e formatar identificador, título, resumo, palavras-chave, contatos, BBOX e distribuição. | `Implementado` |
-| **RF-021** | Diagnóstico de Links | Verificar a conectividade das URLs cadastradas nos registros de metadados, identificando erros 404/500. | `Implementado` |
+| **RF-021** | Varredura CSW | Executar buscas paginadas (`GetRecords`) em catálogos CSW da INDE. | `Implementado` |
+| **RF-022** | Parser ISO 19115 | Extrair e formatar identificador, título, resumo, palavras-chave, contatos, BBOX e distribuição. | `Implementado` |
+| **RF-023** | Diagnóstico de Links | Verificar a conectividade das URLs cadastradas nos registros de metadados, identificando erros 404/500. | `Implementado` |
+| **RF-024** | Conformidade Perfil MGB | Verificar a conformidade dos metadados de uma instituição em relação ao Perfil MGB 2.0 com suporte à detecção automática por escopo: Quadro 84 para produtos não-geoespaciais (15 elementos), Quadro 85 para produtos geoespaciais CDG/séries (20 elementos), Quadro 86 para CDG/séries do SCN (21 elementos) e Quadro 87 para geosserviços web (16 elementos), com indicadores percentuais individuais e globais e exportação CSV. | `Implementado` |
 
 ### 6.7 Visualizador Cartográfico (WebGIS)
 | ID | Requisito | Descrição | Status |
 | :--- | :--- | :--- | :--- |
-| **RF-022** | Renderizador OpenLayers | Mapa interativo com suporte a basemaps (OSM, CartoDB), controle de zoom e medições. | `Implementado` |
-| **RF-023** | Gestão de Camadas | Adicionar, remover, reordenar e ajustar opacidade de camadas WMS/WFS ativas. | `Implementado` |
-| **RF-024** | Renderizador MapLibre | Motor alternativo de mapa para testes de performance e renderização em vetores. | `Parcial` |
+| **RF-025** | Renderizador OpenLayers | Mapa interativo com suporte a basemaps (OSM, CartoDB), controle de zoom e medições. | `Implementado` |
+| **RF-026** | Gestão de Camadas | Adicionar, remover, reordenar e ajustar opacidade de camadas WMS/WFS ativas. | `Implementado` |
+| **RF-027** | Renderizador MapLibre | Motor alternativo de mapa para testes de performance e renderização em vetores. | `Parcial` |
 
 ### 6.8 Exportação de Dados & Relatórios
 | ID | Requisito | Descrição | Status |
 | :--- | :--- | :--- | :--- |
-| **RF-025** | Exportação CSV | Exportar inventários de camadas, palavras-chave e lista de links testados em CSV (UTF-8). | `Implementado` |
-| **RF-026** | Relatório PDF | Gerar relatório formatado em PDF contendo estatísticas e detalhamento do metadado inspecionado. | `Implementado` |
+| **RF-028** | Exportação CSV | Exportar inventários de camadas, palavras-chave, relatórios MGB e lista de links testados em CSV (UTF-8). | `Implementado` |
+| **RF-029** | Relatório PDF | Gerar relatório formatado em PDF contendo estatísticas e detalhamento do metadado inspecionado. | `Implementado` |
 
 ---
 
@@ -199,7 +202,7 @@ flowchart TD
 
 - **RNF-001 (Compatibilidade):** Compatível com Node.js 20+ e executável nos principais navegadores modernos (Chrome, Firefox, Edge, Safari).
 - **RNF-002 (Responsividade):** Layout adaptável para resoluções Desktop e Tablet/Mobile utilizando breakpoints do Tailwind CSS.
-- **RNF-003 (Interoperabilidade):** Estrita aderência às especificações OGC (WMS 1.1/1.3, WFS 1.1/2.0, WCS 1.0/2.0, CSW 2.0.2 e ISO 19115).
+- **RNF-003 (Interoperabilidade):** Estrita aderência às especificações OGC (WMS 1.1/1.3, WFS 1.1/2.0, WCS 1.0/2.0, CSW 2.0.2 e ISO 19115 / Perfil MGB 2.0).
 - **RNF-004 (Desempenho e Resiliência):** As operações de rede longas (como varreduras CSW) devem possuir indicação de *loading*, tratamento de exceções sem travar a UI e opção de cancelamento.
 - **RNF-005 (Mitigação de SSRF no Proxy):** O proxy backend deve validar domínios, impedir requisições a redes privadas/localhost e aplicar timeout rígido.
 
@@ -213,7 +216,7 @@ flowchart TD
 ├── /ogc
 │   ├── /wms
 │   │   ├── /catalogos                     (Inventário e capacidades WMS)
-│   │   ├── /capabilities                  (Filtros e árvore de camadas)
+│   │   ├── /capabilities                  (Filtros, árvore de camadas e GetFeatureInfo)
 │   │   └── /palavras-chaves               (Estatísticas de palavras-chave)
 │   ├── /wfs
 │   │   ├── /catalogos                     (Inventário e métricas WFS)
@@ -224,29 +227,43 @@ flowchart TD
 │   │   └── /catalogos                     (Análise de coberturas WCS)
 │   └── /csw
 │       ├── /catalogos                     (Seleção de nós CSW)
+│       ├── /conformidade-mgb              (Avaliação de conformidade MGB - Quadros 84, 85 e 86)
 │       ├── /metadados                     (Navegação e busca em registros)
 │       ├── /links-quebrados               (Configuração de teste de links)
 │       └── /links-quebrados/result        (Resultado e diagnósticos)
-└── /visualizador
-    ├── /ol                                (Visualizador principal OpenLayers)
-    ├── /metadata                          (Visualizador de documento ISO 19115)
-    └── /maplibre                          (Visualizador alternativo MapLibre GL)
+├── /visualizador
+│   ├── /ol                                (Visualizador principal OpenLayers)
+│   ├── /metadata                          (Visualizador de documento ISO 19115)
+│   └── /maplibre                          (Visualizador alternativo MapLibre GL)
+└── /api
+    ├── /get                               (Proxy HTTP com controle de CORS e timeouts)
+    ├── /get-json-response                 (Proxy e conversão de resposta JSON)
+    ├── /get-xml-response                  (Proxy e entrega de payload XML)
+    └── /inde                              (Agregador e proxy da API de nós da INDE)
 ```
 
 ---
 
 ## 9. Riscos, Débitos Técnicos e Recomendações
 
-1. **Proteção contra SSRF:** O endpoint `/api/get` aceita URLs arbitrárias. Recomenda-se implementar uma *allowlist* de domínios confiáveis da INDE/IBGE ou proibir blocos de IP privados (10.0.0.0/8, 192.168.0.0/16, etc.).
-2. **Dependência de Terceiros:** A aplicação depende da estabilidade e velocidade dos servidores dos órgãos da INDE. Recomenda-se adicionar mecanismo de cache de curta duração para `GetCapabilities`.
-3. **Limpeza de Rotas Experimentais:** Isolar as rotas legadas/protótipos (`/deckgl`, `/teste`, `/xml`) da build de produção para evitar ambiguidades.
-4. **Testes Automatizados:** Desenvolver suíte de testes unitários (Vitest) para os parsers de XML/OGC e testes de ponta a ponta (Playwright) para o fluxo cartográfico.
+1. **Blindagem contra SSRF no Proxy Server-Side (`/api/get`):**
+   - O proxy server-side intermediador de CORS atualmente aceita parâmetros `url` arbitrários. Recomenda-se reforçar a validação rejeitando estritamente requisições direcionadas para `localhost`, `127.0.0.1`, `::1` e faixas de IP de redes privadas (RFC 1918 / CGNAT).
+2. **Eliminação de Bypass Global de TLS:**
+   - O uso de `process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'` afeta globalmente o runtime Node.js. Recomenda-se substituir essa variável global por uma configuração isolada de agente HTTPS/fetcher (`dispatcher` ou `https.Agent` customizado) restrita unicamente aos hosts legados que dela necessitam.
+3. **Expansão da Cobertura de Testes Automatizados:**
+   - A suíte de testes unitários (`tests/`) atualmente cobre apenas cenários de WFS. É prioritário adicionar testes unitários utilizando o test runner nativo (`node:test`) com fixtures estáticas gravadas em XML para os parsers de WMS (`GetCapabilities`), WCS, CSW e metadados ISO 19115/19139.
+4. **Padronização de Linter & Formatação:**
+   - As dependências de ESLint estão declaradas em `devDependencies`, mas faz-se necessária a adição do arquivo `eslint.config.js` (Flat Config) e do script `"lint": "eslint ."` no `package.json` para validação contínua de boas práticas de TypeScript e Svelte 5.
+5. **Organização e Isolamento de Rotas Experimentais:**
+   - Rotas de protótipos e testes pontuais (`/deckgl`, `/teste`, `/xml`) devem ser claramente isoladas do fluxo principal de navegação para manter o bundle de produção otimizado.
+6. **Resiliência e Cache de Capabilities:**
+   - Os nós públicos da INDE e órgãos parceiros frequentemente apresentam instabilidade ou lentidão. Recomenda-se introduzir cache temporário em memória para documentos `GetCapabilities` frequentemente consultados.
 
 ---
 
 ## 10. Critérios de Aceite para Release
 
 1. **Parsing Robusto:** Todos os parsers (WMS, WFS, WCS, CSW) devem ser testados e aprovados contra ao menos 5 provedores distintos da INDE.
-2. **Build sem Erros:** O projeto deve passar nos comandos `npm run check` (Svelte Check / TypeScript) e `npm run build` sem avisos críticos ou falhas.
+2. **Build e Tipagem sem Erros:** O projeto deve passar nos comandos `npm run check` (Svelte Check / TypeScript) e `npm run build` sem avisos críticos ou falhas.
 3. **Exportação Funcional:** Os relatórios em PDF e arquivos CSV gerados devem conter acentuação correta e formatar adequadamente caracteres especiais em UTF-8.
 4. **Sem Vazamento de Memória:** Adicionar e remover 20 camadas consecutivas no OpenLayers não deve causar congelamento ou travamento da aba do navegador.

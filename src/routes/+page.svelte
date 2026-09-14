@@ -17,6 +17,7 @@
     ];  
   let menuCSW = [
       {name: 'Catálogos ', href: '/ogc/csw/catalogos'},
+      {name: 'Conformidade Perfil MGB', href: '/ogc/csw/conformidade-mgb'},
       {name: 'Palavras Chaves ', href: '/ogc/csw/palavras-chaves'}, 
       {name: ' Quantidade WMS ', href: '/ogc/csw/metadados/protocolo-wms/quantidade'}, 
       {name: ' Quantidade WFS ', href: '/ogc/csw/metadados/protocolo-wfs/quantidade'}, 

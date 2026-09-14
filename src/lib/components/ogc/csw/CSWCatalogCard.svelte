@@ -77,7 +77,20 @@
             params.set('noCentralCategoria', catalog.noCentralCategoria);
         }
 
-        goto(`/ogc/csw/metadados?${params.toString()}`)
+        goto(`/ogc/csw/metadados?${params.toString()}`);
+    }
+
+    function mgbLinkClicked() {
+        const params = new URLSearchParams({
+            descricao: catalog.descricao,
+            iri: catalog.iri
+        });
+
+        if (catalog.noCentralCategoria) {
+            params.set('noCentralCategoria', catalog.noCentralCategoria);
+        }
+
+        goto(`/ogc/csw/conformidade-mgb?${params.toString()}`);
     }
 
     onMount(async () => {
@@ -111,8 +124,13 @@
     <h2> Quantidade de registros de metadados: {qtdMetadados}</h2>
     <h2> Quantidade de registros de metadados com WMS: {qtdMetadadosComWMS}</h2>
     <h2> Quantidade de registros de metadados com WFS: {qtdMetadadosComWFS}</h2>
-    <button class="text-green-600 text-left font-semibold hover:bg-gray-200 hover:underline py-1"  
-    onclick={preventDefault(linkClicked)}>Mais detalhes</button>
+    <div class="flex items-center gap-3 py-1">
+        <button class="text-green-600 text-left font-semibold hover:bg-gray-200 hover:underline"  
+        onclick={preventDefault(linkClicked)}>Mais detalhes</button>
+        <span class="text-gray-400">|</span>
+        <button class="text-blue-600 text-left font-semibold hover:bg-gray-200 hover:underline"  
+        onclick={preventDefault(mgbLinkClicked)}>Conformidade MGB</button>
+    </div>
     <!--<a class="text-xs text-blue-500 underline underline-offset-4 uppercase" href="{metadadoAssociado()}">{metadadoText}</a>-->
     <div class="bg-slate-300 text-slate-600 rounded-md text-center p-1">
         <Spinner class="{spinHidden} mr-3" size="4" color="blue" />

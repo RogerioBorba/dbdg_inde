@@ -23,53 +23,60 @@ A arquitetura deve favorecer:
 
 ### `src/routes`
 Responsável por:
-- páginas da aplicação;
-- layouts;
-- parâmetros de rota;
+- páginas da aplicação e layouts;
+- orquestração e fluxo de tela;
 - carregamento de dados associado à navegação;
-- endpoints quando houver.
-
-As rotas devem focar orquestração, fluxo de tela e composição de componentes.
+- endpoints server-side (`src/routes/api/`), incluindo proxy transparente (`/api/get`), adaptadores de formato (`/get-json-response`, `/get-xml-response`) e integração INDE (`/api/inde/`).
 
 ### `src/lib/components`
 Responsável por:
 - componentes reutilizáveis de interface;
-- blocos visuais compartilhados;
-- encapsulamento de padrões recorrentes de UI.
+- blocos visuais compartilhados e encapsulamento de padrões de UI;
+- componentes cartográficos separados por renderizador (`openlayers/` e `map_libre/`);
+- geradores de saída no cliente (`pdf/` e `csv/`).
 
 Os componentes devem ser pequenos, coesos e semanticamente nomeados.
 
 ### `src/lib/request`
 Responsável por:
-- chamadas HTTP;
+- comunicação HTTP compartilhada do lado do cliente;
+- centralização do redirecionamento para o proxy interno quando necessário.
 
 Evitar espalhar lógica de comunicação diretamente por páginas e componentes.
 
 ### `src/lib/shared`
 Responsável por:
-- estado compartilhado entre partes da aplicação;
-- sincronização de estado quando necessário;
-- abstrações de estado reutilizáveis.
+- estado reativo compartilhado entre páginas e componentes usando Runes do Svelte 5 (`$state`, `$derived`);
+- gerenciamento de catálogos ativos, camadas e seleção geográfica (BBOX).
 
 Usar apenas quando o compartilhamento realmente fizer sentido.
 
 ### `src/lib/utils`
 Responsável por:
 - funções auxiliares puras;
-- transformação de dados;
-- lógica reaproveitável sem dependência forte de UI.
+- transformação e normalização de dados;
+- lógica reaproveitável sem dependência de UI ou estado do navegador.
 
 ### `src/lib/metadata`
 Responsável por:
-
--  parser para metadados através da ISO 19115.
+- parsing, validação e modelos de metadados na norma ISO 19115 / ISO 19139.
 
 ### `src/lib/inde`
 Responsável por:
--  adapatações de chamadas aos geosserviços
+- integrações e adaptações específicas para as APIs e catálogos da INDE e do IBGE.
 
 ### `src/lib/ogc`
--  Tratamentos dos serviços OGC: WMS, WFS, WCS, CSW
+Responsável por:
+- modelos de domínio, parsers XML e construtores de requisição dos padrões OGC: WMS, WFS, WCS e CSW.
+
+### `src/lib/types`
+Responsável por:
+- contratos de domínio compartilhados, interfaces e definições TypeScript transversais.
+
+### `tests`
+Responsável por:
+- testes unitários e de regressão executados com o test runner nativo do Node.js (`node:test`);
+- validação de parsers de XML, transformações de BBOX e comportamento puro com fixtures estáticas.
 
 ## Diretrizes de responsabilidade
 - lógica de apresentação deve ficar em componentes e páginas;
@@ -105,6 +112,18 @@ De forma simplificada:
 - manter contratos próximos do domínio da aplicação;
 - tipar props, respostas de API e estruturas compartilhadas;
 - revisar impacto de qualquer mudança de tipo em cadeia.
+
+## Segurança e Comunicação de Rede (Proxy HTTP)
+- O proxy server-side em `src/routes/api/get/+server.ts` existe para contornar restrições de CORS impostas por navegadores ao consumir servidores da INDE/IBGE.
+- **Proteção contra SSRF:** Requisições a localhost (`127.0.0.1`, `::1`), redes locais privadas (RFC 1918) ou esquemas que não sejam `http:` / `https:` devem ser bloqueadas.
+- **Validação de TLS:** Não desative globalmente a validação TLS via `process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'`. Quando for estritamente indispensável para certificados legados da INDE, restrinja o bypass ao dispatcher HTTP da requisição específica.
+- **Resiliência:** Manter timeout explícito (ex: 30s-65s) com `AbortController` e repassar códigos de status HTTP e `Content-Type` adequados para o cliente.
+
+## Qualidade de Código e Testes
+- **Tipagem Estrita:** Uso de TypeScript 5 com validação estrita via `npm run check` (`svelte-check`).
+- **Linter & Boas Práticas:** Padronização com ESLint (Flat Config) para regras de qualidade e consistência em TypeScript e Svelte 5.
+- **Testes Unitários:** Concentrados em `tests/`, focados em lógica pura (parsers XML de WMS/WFS/WCS/CSW, normalização de metadados e manipulação de BBOX).
+- **Fixtures Determinísticas:** Utilizar payloads XML gravados em vez de depender da disponibilidade de servidores externos em tempo de teste.
 
 ## Manutenção
 Ao alterar a arquitetura, verificar:
