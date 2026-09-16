@@ -6,15 +6,41 @@
         title: string;
         summary?: string;
         evaluation: MGBEvaluationResult;
+        catalogIri?: string;
+        metadataUrl?: string;
     }
 
-    let { identifier, title, summary = '', evaluation }: Props = $props();
+    let {
+        identifier,
+        title,
+        summary = '',
+        evaluation,
+        catalogIri = 'https://metadados.inde.gov.br/geonetwork/srv/por/csw',
+        metadataUrl = ''
+    }: Props = $props();
 
     let showDetails = $state(false);
 
     function toggleDetails() {
         showDetails = !showDetails;
     }
+
+    function buildGetRecordByIdUrl(baseIri: string, id: string): string {
+        const baseUrl = baseIri.split('?')[0];
+        return `${baseUrl}?service=CSW&version=2.0.2&request=GetRecordById&elementSetName=full&outputSchema=csw:IsoRecord&id=${encodeURIComponent(id)}`;
+    }
+
+    let recordUrl = $derived.by(() => {
+        if (metadataUrl) return metadataUrl;
+        if (catalogIri && identifier) {
+            return buildGetRecordByIdUrl(catalogIri, identifier);
+        }
+        return '';
+    });
+
+    let viewMetadataHref = $derived(
+        recordUrl ? `/metadado?link=${encodeURIComponent(recordUrl)}` : ''
+    );
 
     function getScoreBadgeClass(percentage: number): { bg: string; text: string; bar: string } {
         if (percentage >= 90) {
@@ -56,9 +82,21 @@
         <!-- Cabeçalho do Card -->
         <div class="flex items-start justify-between gap-3">
             <div class="min-w-0 flex-1">
-                <h3 class="line-clamp-2 text-base font-bold text-gray-900 dark:text-white" title={title}>
-                    {title || 'Sem título'}
-                </h3>
+                {#if viewMetadataHref}
+                    <a
+                        href={viewMetadataHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="line-clamp-2 text-base font-bold text-gray-900 transition hover:text-blue-600 hover:underline dark:text-white dark:hover:text-blue-400"
+                        title={`Visualizar metadado: ${title || 'Sem título'}`}
+                    >
+                        {title || 'Sem título'}
+                    </a>
+                {:else}
+                    <h3 class="line-clamp-2 text-base font-bold text-gray-900 dark:text-white" title={title}>
+                        {title || 'Sem título'}
+                    </h3>
+                {/if}
                 {#if identifier}
                     <p class="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400" title={identifier}>
                         ID: {identifier}
@@ -105,26 +143,43 @@
 
     <!-- Rodapé e Detalhes Expansíveis -->
     <div class="mt-4 border-t border-gray-100 pt-3 dark:border-gray-700/60">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-2">
             <span class="text-xs font-medium {evaluation.isFullyCompliant ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}">
                 {evaluation.isFullyCompliant ? '100% Conforme' : `${evaluation.totalElements - evaluation.compliantElements} pendências`}
             </span>
-            <button
-                class="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline dark:text-blue-400"
-                onclick={toggleDetails}
-                aria-expanded={showDetails}
-            >
-                {showDetails ? 'Ocultar elementos' : 'Ver conformidade'}
-                <svg
-                    class="h-3.5 w-3.5 transition-transform duration-200 {showDetails ? 'rotate-180' : ''}"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+            <div class="flex flex-wrap items-center gap-2">
+                {#if viewMetadataHref}
+                    <a
+                        href={viewMetadataHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:bg-blue-600 dark:hover:bg-blue-500"
+                        title="Visualizar metadado completo em outra página"
+                    >
+                        <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Ver metadado
+                    </a>
+                {/if}
+                <button
+                    class="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                    onclick={toggleDetails}
+                    aria-expanded={showDetails}
                 >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-            </button>
+                    {showDetails ? 'Ocultar elementos' : 'Ver conformidade'}
+                    <svg
+                        class="h-3.5 w-3.5 transition-transform duration-200 {showDetails ? 'rotate-180' : ''}"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+            </div>
         </div>
 
         {#if showDetails}

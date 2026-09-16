@@ -738,6 +738,7 @@
                         title={item.title}
                         summary={item.summary}
                         evaluation={item.evaluation}
+                        catalogIri={activeCatalog?.iri}
                     />
                 {/each}
             </div>
