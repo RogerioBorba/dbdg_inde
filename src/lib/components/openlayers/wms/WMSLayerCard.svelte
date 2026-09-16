@@ -30,7 +30,7 @@
         {#if metadados }
             {#each metadados as metadata}
                 <p>
-                   <a class="text-xs text-blue-500 underline underline-offset-4 uppercase" href="{metadata.href}" target="_blank">Link metadado</a>
+                   <a class="text-xs text-blue-500 underline underline-offset-4 uppercase" href="/metadado?link={encodeURIComponent(metadata.href)}" target="_blank">Metadado</a>
                    <span> tipo: {metadata.type}</span>
                 </p>
             {/each}

@@ -181,7 +181,8 @@ flowchart TD
 | **RF-021** | Varredura CSW | Executar buscas paginadas (`GetRecords`) em catálogos CSW da INDE. | `Implementado` |
 | **RF-022** | Parser ISO 19115 | Extrair e formatar identificador, título, resumo, palavras-chave, contatos, BBOX e distribuição. | `Implementado` |
 | **RF-023** | Diagnóstico de Links | Verificar a conectividade das URLs cadastradas nos registros de metadados, identificando erros 404/500. | `Implementado` |
-| **RF-024** | Conformidade Perfil MGB | Verificar a conformidade dos metadados de uma instituição em relação ao Perfil MGB 2.0 com suporte à detecção automática por escopo: Quadro 84 para produtos não-geoespaciais (15 elementos), Quadro 85 para produtos geoespaciais CDG/séries (20 elementos), Quadro 86 para CDG/séries do SCN (21 elementos) e Quadro 87 para geosserviços web (16 elementos), com indicadores percentuais individuais e globais e exportação CSV. | `Implementado` |
+| **RF-024** | Conformidade Perfil MGB | Avaliação de conformidade dos metadados de uma instituição em relação ao Perfil MGB 2.0 (norma INDE). Possui detecção automática do escopo do metadado (`detectMetadataScope`) para seleção do quadro adequado: Quadro 84 (Não Geoespacial / Recursos em Geral - 15 elementos), Quadro 85 (Produtos Geoespaciais CDG/Séries - 20 elementos), Quadro 86 (CDG/Séries do SCN - 21 elementos) e Quadro 87 (Geosserviços Web sem recursos acoplados - 16 elementos). Suporta extração robusta de atributos de listas de códigos ISO 19139 (`codeListValue`), apresenta indicadores percentuais individuais, percentual global ponderado por tipo de produto e exportação de relatórios em CSV. | `Implementado` |
+| **RF-030** | Visualizador de Metadados Parametrizado | Rota de visualização dedicada (`/metadado?link=...` e `/visualizador/metadata?link=...`) alimentada pelo componente unificado `MetadataViewer.svelte`, permitindo a visualização em nova aba do documento completo de metadados ISO 19115 / CSW GetRecordById a partir de botões de ação nos cartões de conformidade (`MGBMetadataCard`). | `Implementado` |
 
 ### 6.7 Visualizador Cartográfico (WebGIS)
 | ID | Requisito | Descrição | Status |
@@ -213,6 +214,7 @@ flowchart TD
 ```
 /
 ├── /servicos                              (Listagem de serviços da API INDE)
+├── /metadado                              (Visualizador de documento ISO 19115 / CSW GetRecordById via parâmetro ?link=...)
 ├── /ogc
 │   ├── /wms
 │   │   ├── /catalogos                     (Inventário e capacidades WMS)
@@ -227,13 +229,13 @@ flowchart TD
 │   │   └── /catalogos                     (Análise de coberturas WCS)
 │   └── /csw
 │       ├── /catalogos                     (Seleção de nós CSW)
-│       ├── /conformidade-mgb              (Avaliação de conformidade MGB - Quadros 84, 85 e 86)
+│       ├── /conformidade-mgb              (Avaliação de conformidade MGB - Quadros 84, 85, 86 e 87)
 │       ├── /metadados                     (Navegação e busca em registros)
 │       ├── /links-quebrados               (Configuração de teste de links)
 │       └── /links-quebrados/result        (Resultado e diagnósticos)
 ├── /visualizador
 │   ├── /ol                                (Visualizador principal OpenLayers)
-│   ├── /metadata                          (Visualizador de documento ISO 19115)
+│   ├── /metadata                          (Visualizador de documento ISO 19115 via ?link=...)
 │   └── /maplibre                          (Visualizador alternativo MapLibre GL)
 └── /api
     ├── /get                               (Proxy HTTP com controle de CORS e timeouts)

@@ -33,6 +33,8 @@ Responsável por:
 - componentes reutilizáveis de interface;
 - blocos visuais compartilhados e encapsulamento de padrões de UI;
 - componentes cartográficos separados por renderizador (`openlayers/` e `map_libre/`);
+- componentes de metadados (`metadata/MetadataViewer.svelte` para renderização completa de documentos ISO 19115 / CSW);
+- componentes de geosserviços e CSW (`ogc/csw/MGBMetadataCard.svelte`, `CSWCatalogSelector.svelte`);
 - geradores de saída no cliente (`pdf/` e `csv/`).
 
 Os componentes devem ser pequenos, coesos e semanticamente nomeados.
@@ -67,7 +69,8 @@ Responsável por:
 
 ### `src/lib/ogc`
 Responsável por:
-- modelos de domínio, parsers XML e construtores de requisição dos padrões OGC: WMS, WFS, WCS e CSW.
+- modelos de domínio, parsers XML e construtores de requisição dos padrões OGC: WMS, WFS, WCS e CSW;
+- regras normativas e validador do Perfil MGB 2.0 da INDE (`src/lib/ogc/csw/mgb/mgbConformance.ts`), com suporte à detecção automática de escopo e avaliação dos Quadros 84, 85, 86 e 87.
 
 ### `src/lib/types`
 Responsável por:
@@ -76,7 +79,7 @@ Responsável por:
 ### `tests`
 Responsável por:
 - testes unitários e de regressão executados com o test runner nativo do Node.js (`node:test`);
-- validação de parsers de XML, transformações de BBOX e comportamento puro com fixtures estáticas.
+- validação de regras de conformidade MGB, parsers de XML, transformações de BBOX e comportamento puro com fixtures estáticas.
 
 ## Diretrizes de responsabilidade
 - lógica de apresentação deve ficar em componentes e páginas;

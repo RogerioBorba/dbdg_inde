@@ -96,7 +96,7 @@
         //let link = wfsLayer.metadataURLs()[0].link() //wmsLayer.metadataURL().link()
         iWFSLayer.metadataURLs.forEach((metadataURL: IMetadataUrl) => {
             let link = metadataURL.href         
-            window.open(`/visualizador/metadata?link=${encodeURIComponent(link)}`, '_blank');
+            window.open(`/metadado?link=${encodeURIComponent(link)}`, '_blank');
         })
     };
 
