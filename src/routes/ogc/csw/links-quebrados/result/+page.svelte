@@ -324,9 +324,8 @@
         {#each brokenLinks as item, index (`${item.resourceUrl}-${index}`)}
             <article class="rounded-md border border-gray-200 bg-white p-4 shadow-sm">
                 <h2 class="font-semibold text-gray-900">{item.metadataTitle}</h2>
-                <p class="mt-1 break-all text-xs text-gray-500">{item.metadataIdentifier}</p>
+                <p class="mt-1 break-all text-xs text-gray-500"><span class="font-semibold">ID:</span> {item.metadataIdentifier}</p>
                 <div class="mt-3 space-y-2 text-sm text-gray-700">
-                    <p><span class="font-semibold">Resumo:</span> {item.metadataSummary}</p>
                     <p><span class="font-semibold">Protocolo:</span> {item.resourceProtocol}</p>
                     <p><span class="font-semibold">Nome do recurso:</span> {item.resourceName}</p>
                     <p><span class="font-semibold">URL:</span> <span class="break-all">{item.resourceUrl}</span></p>
