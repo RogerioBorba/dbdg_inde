@@ -128,6 +128,7 @@ test('reconhece código de caracteres do metadado e dos dados via atributo codeL
   assert.equal(result3.compliant, true);
   assert.equal(result3.value, 'utf8');
 });
+<<<<<<< HEAD
 
 test('cálculo de parâmetros de amostragem e paginação para catálogos com grande volume', () => {
   // Simulação de catálogo volumoso (ex: IBGE com 22.000 registros)
@@ -162,3 +163,5 @@ test('cálculo de parâmetros de amostragem e paginação para catálogos com gr
   assert.equal(targetAll, 22000, 'Deve visar a totalidade do catálogo');
 });
 
+=======
+>>>>>>> 049489398e5e86a05609f21ec4400f9605ffe0a9

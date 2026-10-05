@@ -894,7 +894,10 @@
                         summary={item.summary}
                         evaluation={item.evaluation}
                         catalogIri={activeCatalog?.iri}
+<<<<<<< HEAD
                         xmlElement={item.xmlElement}
+=======
+>>>>>>> 049489398e5e86a05609f21ec4400f9605ffe0a9
                     />
                 {/each}
             </div>

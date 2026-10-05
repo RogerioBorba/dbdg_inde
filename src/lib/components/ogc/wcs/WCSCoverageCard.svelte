@@ -143,7 +143,7 @@
         {#each metadados as metadata}
             <p class="text-xs mb-1">
                 <a class="text-blue-600 dark:text-blue-400 underline underline-offset-2 hover:text-blue-800 dark:hover:text-blue-300" 
-                   href="{metadata.href}" 
+                   href="/metadado?link={encodeURIComponent(metadata.href)}" 
                    target="_blank"
                    rel="noreferrer">
                    Link metadado

@@ -34,7 +34,11 @@ Responsável por:
 - blocos visuais compartilhados e encapsulamento de padrões de UI;
 - componentes cartográficos separados por renderizador (`openlayers/` e `map_libre/`);
 - componentes de metadados (`metadata/MetadataViewer.svelte` para renderização completa de documentos ISO 19115 / CSW);
+<<<<<<< HEAD
 - componentes de geosserviços e CSW (`ogc/csw/MGBMetadataCard.svelte`, `CSWCatalogSelector.svelte`, `MGBAIEvaluationModal.svelte`);
+=======
+- componentes de geosserviços e CSW (`ogc/csw/MGBMetadataCard.svelte`, `CSWCatalogSelector.svelte`);
+>>>>>>> 049489398e5e86a05609f21ec4400f9605ffe0a9
 - geradores de saída no cliente (`pdf/` e `csv/`).
 
 Os componentes devem ser pequenos, coesos e semanticamente nomeados.
@@ -78,8 +82,12 @@ Responsável por:
 ### `src/lib/ogc`
 Responsável por:
 - modelos de domínio, parsers XML e construtores de requisição dos padrões OGC: WMS, WFS, WCS e CSW;
+<<<<<<< HEAD
 - regras normativas e validador do Perfil MGB 2.0 da INDE (`src/lib/ogc/csw/mgb/mgbConformance.ts`), com suporte à detecção automática de escopo e avaliação dos Quadros 84, 85, 86 e 87;
 - varredura paginada CSW (`GetRecords`) com suporte a amostragem configurável por intervalo ('A partir de' e quantidade máxima) para mitigar gargalos em catálogos de alto volume (>20.000 registros).
+=======
+- regras normativas e validador do Perfil MGB 2.0 da INDE (`src/lib/ogc/csw/mgb/mgbConformance.ts`), com suporte à detecção automática de escopo e avaliação dos Quadros 84, 85, 86 e 87.
+>>>>>>> 049489398e5e86a05609f21ec4400f9605ffe0a9
 
 ### `src/lib/types`
 Responsável por:

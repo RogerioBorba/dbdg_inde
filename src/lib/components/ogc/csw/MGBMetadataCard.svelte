@@ -9,8 +9,11 @@
         evaluation: MGBEvaluationResult;
         catalogIri?: string;
         metadataUrl?: string;
+<<<<<<< HEAD
         rawXml?: string;
         xmlElement?: Element;
+=======
+>>>>>>> 049489398e5e86a05609f21ec4400f9605ffe0a9
     }
 
     let {
@@ -19,9 +22,13 @@
         summary = '',
         evaluation,
         catalogIri = 'https://metadados.inde.gov.br/geonetwork/srv/por/csw',
+<<<<<<< HEAD
         metadataUrl = '',
         rawXml = '',
         xmlElement
+=======
+        metadataUrl = ''
+>>>>>>> 049489398e5e86a05609f21ec4400f9605ffe0a9
     }: Props = $props();
 
     let showDetails = $state(false);
@@ -170,6 +177,7 @@
                     </a>
                 {/if}
                 <button
+<<<<<<< HEAD
                     type="button"
                     class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 dark:bg-indigo-600 dark:hover:bg-indigo-500"
                     onclick={() => (showAiModal = true)}
@@ -185,6 +193,12 @@
                     onclick={toggleDetails}
                     aria-expanded={showDetails}
                 >
+=======
+                    class="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                    onclick={toggleDetails}
+                    aria-expanded={showDetails}
+                >
+>>>>>>> 049489398e5e86a05609f21ec4400f9605ffe0a9
                     {showDetails ? 'Ocultar elementos' : 'Ver conformidade'}
                     <svg
                         class="h-3.5 w-3.5 transition-transform duration-200 {showDetails ? 'rotate-180' : ''}"
