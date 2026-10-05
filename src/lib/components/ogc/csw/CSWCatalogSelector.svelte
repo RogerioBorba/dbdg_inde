@@ -41,7 +41,7 @@
         <label for={selectId} class="mr-4">{label}</label>
         <div>
             <input
-                class="mr-1 rounded w-4 h-4 focus:outline-none border-gray-300"
+                class="mr-1 rounded w-4 h-4 focus:outline-none border border-gray-300"
                 type="checkbox"
                 checked={checked}
                 onclick={() => onToggleAll?.()}
@@ -67,14 +67,14 @@
 
     <div class="mt-2 w-full p1 flex flex-col md:flex-row">
         <input
-            class="border-gray-300 focus:outline-none w-full rounded md:w-2/5 mr-1"
+            class="border border-gray-300 focus:outline-none w-full rounded md:w-2/5 mr-1 p-2"
             type="text"
             value={nameCatalog}
             oninput={(event) => onNameCatalogChange?.((event.currentTarget as HTMLInputElement).value)}
             placeholder="Informe o nome do catalogo"
         >
         <input
-            class="border-gray-300 focus:outline-none rounded w-full md:w-2/5 mr-1"
+            class="border border-gray-300 focus:outline-none rounded w-full md:w-2/5 mr-1 p-2"
             type="text"
             value={adressCatalog}
             oninput={(event) => onAdressCatalogChange?.((event.currentTarget as HTMLInputElement).value)}

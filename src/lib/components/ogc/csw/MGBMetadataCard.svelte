@@ -1,20 +1,52 @@
 <script lang="ts">
     import type { MGBEvaluationResult } from '$lib/ogc/csw/mgb/mgbConformance';
+    import MGBAIEvaluationModal from '$lib/components/ogc/csw/MGBAIEvaluationModal.svelte';
 
     interface Props {
         identifier: string;
         title: string;
         summary?: string;
         evaluation: MGBEvaluationResult;
+        catalogIri?: string;
+        metadataUrl?: string;
+        rawXml?: string;
+        xmlElement?: Element;
     }
 
-    let { identifier, title, summary = '', evaluation }: Props = $props();
+    let {
+        identifier,
+        title,
+        summary = '',
+        evaluation,
+        catalogIri = 'https://metadados.inde.gov.br/geonetwork/srv/por/csw',
+        metadataUrl = '',
+        rawXml = '',
+        xmlElement
+    }: Props = $props();
 
     let showDetails = $state(false);
+    let showAiModal = $state(false);
 
     function toggleDetails() {
         showDetails = !showDetails;
     }
+
+    function buildGetRecordByIdUrl(baseIri: string, id: string): string {
+        const baseUrl = baseIri.split('?')[0];
+        return `${baseUrl}?service=CSW&version=2.0.2&request=GetRecordById&elementSetName=full&outputSchema=csw:IsoRecord&id=${encodeURIComponent(id)}`;
+    }
+
+    let recordUrl = $derived.by(() => {
+        if (metadataUrl) return metadataUrl;
+        if (catalogIri && identifier) {
+            return buildGetRecordByIdUrl(catalogIri, identifier);
+        }
+        return '';
+    });
+
+    let viewMetadataHref = $derived(
+        recordUrl ? `/metadado?link=${encodeURIComponent(recordUrl)}` : ''
+    );
 
     function getScoreBadgeClass(percentage: number): { bg: string; text: string; bar: string } {
         if (percentage >= 90) {
@@ -56,9 +88,21 @@
         <!-- Cabeçalho do Card -->
         <div class="flex items-start justify-between gap-3">
             <div class="min-w-0 flex-1">
-                <h3 class="line-clamp-2 text-base font-bold text-gray-900 dark:text-white" title={title}>
-                    {title || 'Sem título'}
-                </h3>
+                {#if viewMetadataHref}
+                    <a
+                        href={viewMetadataHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="line-clamp-2 text-base font-bold text-gray-900 transition hover:text-blue-600 hover:underline dark:text-white dark:hover:text-blue-400"
+                        title={`Visualizar metadado: ${title || 'Sem título'}`}
+                    >
+                        {title || 'Sem título'}
+                    </a>
+                {:else}
+                    <h3 class="line-clamp-2 text-base font-bold text-gray-900 dark:text-white" title={title}>
+                        {title || 'Sem título'}
+                    </h3>
+                {/if}
                 {#if identifier}
                     <p class="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400" title={identifier}>
                         ID: {identifier}
@@ -105,26 +149,54 @@
 
     <!-- Rodapé e Detalhes Expansíveis -->
     <div class="mt-4 border-t border-gray-100 pt-3 dark:border-gray-700/60">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-2">
             <span class="text-xs font-medium {evaluation.isFullyCompliant ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}">
                 {evaluation.isFullyCompliant ? '100% Conforme' : `${evaluation.totalElements - evaluation.compliantElements} pendências`}
             </span>
-            <button
-                class="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline dark:text-blue-400"
-                onclick={toggleDetails}
-                aria-expanded={showDetails}
-            >
-                {showDetails ? 'Ocultar elementos' : 'Ver conformidade'}
-                <svg
-                    class="h-3.5 w-3.5 transition-transform duration-200 {showDetails ? 'rotate-180' : ''}"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+            <div class="flex flex-wrap items-center gap-2">
+                {#if viewMetadataHref}
+                    <a
+                        href={viewMetadataHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:bg-blue-600 dark:hover:bg-blue-500"
+                        title="Visualizar metadado completo em outra página"
+                    >
+                        <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Ver metadado
+                    </a>
+                {/if}
+                <button
+                    type="button"
+                    class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 dark:bg-indigo-600 dark:hover:bg-indigo-500"
+                    onclick={() => (showAiModal = true)}
+                    title="Avaliar qualidade semântica do metadado com Agente de IA (Perfil MGB)"
                 >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-            </button>
+                    <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+                    </svg>
+                    Avaliar com IA
+                </button>
+                <button
+                    class="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                    onclick={toggleDetails}
+                    aria-expanded={showDetails}
+                >
+                    {showDetails ? 'Ocultar elementos' : 'Ver conformidade'}
+                    <svg
+                        class="h-3.5 w-3.5 transition-transform duration-200 {showDetails ? 'rotate-180' : ''}"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+            </div>
         </div>
 
         {#if showDetails}
@@ -161,4 +233,16 @@
             </div>
         {/if}
     </div>
+
+    <!-- Modal de Avaliação Semântica por IA -->
+    <MGBAIEvaluationModal
+        isOpen={showAiModal}
+        metadataId={identifier}
+        metadataTitle={title}
+        catalogIri={catalogIri}
+        metadataUrl={recordUrl}
+        rawXml={rawXml || (xmlElement ? xmlElement.outerHTML : '')}
+        quadroId={evaluation.quadroId}
+        onClose={() => (showAiModal = false)}
+    />
 </article>

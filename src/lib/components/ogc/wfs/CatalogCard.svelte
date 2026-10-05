@@ -2,7 +2,7 @@
     import { goto } from '$app/navigation';
     import { capabilities, layerStats, type IFeatureType, type ILayerStats, type IWFSGetCapabilities}from '$lib/ogc/wfs/wfsCapabilities';
     import type { OGCProcessRecord } from '$lib/ogc/commom/OGCRecord';
-    import { Spinner } from "flowbite-svelte";
+    import { Spinner } from "$lib/components/ui/spinner";
     import { fade } from 'svelte/transition'
     import { onMount } from 'svelte';
     import { get } from "$lib/request/get";

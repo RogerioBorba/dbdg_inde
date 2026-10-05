@@ -38,9 +38,14 @@
     let rawRecords = $state<RawMetadataItem[]>([]);
     let totalRecordsInCatalog = $state(0);
     let loadedCount = $state(0);
+    let targetEvaluationCount = $state(0);
     let isLoading = $state(false);
     let statusMessage = $state('Selecione uma instituição e clique em "Analisar Conformidade".');
     let errorMessage = $state('');
+
+    // Filtro de Amostragem / Intervalo de Registros (Opcional)
+    let startFromRecord = $state<number | null>(null);
+    let maxRecordsToEvaluate = $state<number | null>(null);
 
     // Filtros
     let searchTerm = $state('');
@@ -53,6 +58,7 @@
         identifier: string;
         title: string;
         summary: string;
+        xmlElement: Element;
         evaluation: MGBEvaluationResult;
     }
 
@@ -61,6 +67,7 @@
             identifier: item.identifier,
             title: item.title,
             summary: item.summary,
+            xmlElement: item.xmlElement,
             evaluation: evaluateMGBRecord(item.xmlElement, selectedQuadro)
         }))
     );
@@ -212,7 +219,7 @@
         return '';
     }
 
-    function buildGetRecordsUrl(catalog: CSWCatalog, startPosition: number): URL {
+    function buildGetRecordsUrl(catalog: CSWCatalog, startPosition: number, batchSize = PAGE_SIZE): URL {
         const baseUrl = catalog.iri.split('?')[0];
         const url = new URL(baseUrl);
         url.searchParams.set('service', 'CSW');
@@ -222,7 +229,7 @@
         url.searchParams.set('elementSetName', 'full');
         url.searchParams.set('resultType', 'results');
         url.searchParams.set('outputSchema', 'http://www.isotc211.org/2005/gmd');
-        url.searchParams.set('maxRecords', String(PAGE_SIZE));
+        url.searchParams.set('maxRecords', String(batchSize));
         url.searchParams.set('startPosition', String(startPosition));
 
         if (catalog.noCentralCategoria) {
@@ -276,16 +283,31 @@
         rawRecords = [];
         totalRecordsInCatalog = 0;
         loadedCount = 0;
+        targetEvaluationCount = 0;
         errorMessage = '';
         isLoading = true;
 
-        let startPosition = 1;
+        // Posição inicial (a partir de): padrão 1 se não preenchido ou inválido
+        let startPosition = (startFromRecord && startFromRecord > 0) ? Math.floor(startFromRecord) : 1;
+        // Limite máximo de registros a avaliar: se não preenchido, avalia todos
+        const userLimit = (maxRecordsToEvaluate && maxRecordsToEvaluate > 0) ? Math.floor(maxRecordsToEvaluate) : null;
 
         try {
             while (true) {
-                statusMessage = `Consultando registros ${loadedCount + 1} a ${loadedCount + PAGE_SIZE} de ${targetCatalog.descricao}...`;
+                // Se atingiu o limite do usuário, encerra o loop
+                if (userLimit !== null && rawRecords.length >= userLimit) {
+                    break;
+                }
 
-                const url = buildGetRecordsUrl(targetCatalog, startPosition);
+                // Determina o lote a solicitar nesta iteração
+                let currentBatchSize = PAGE_SIZE;
+                if (userLimit !== null) {
+                    const remaining = userLimit - rawRecords.length;
+                    if (remaining <= 0) break;
+                    currentBatchSize = Math.min(PAGE_SIZE, remaining);
+                }
+
+                const url = buildGetRecordsUrl(targetCatalog, startPosition, currentBatchSize);
                 const response = await get(url);
                 const xmlText = await response.text();
 
@@ -296,27 +318,48 @@
                 const total = parseInt(searchResults?.getAttribute('numberOfRecordsMatched') || '0', 10);
                 totalRecordsInCatalog = total;
 
+                // Calcula quantidade alvo efetiva para feedback visual
+                const availableFromStart = Math.max(0, total - startPosition + 1);
+                targetEvaluationCount = userLimit !== null
+                    ? Math.min(userLimit, availableFromStart)
+                    : total;
+
+                statusMessage = `Consultando registros a partir de ${startPosition} de ${targetCatalog.descricao} (carregados ${rawRecords.length} de ${targetEvaluationCount})...`;
+
                 // Extrai os elementos de metadados retornados
                 const metadataNodes = Array.from(xml.querySelectorAll('gmd\\:MD_Metadata, MD_Metadata'));
 
                 if (metadataNodes.length > 0) {
                     // O servidor já devolveu os registros completos em GetRecords
                     for (const node of metadataNodes) {
+                        if (userLimit !== null && rawRecords.length >= userLimit) break;
                         rawRecords = [...rawRecords, parseMetadataElementToRaw(node)];
                     }
                     loadedCount = rawRecords.length;
                     startPosition += metadataNodes.length;
 
-                    if (rawRecords.length >= total || metadataNodes.length < PAGE_SIZE) {
+                    if (
+                        (userLimit !== null && rawRecords.length >= userLimit) ||
+                        startPosition > total ||
+                        metadataNodes.length === 0 ||
+                        metadataNodes.length < currentBatchSize
+                    ) {
                         break;
                     }
                 } else {
                     // Fallback para caso retorne apenas identificadores sintéticos
                     const idNodes = Array.from(xml.querySelectorAll('identifier, dc\\:identifier, gmd\\:fileIdentifier'));
-                    const identifiers = idNodes.map((n) => n.textContent?.trim()).filter((id): id is string => !!id);
+                    let identifiers = idNodes.map((n) => n.textContent?.trim()).filter((id): id is string => !!id);
 
                     if (identifiers.length === 0) {
                         break;
+                    }
+
+                    if (userLimit !== null) {
+                        const remaining = userLimit - rawRecords.length;
+                        if (remaining < identifiers.length) {
+                            identifiers = identifiers.slice(0, remaining);
+                        }
                     }
 
                     const fetchedList = await Promise.all(
@@ -338,14 +381,19 @@
 
                     for (const item of fetchedList) {
                         if (item) {
+                            if (userLimit !== null && rawRecords.length >= userLimit) break;
                             rawRecords = [...rawRecords, item];
                         }
                     }
 
                     loadedCount = rawRecords.length;
-                    startPosition += identifiers.length;
+                    startPosition += idNodes.length;
 
-                    if (rawRecords.length >= total || identifiers.length < PAGE_SIZE) {
+                    if (
+                        (userLimit !== null && rawRecords.length >= userLimit) ||
+                        startPosition > total ||
+                        idNodes.length < currentBatchSize
+                    ) {
                         break;
                     }
                 }
@@ -355,9 +403,12 @@
             }
 
             const currentQuadroTitle = MGB_QUADROS_INFO[selectedQuadro]?.title || 'Perfil MGB';
+            const rangeInfo = userLimit !== null
+                ? `(amostra de ${rawRecords.length} registros a partir da posição ${startFromRecord || 1})`
+                : `(todos os ${rawRecords.length} registros)`;
             statusMessage = rawRecords.length === 0
-                ? 'Nenhum registro de metadado localizado para este catálogo.'
-                : `Análise concluída: ${rawRecords.length} metadados avaliados contra o ${currentQuadroTitle}.`;
+                ? 'Nenhum registro de metadado localizado para este catálogo no intervalo solicitado.'
+                : `Análise concluída: ${rawRecords.length} metadados avaliados ${rangeInfo} contra o ${currentQuadroTitle}.`;
         } catch (err: any) {
             errorMessage = `Falha ao carregar metadados do catálogo. ${err?.message || 'Verifique o endpoint e tente novamente.'}`;
             statusMessage = 'Erro na requisição.';
@@ -447,7 +498,7 @@
         <div class="mt-4">
             <CSWCatalogSelector
                 items={availableCatalogs}
-                {selectedCatalogs}
+                selectedItems={selectedCatalogs}
                 checked={checkedAll}
                 nameCatalog={newCatalogName}
                 adressCatalog={newCatalogAddress}
@@ -459,6 +510,98 @@
                 onAdressCatalogChange={(val) => (newCatalogAddress = val)}
                 onAddCatalog={addNewCatalog}
             />
+        </div>
+
+        <!-- Opções de Limite e Intervalo de Registros para Avaliação (Opcional) -->
+        <div class="mt-4 rounded-lg border border-gray-100 bg-gray-50/80 p-3.5 dark:border-gray-700/60 dark:bg-gray-800/60">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                <span class="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                    Filtro de Amostragem / Intervalo de Registros (Opcional)
+                </span>
+                <span class="text-[11px] text-gray-500 dark:text-gray-400">
+                    Recomendado para catálogos com alto volume de dados (ex: IBGE com mais de 20.000 registros)
+                </span>
+            </div>
+
+            <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div>
+                    <label for="start-record-input" class="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                        A partir do registro (início):
+                    </label>
+                    <input
+                        id="start-record-input"
+                        type="number"
+                        min="1"
+                        placeholder="Ex: 1 (padrão)"
+                        bind:value={startFromRecord}
+                        disabled={isLoading}
+                        class="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-800 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"
+                    />
+                    <p class="mt-0.5 text-[10px] text-gray-500 dark:text-gray-400">
+                        Posição inicial no CSW (GetRecords startPosition).
+                    </p>
+                </div>
+
+                <div>
+                    <label for="max-records-input" class="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                        Quantidade a ser avaliada:
+                    </label>
+                    <input
+                        id="max-records-input"
+                        type="number"
+                        min="1"
+                        placeholder="Ex: 20, 50, 100 (vazio = todos)"
+                        bind:value={maxRecordsToEvaluate}
+                        disabled={isLoading}
+                        class="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-800 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"
+                    />
+                    <p class="mt-0.5 text-[10px] text-gray-500 dark:text-gray-400">
+                        Se não preenchido, todos os registros do catálogo serão avaliados.
+                    </p>
+                </div>
+
+                <!-- Atalhos Rápidos de Quantidade -->
+                <div class="flex flex-col justify-end">
+                    <span class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                        Atalhos rápidos de quantidade:
+                    </span>
+                    <div class="flex flex-wrap gap-1.5">
+                        <button
+                            type="button"
+                            disabled={isLoading}
+                            onclick={() => { startFromRecord = 1; maxRecordsToEvaluate = 20; }}
+                            class="rounded border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700 shadow-sm hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                        >
+                            20 primeiros
+                        </button>
+                        <button
+                            type="button"
+                            disabled={isLoading}
+                            onclick={() => { startFromRecord = 1; maxRecordsToEvaluate = 50; }}
+                            class="rounded border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700 shadow-sm hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                        >
+                            50 registros
+                        </button>
+                        <button
+                            type="button"
+                            disabled={isLoading}
+                            onclick={() => { startFromRecord = 1; maxRecordsToEvaluate = 100; }}
+                            class="rounded border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700 shadow-sm hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                        >
+                            100 registros
+                        </button>
+                        <button
+                            type="button"
+                            disabled={isLoading}
+                            onclick={() => { startFromRecord = null; maxRecordsToEvaluate = null; }}
+                            class="rounded border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-500 shadow-sm hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+                            title="Limpar campos para avaliar todo o catálogo"
+                        >
+                            Limpar (Todos)
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="mt-4 flex flex-wrap items-center gap-3">
@@ -495,14 +638,19 @@
             <div class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-300">
                 <span>{statusMessage}</span>
                 {#if totalRecordsInCatalog > 0}
-                    <span class="font-bold">{loadedCount} / {totalRecordsInCatalog}</span>
+                    <span class="font-bold">
+                        {loadedCount} / {targetEvaluationCount > 0 ? targetEvaluationCount : totalRecordsInCatalog}
+                        {#if targetEvaluationCount > 0 && targetEvaluationCount < totalRecordsInCatalog}
+                            <span class="font-normal text-gray-400"> (Total no catálogo: {totalRecordsInCatalog})</span>
+                        {/if}
+                    </span>
                 {/if}
             </div>
-            {#if isLoading && totalRecordsInCatalog > 0}
+            {#if isLoading && (targetEvaluationCount > 0 || totalRecordsInCatalog > 0)}
                 <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
                     <div
                         class="h-full bg-blue-600 transition-all duration-200"
-                        style="width: {Math.min(100, Math.round((loadedCount / totalRecordsInCatalog) * 100))}%"
+                        style="width: {Math.min(100, Math.round((loadedCount / (targetEvaluationCount > 0 ? targetEvaluationCount : totalRecordsInCatalog)) * 100))}%"
                     ></div>
                 </div>
             {/if}
@@ -609,6 +757,13 @@
                     </h2>
                     <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                         {selectedQuadro === 'AUTO' ? 'Modo Automático: Validação adaptativa conforme o escopo de cada metadado' : MGB_QUADROS_INFO[selectedQuadro].title}
+                        {#if maxRecordsToEvaluate || (startFromRecord && startFromRecord > 1)}
+                            <span class="ml-1 font-semibold text-blue-600 dark:text-blue-400">
+                                • Amostragem: {rawRecords.length} metadados (início na posição {startFromRecord || 1}) de {totalRecordsInCatalog} no catálogo
+                            </span>
+                        {:else}
+                            <span class="ml-1">• Total avaliado: {rawRecords.length} de {totalRecordsInCatalog} registros</span>
+                        {/if}
                     </p>
                 </div>
 
@@ -738,6 +893,8 @@
                         title={item.title}
                         summary={item.summary}
                         evaluation={item.evaluation}
+                        catalogIri={activeCatalog?.iri}
+                        xmlElement={item.xmlElement}
                     />
                 {/each}
             </div>

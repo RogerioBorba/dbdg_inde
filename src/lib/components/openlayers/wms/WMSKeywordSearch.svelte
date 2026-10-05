@@ -177,7 +177,7 @@
     <div class="mb-3 flex items-center gap-2">
         <input
             id="selecionar-todos-wms-keyword"
-            class="rounded border-gray-300"
+            class="rounded border border-gray-300"
             type="checkbox"
             checked={allCatalogsSelected}
             onchange={toggleAllCatalogs}

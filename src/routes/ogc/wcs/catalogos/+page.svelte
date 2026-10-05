@@ -139,7 +139,7 @@
     <div class="flex items-center flex-col sm:flex-row mb-1 text-sm font-medium text-gray-900 dark:text-gray-400">
         <label for="instituicoes_multiple" class="mr-4">Escolha as instituições</label>
         <div>
-            <input class="mr-1 rounded w-4 h-4 focus:outline-none border-gray-300" type="checkbox" {checked} onclick={isChecking}> 
+            <input class="mr-1 rounded w-4 h-4 focus:outline-none border border-gray-300" type="checkbox" {checked} onclick={isChecking}> 
             <span class="mr-2">selecione todos</span>
         </div>
         <button class="mr-4 focus:outline-none bg-grey-light hover:bg-grey font-bold rounded inline-flex items-center
@@ -172,8 +172,8 @@
 {/snippet}
 {#snippet adiconarNovoWCSGetCapabilities()}
     <div class="mt-2 w-full p1 flex flex-col md:flex-row">
-        <input class="border-gray-300 focus:outline-none w-full rounded md:w-2/5 mr-1" type="text"  bind:value={nameCatalog} placeholder="Informe o nome do catálogo"> 
-        <input class="border-gray-300 focus:outline-none rounded w-full md:w-2/5 mr-1" type="text"  bind:value={adressCatalog} placeholder="Informe o endereço/link WCS do GetCapabilities"> 
+        <input class="border border-gray-300 focus:outline-none w-full rounded md:w-2/5 mr-1 p-2" type="text"  bind:value={nameCatalog} placeholder="Informe o nome do catálogo"> 
+        <input class="border border-gray-300 focus:outline-none rounded w-full md:w-2/5 mr-1 p-2" type="text"  bind:value={adressCatalog} placeholder="Informe o endereço/link WCS do GetCapabilities"> 
         <button class=" md:w-1/5 shadow-sm rounded bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 disabled:opacity-25" 
         onclick={preventDefault(addNewCatalog)} disabled={disableButtonAddNewCatalog}>Adicionar novo catálogo</button>
     </div>

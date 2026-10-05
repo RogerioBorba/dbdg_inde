@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Spinner} from 'flowbite-svelte';
+    import { Spinner } from '$lib/components/ui/spinner';
     import { goto } from '$app/navigation';
     import { fade } from 'svelte/transition'
     import { onMount } from 'svelte';

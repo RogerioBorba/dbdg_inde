@@ -26,16 +26,26 @@ Responsável por:
 - páginas da aplicação e layouts;
 - orquestração e fluxo de tela;
 - carregamento de dados associado à navegação;
-- endpoints server-side (`src/routes/api/`), incluindo proxy transparente (`/api/get`), adaptadores de formato (`/get-json-response`, `/get-xml-response`) e integração INDE (`/api/inde/`).
+- endpoints server-side (`src/routes/api/`), incluindo proxy transparente (`/api/get`), adaptadores de formato (`/get-json-response`, `/get-xml-response`), integração INDE (`/api/inde/`) e agente semântico de metadados (`/api/ai/avaliar-metadado`).
 
 ### `src/lib/components`
 Responsável por:
 - componentes reutilizáveis de interface;
 - blocos visuais compartilhados e encapsulamento de padrões de UI;
 - componentes cartográficos separados por renderizador (`openlayers/` e `map_libre/`);
+- componentes de metadados (`metadata/MetadataViewer.svelte` para renderização completa de documentos ISO 19115 / CSW);
+- componentes de geosserviços e CSW (`ogc/csw/MGBMetadataCard.svelte`, `CSWCatalogSelector.svelte`, `MGBAIEvaluationModal.svelte`);
 - geradores de saída no cliente (`pdf/` e `csv/`).
 
 Os componentes devem ser pequenos, coesos e semanticamente nomeados.
+
+### `src/lib/ai`
+Responsável por:
+- modelos, prompts e orquestração do Agente de IA para avaliação semântica do Perfil MGB 2.0;
+- construção de instruções normativas especializadas para os Quadros 84, 85, 86 e 87;
+- motor de avaliação estruturada com suporte a provedores LLM (Gemini / OpenAI / Ollama) e motor heurístico de fallback determinístico;
+- cálculo de notas de qualidade semântica (0 a 100), pareceres analíticos por dimensão e geração de propostas de melhoria textual por elemento;
+- geração de relatórios de auditoria em PDF estilizados via `jsPDF` (`src/lib/ai/mgbPdfReport.ts`).
 
 ### `src/lib/request`
 Responsável por:
@@ -67,7 +77,9 @@ Responsável por:
 
 ### `src/lib/ogc`
 Responsável por:
-- modelos de domínio, parsers XML e construtores de requisição dos padrões OGC: WMS, WFS, WCS e CSW.
+- modelos de domínio, parsers XML e construtores de requisição dos padrões OGC: WMS, WFS, WCS e CSW;
+- regras normativas e validador do Perfil MGB 2.0 da INDE (`src/lib/ogc/csw/mgb/mgbConformance.ts`), com suporte à detecção automática de escopo e avaliação dos Quadros 84, 85, 86 e 87;
+- varredura paginada CSW (`GetRecords`) com suporte a amostragem configurável por intervalo ('A partir de' e quantidade máxima) para mitigar gargalos em catálogos de alto volume (>20.000 registros).
 
 ### `src/lib/types`
 Responsável por:
@@ -76,7 +88,7 @@ Responsável por:
 ### `tests`
 Responsável por:
 - testes unitários e de regressão executados com o test runner nativo do Node.js (`node:test`);
-- validação de parsers de XML, transformações de BBOX e comportamento puro com fixtures estáticas.
+- validação de regras de conformidade MGB, parsers de XML, transformações de BBOX e comportamento puro com fixtures estáticas.
 
 ## Diretrizes de responsabilidade
 - lógica de apresentação deve ficar em componentes e páginas;

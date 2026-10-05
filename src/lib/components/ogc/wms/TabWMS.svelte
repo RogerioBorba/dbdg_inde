@@ -1,26 +1,15 @@
 <script lang="ts">
-    import {Tabs, TabItem} from 'flowbite-svelte';
+    import * as Tabs from '$lib/components/ui/tabs';
     import BaseWMS from './BaseWMS.svelte';
-   // import WMSSearchByNomeTitulo from './WMSSearchByNomeTitulo.svelte'
-   //import WmsSearchByPalavraChave from './WMSSearchByPalavraChave.svelte';
-   // import WmsPesquisaEspacial from './WMSPesquisaEspacial.svelte';
 </script>
     
-<Tabs style="underline" >
-    <TabItem open title='Por instituição'>
-        <BaseWMS></BaseWMS>
-    <!--
-    </TabItem>
-    <TabItem title='Por nome ou título'>
-        <WMSSearchByNomeTitulo></WMSSearchByNomeTitulo>
-        
-    </TabItem>
-    <TabItem title='Por palavra chave'>
-        <WmsSearchByPalavraChave></WmsSearchByPalavraChave>
-    </TabItem>
-
-    <TabItem title='Pesquisa espacial'>
-        <WmsPesquisaEspacial></WmsPesquisaEspacial>
-    -->    
-    </TabItem>
-</Tabs>
+<Tabs.Root value="instituicao">
+    <Tabs.List>
+        <Tabs.Trigger value="instituicao">
+            Por instituição
+        </Tabs.Trigger>
+    </Tabs.List>
+    <Tabs.Content value="instituicao">
+        <BaseWMS />
+    </Tabs.Content>
+</Tabs.Root>

@@ -4,7 +4,7 @@ Orientações para agentes de IA que trabalham neste repositório.
 
 ## Visão geral
 
-O DBDG INDE é uma aplicação web de consulta, análise e visualização de geosserviços da INDE. A aplicação usa SvelteKit 2, Svelte 5, TypeScript, Tailwind CSS 4, Flowbite Svelte, OpenLayers, MapLibre GL e deck.gl.
+O DBDG INDE é uma aplicação web de consulta, análise e visualização de geosserviços da INDE. A aplicação usa SvelteKit 2, Svelte 5, TypeScript, Tailwind CSS 4, shadcn-svelte, lucide-svelte, OpenLayers, MapLibre GL e deck.gl.
 
 Antes de alterar comportamento relevante, consulte:
 

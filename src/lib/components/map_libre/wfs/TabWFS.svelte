@@ -1,26 +1,15 @@
-<script>
-    import {  Tabs, TabItem} from 'flowbite-svelte';
-    import BaseWFS from './BaseWFS.svelte'  
-    //import WfsSearchByNomeTitulo from './WFSSearchByNomeTitulo.svelte';
-	//import WfsPesquisaEspacial from './WFSPesquisaEspacial.svelte';
-    //import WfsSearchByPalavraChave from './WFSSearchByPalavraChave.svelte'
+<script lang="ts">
+    import * as Tabs from '$lib/components/ui/tabs';
+    import BaseWFS from './BaseWFS.svelte';
 </script>
     
-<Tabs style="underline" >
-    <TabItem open title='Por instituição'>
-        <BaseWFS></BaseWFS>
-        
-    </TabItem>
-    <!--<TabItem title='Por nome ou título'>
-        <WfsSearchByNomeTitulo/>
-        
-    </TabItem>
-    <TabItem title='Por palavra chave'>
-        <WfsSearchByPalavraChave/>
-    </TabItem>
-
-    <TabItem title='Pesquisa espacial'>
-        <WfsPesquisaEspacial/>
-    </TabItem>
-    -->
-</Tabs>
+<Tabs.Root value="instituicao">
+    <Tabs.List>
+        <Tabs.Trigger value="instituicao">
+            Por instituição
+        </Tabs.Trigger>
+    </Tabs.List>
+    <Tabs.Content value="instituicao">
+        <BaseWFS />
+    </Tabs.Content>
+</Tabs.Root>

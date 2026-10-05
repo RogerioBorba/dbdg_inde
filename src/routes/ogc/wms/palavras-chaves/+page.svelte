@@ -6,7 +6,7 @@
     import type { IGeoservicoDescricao } from '$lib/inde';
     import { iWMSCapabilities,  layersAndGroupKayers,  type IWMSLayer } from '$lib/ogc/wms/wmsCapabilities';
     import { get } from '$lib/request/get';
-    import { FileCsvSolid, FilePdfSolid } from 'flowbite-svelte-icons';
+    import { FileSpreadsheet, FileText } from 'lucide-svelte';
     import { onMount } from 'svelte';
     let selectedItems = $state<{id: number, descricao: string, iri: string}[]>([]);
     interface IdDescricaoIRI {id: number, descricao: string, iri: string};
@@ -118,7 +118,7 @@
     <div class="flex flex-col md:flex-row items-center mb-1 text-sm font-medium text-gray-900 dark:text-gray-400">
         <label for="instituicoes_multiple" class="mr-4">Escolha as instituições</label>
         <div>
-            <input class="mr-1 rounded w-4 h-4 focus:outline-none border-gray-300" type="checkbox" {checked}
+            <input class="mr-1 rounded w-4 h-4 focus:outline-none border border-gray-300" type="checkbox" {checked}
              onclick={preventDefault(isChecking)} > 
             <span class="mr-2">selecione todos</span>
         </div>
@@ -142,7 +142,7 @@
                 disabled={allKeywords.length == 0} 
                 onclick={preventDefault(() => {btnPDFClicked();})} 
                 title="Gerar PDF com todas as palavras chaves">
-                <FilePdfSolid class="h-6 w-6 text-red-500 dark:text-purple-300 shrink-0 disabled:text-gray-400"/>
+                <FileText class="h-6 w-6 text-red-500 dark:text-purple-300 shrink-0 disabled:text-gray-400"/>
             </button>
             <button 
                 class="ml-2 focus:outline-none bg-grey-light hover:bg-grey font-bold rounded inline-flex items-center
@@ -150,7 +150,7 @@
                 disabled={allKeywords.length == 0} 
                 onclick={preventDefault(() => {btnCSVClicked();})} 
                 title="Gerar CSV com todas as palavras chaves">
-                <FileCsvSolid class="h-6 w-6 text-green-500 dark:text-green-500 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-200"/>
+                <FileSpreadsheet class="h-6 w-6 text-green-500 dark:text-green-500 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-200"/>
             </button>    
         </div>
     </div>
@@ -165,8 +165,8 @@
     </select>
     <!--adicionar novo catálogo(nome e url)-->
     <div class="mt-2 w-full p1 flex flex-col md:flex-row">
-        <input class="border-gray-300 focus:outline-none w-full rounded md:w-2/5 mr-1" type="text" bind:value={nameCatalog} placeholder="Informe o nome do catálogo"> 
-        <input class="border-gray-300 focus:outline-none rounded w-full md:w-2/5 mr-1" type="text" bind:value={adressCatalog} placeholder="Informe o endereço/link WMS do GetCapabilities"> 
+        <input class="border border-gray-300 focus:outline-none w-full rounded md:w-2/5 mr-1 p-2" type="text" bind:value={nameCatalog} placeholder="Informe o nome do catálogo"> 
+        <input class="border border-gray-300 focus:outline-none rounded w-full md:w-2/5 mr-1 p-2" type="text" bind:value={adressCatalog} placeholder="Informe o endereço/link WMS do GetCapabilities"> 
         <button class="md:w-1/5 shadow-sm rounded bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 disabled:opacity-25" 
         onclick={preventDefault(addNewCatalog)} disabled={disableButtonAddNewCatalog}>Adicionar novo catálogo</button>
     </div>

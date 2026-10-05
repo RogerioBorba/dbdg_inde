@@ -63,11 +63,29 @@ export interface MGBMetadataItem {
 // Funções auxiliares tolerantes a namespaces (ISO 19139 gmd: e ISO 19115-3)
 // ---------------------------------------------------------------------------
 
+function getNodeValue(node: Element | null | undefined): string {
+    if (!node) return '';
+    const nilReason = node.getAttribute('nilReason') || node.getAttribute('gco:nilReason');
+    if (nilReason === 'missing') return '';
+    const codeListVal = node.getAttribute('codeListValue')?.trim();
+    if (codeListVal) return codeListVal;
+    const valAttr = node.getAttribute('value')?.trim();
+    if (valAttr) return valAttr;
+    const txt = node.textContent?.trim();
+    if (txt) return txt;
+    const childWithCode = node.querySelector?.('[codeListValue], [value]');
+    if (childWithCode) {
+        const childVal = childWithCode.getAttribute('codeListValue')?.trim() || childWithCode.getAttribute('value')?.trim();
+        if (childVal) return childVal;
+    }
+    return '';
+}
+
 function findFirstText(parent: Element, selectors: string[]): string {
     for (const sel of selectors) {
         try {
             const node = parent.querySelector(sel);
-            const val = node?.textContent?.trim();
+            const val = getNodeValue(node);
             if (val) return val;
         } catch {
             // Ignora seletores com sintaxe não suportada em certos navegadores
@@ -81,8 +99,8 @@ function hasAnyDescendantByLocalNames(parent: Element, localNames: string[]): bo
     for (let i = 0; i < all.length; i++) {
         const item = all[i];
         if (localNames.includes(item.localName)) {
-            const txt = item.textContent?.trim();
-            if (txt) return true;
+            const val = getNodeValue(item);
+            if (val) return true;
         }
     }
     return false;
@@ -93,8 +111,8 @@ function findFirstTextByLocalNames(parent: Element, localNames: string[]): strin
     for (let i = 0; i < all.length; i++) {
         const item = all[i];
         if (localNames.includes(item.localName)) {
-            const txt = item.textContent?.trim();
-            if (txt) return txt;
+            const val = getNodeValue(item);
+            if (val) return val;
         }
     }
     return '';
@@ -234,9 +252,13 @@ export const QUADRO_84_RULES: MGBElementRule[] = [
         description: 'Padrão de codificação de caracteres dos metadados (ex: utf8).',
         path: 'defaultLocale > PT_Locale.characterEncoding | characterSet',
         check: (el) => {
-            const val = findFirstText(el, [
+            const csEl = el.querySelector('characterSet MD_CharacterSetCode, gmd\\:characterSet gmd\\:MD_CharacterSetCode, MD_CharacterSetCode');
+            const codeAttr = csEl?.getAttribute('codeListValue') || csEl?.getAttribute('value');
+            const val = codeAttr || findFirstText(el, [
                 'characterSet MD_CharacterSetCode',
                 'gmd\\:characterSet gmd\\:MD_CharacterSetCode',
+                'characterSet',
+                'gmd\\:characterSet',
                 'defaultLocale PT_Locale characterEncoding MD_CharacterSetCode',
                 'mdb\\:defaultLocale lan\\:PT_Locale lan\\:characterEncoding lan\\:MD_CharacterSetCode'
             ]) || findFirstTextByLocalNames(el, ['MD_CharacterSetCode', 'characterSet', 'characterEncoding']);
@@ -526,9 +548,13 @@ export const QUADRO_85_ADDITIONAL_RULES: MGBElementRule[] = [
         check: (el) => {
             const idInfo = el.querySelector('identificationInfo, gmd\\:identificationInfo, mri\\:MD_DataIdentification');
             if (!idInfo) return { compliant: false, value: 'Não informado' };
-            const val = findFirstText(idInfo as Element, [
+            const csEl = idInfo.querySelector('characterSet MD_CharacterSetCode, gmd\\:characterSet gmd\\:MD_CharacterSetCode, MD_CharacterSetCode, gmd\\:MD_CharacterSetCode');
+            const codeAttr = csEl?.getAttribute('codeListValue') || csEl?.getAttribute('value');
+            const val = codeAttr || findFirstText(idInfo as Element, [
                 'characterSet MD_CharacterSetCode',
                 'gmd\\:characterSet gmd\\:MD_CharacterSetCode',
+                'characterSet',
+                'gmd\\:characterSet',
                 'defaultLocale PT_Locale characterEncoding MD_CharacterSetCode'
             ]) || findFirstTextByLocalNames(idInfo as Element, ['MD_CharacterSetCode', 'characterSet', 'characterEncoding']);
             return { compliant: !!val, value: val || 'Não informado' };

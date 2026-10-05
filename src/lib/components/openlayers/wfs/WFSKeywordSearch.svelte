@@ -70,7 +70,7 @@
 
 <form class="relative m-0 text-sm" onsubmit={preventDefault(search)}>
     <label class="mb-3 flex items-center gap-2">
-        <input class="rounded border-gray-300" type="checkbox" checked={allSelected} onchange={() => selectedCatalogs = allSelected ? [] : [...catalogs]} />
+        <input class="rounded border border-gray-300" type="checkbox" checked={allSelected} onchange={() => selectedCatalogs = allSelected ? [] : [...catalogs]} />
         Selecionar todos os catálogos
     </label>
     <select size="6" multiple class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:outline-none" bind:value={selectedCatalogs}>

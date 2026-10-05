@@ -1,18 +1,29 @@
 <script lang="ts">
-    import { Tabs, TabItem } from 'flowbite-svelte';
+    import * as Tabs from '$lib/components/ui/tabs';
     import BaseWMS from './BaseWMS.svelte';
     import WMSBoundingBoxSearch from './WMSBoundingBoxSearch.svelte';
     import WMSKeywordSearch from './WMSKeywordSearch.svelte';
 </script>
 
-<Tabs style="underline">
-    <TabItem open title="Por instituicao">
+<Tabs.Root value="instituicao">
+    <Tabs.List>
+        <Tabs.Trigger value="instituicao">
+            Por instituição
+        </Tabs.Trigger>
+        <Tabs.Trigger value="palavra-chave">
+            Por palavra-chave
+        </Tabs.Trigger>
+        <Tabs.Trigger value="retangulo">
+            Por retângulo
+        </Tabs.Trigger>
+    </Tabs.List>
+    <Tabs.Content value="instituicao">
         <BaseWMS />
-    </TabItem>
-    <TabItem title="Por palavra-chave">
+    </Tabs.Content>
+    <Tabs.Content value="palavra-chave">
         <WMSKeywordSearch />
-    </TabItem>
-    <TabItem title="Por retangulo">
+    </Tabs.Content>
+    <Tabs.Content value="retangulo">
         <WMSBoundingBoxSearch />
-    </TabItem>
-</Tabs>
+    </Tabs.Content>
+</Tabs.Root>
