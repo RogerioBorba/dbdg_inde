@@ -26,6 +26,9 @@ const SAMPLE_IBGE_BC250_XML = `<?xml version="1.0" encoding="UTF-8"?>
       </gmd:role>
     </gmd:CI_ResponsibleParty>
   </gmd:contact>
+  <gmd:dateStamp>
+    <gco:Date>2025-05-20</gco:Date>
+  </gmd:dateStamp>
   <gmd:identificationInfo>
     <gmd:MD_DataIdentification>
       <gmd:citation>
@@ -33,6 +36,16 @@ const SAMPLE_IBGE_BC250_XML = `<?xml version="1.0" encoding="UTF-8"?>
           <gmd:title>
             <gco:CharacterString>Aglomerados Rurais - Base Cartografica Continua do Brasil - BC250 - 2025</gco:CharacterString>
           </gmd:title>
+          <gmd:date>
+            <gmd:CI_Date>
+              <gmd:date>
+                <gco:Date>2025-01-15</gco:Date>
+              </gmd:date>
+              <gmd:dateType>
+                <gmd:CI_DateTypeCode codeList="http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/codelist/gmxCodelists.xml#CI_DateTypeCode" codeListValue="publication">publication</gmd:CI_DateTypeCode>
+              </gmd:dateType>
+            </gmd:CI_Date>
+          </gmd:date>
         </gmd:CI_Citation>
       </gmd:citation>
       <gmd:abstract>
@@ -131,6 +144,11 @@ test('extractSemanticDataFromXml extrai corretamente os campos semânticos do XM
     assert.equal(extracted.scaleDenominator, '250000');
     assert.equal(extracted.spatialRepresentation, 'vector');
     assert.ok(extracted.topicCategories.includes('location'));
+    // Datas do recurso e do metadado
+    assert.equal(extracted.resourceDate, '2025-01-15');
+    assert.equal(extracted.resourceDateType, 'publication');
+    assert.equal(extracted.metadataDate, '2025-05-20');
+    assert.equal(extracted.metadataDateType, 'publication');
 });
 
 test('evaluateMetadataHeuristically avalia metadado completo com nota alta e diagnóstico positivo', () => {
@@ -140,11 +158,16 @@ test('evaluateMetadataHeuristically avalia metadado completo com nota alta e dia
     assert.equal(evaluation.quadroId, '86');
     assert.ok(evaluation.score >= 80, `Esperado score >= 80, obtido: ${evaluation.score}`);
     assert.ok(evaluation.rating === 'Excelente' || evaluation.rating === 'Bom');
-    assert.equal(evaluation.dimensions.length, 5);
+    assert.equal(evaluation.dimensions.length, 6, 'Devem existir 6 dimensões semânticas incluindo temporal');
 
     // Soma dos pesos deve ser 100%
     const sumWeights = evaluation.dimensions.reduce((acc, d) => acc + d.weight, 0);
     assert.equal(sumWeights, 100, 'A soma dos pesos das dimensões deve ser exatamente 100%');
+
+    // Validação da dimensão temporal
+    const dimTemporal = evaluation.dimensions.find((d) => d.id === 'temporal');
+    assert.ok(dimTemporal, 'Dimensão temporal deve estar presente');
+    assert.ok(dimTemporal.score >= 80, `Esperado score temporal >= 80, obtido: ${dimTemporal.score}`);
 
     // Validação dos elementos do Quadro MGB
     const el10 = evaluation.elementEvaluations.find((e) => e.elementId === 10);
@@ -158,6 +181,23 @@ test('evaluateMetadataHeuristically avalia metadado completo com nota alta e dia
     const el25 = evaluation.elementEvaluations.find((e) => e.elementId === 25);
     assert.ok(el25, 'Quadro 86 deve avaliar o elemento 25 (Resolução espacial)');
     assert.equal(el25?.status, 'adequado');
+
+    // Validação dos elementos de data do MGB
+    const el11 = evaluation.elementEvaluations.find((e) => e.elementId === 11);
+    assert.ok(el11, 'Elemento 11 (Valor da data do recurso) deve estar presente');
+    assert.equal(el11?.status, 'adequado');
+
+    const el12 = evaluation.elementEvaluations.find((e) => e.elementId === 12);
+    assert.ok(el12, 'Elemento 12 (Tipo da data do recurso) deve estar presente');
+    assert.equal(el12?.status, 'adequado');
+
+    const el7 = evaluation.elementEvaluations.find((e) => e.elementId === 7);
+    assert.ok(el7, 'Elemento 7 (Valor da data do metadado) deve estar presente');
+    assert.equal(el7?.status, 'adequado');
+
+    const el8 = evaluation.elementEvaluations.find((e) => e.elementId === 8);
+    assert.ok(el8, 'Elemento 8 (Tipo da data do metadado) deve estar presente');
+    assert.equal(el8?.status, 'adequado');
 
     assert.ok(evaluation.strengths.length > 0);
 });
@@ -181,6 +221,15 @@ test('evaluateMetadataHeuristically reprova metadado deficiente e gera sugestõe
     assert.ok(el17);
     assert.equal(el17?.status, 'inadequado');
 
+    // Elementos de data devem estar ausentes/inadequados
+    const el11Poor = evaluation.elementEvaluations.find((e) => e.elementId === 11);
+    assert.ok(el11Poor);
+    assert.equal(el11Poor?.status, 'inadequado');
+
+    const el7Poor = evaluation.elementEvaluations.find((e) => e.elementId === 7);
+    assert.ok(el7Poor);
+    assert.equal(el7Poor?.status, 'inadequado');
+
     // Deve haver ações prioritárias de melhoria
     assert.ok(evaluation.priorityImprovements.length > 0);
 });
@@ -191,13 +240,19 @@ test('buildSemanticPrompt e MGB_AI_SYSTEM_PROMPT contêm instruções normativas
     assert.ok(MGB_AI_SYSTEM_PROMPT.includes('Quadro 86'));
     assert.ok(MGB_AI_SYSTEM_PROMPT.includes('Quadro 87'));
     assert.ok(MGB_AI_SYSTEM_PROMPT.includes('Compreensão e Clareza Descritiva'));
+    assert.ok(MGB_AI_SYSTEM_PROMPT.includes('Referência Temporal e Ciclo de Vida'));
+    assert.ok(MGB_AI_SYSTEM_PROMPT.includes('Data do Recurso e Tipo de Data'));
+    assert.ok(MGB_AI_SYSTEM_PROMPT.includes('Data do Metadado e Tipo de Data'));
 
     const prompt = buildSemanticPrompt(
         {
             identifier: 'test-123',
             title: 'Metadado Teste',
             abstractText: 'Descricao teste',
-            keywords: ['geo', 'teste']
+            keywords: ['geo', 'teste'],
+            resourceDate: '2025-01-15',
+            resourceDateType: 'publication',
+            metadataDate: '2025-05-20'
         },
         '85'
     );
@@ -205,4 +260,7 @@ test('buildSemanticPrompt e MGB_AI_SYSTEM_PROMPT contêm instruções normativas
     assert.ok(prompt.includes('Quadro 85'));
     assert.ok(prompt.includes('test-123'));
     assert.ok(prompt.includes('Metadado Teste'));
+    assert.ok(prompt.includes('REFERÊNCIA TEMPORAL E DATAS'));
+    assert.ok(prompt.includes('2025-01-15'));
+    assert.ok(prompt.includes('2025-05-20'));
 });

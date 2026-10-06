@@ -33,6 +33,11 @@ export interface ExtractedSemanticData {
     scaleDenominator?: string;
     scopeType?: string;
     rawXmlSnippet?: string;
+    resourceDate?: string;
+    resourceDateType?: string;
+    resourceDates?: Array<{ date: string; dateType: string }>;
+    metadataDate?: string;
+    metadataDateType?: string;
 }
 
 function cleanText(val: string | null | undefined): string {
@@ -137,6 +142,61 @@ export function extractSemanticDataFromXml(xmlStringOrElement: string | Element)
     const scaleEl = getAllByTag('MD_RepresentativeFraction')[0]?.getElementsByTagName('denominator')[0];
     const scaleDenominator = cleanText(scaleEl?.textContent);
 
+    // Datas do metadado (elementos 7 e 8)
+    let metadataDate = '';
+    const dateStampEls = rootEl.getElementsByTagName('dateStamp');
+    if (dateStampEls.length > 0) {
+        const dEl = dateStampEls[0].getElementsByTagName('Date')[0] || dateStampEls[0].getElementsByTagName('DateTime')[0];
+        metadataDate = cleanText(dEl?.textContent || dateStampEls[0].textContent);
+    }
+    if (!metadataDate) {
+        const dateInfoEls = rootEl.getElementsByTagName('dateInfo');
+        if (dateInfoEls.length > 0) {
+            const dEl = dateInfoEls[0].getElementsByTagName('Date')[0] || dateInfoEls[0].getElementsByTagName('DateTime')[0] || dateInfoEls[0].getElementsByTagName('date')[0];
+            metadataDate = cleanText(dEl?.textContent);
+        }
+    }
+
+    let metadataDateType = '';
+    const dateInfoEls = rootEl.getElementsByTagName('dateInfo');
+    if (dateInfoEls.length > 0) {
+        const dtCode = dateInfoEls[0].getElementsByTagName('CI_DateTypeCode')[0];
+        metadataDateType = cleanText(dtCode?.getAttribute('codeListValue') || dtCode?.textContent);
+    }
+    if (!metadataDateType && metadataDate) {
+        metadataDateType = 'publication';
+    }
+
+    // Datas do recurso (elementos 11 e 12 - pacote Informação de Identificação > MD_Identification > CI_Citation > CI_Date)
+    const resourceDates: Array<{ date: string; dateType: string }> = [];
+    if (citationEls.length > 0) {
+        const ciDateEls = citationEls[0].getElementsByTagName('CI_Date');
+        for (let i = 0; i < ciDateEls.length; i++) {
+            const dateEl = ciDateEls[i].getElementsByTagName('Date')[0] || ciDateEls[i].getElementsByTagName('DateTime')[0] || ciDateEls[i].getElementsByTagName('date')[0];
+            const dVal = cleanText(dateEl?.textContent);
+
+            const typeEl = ciDateEls[i].getElementsByTagName('CI_DateTypeCode')[0];
+            const dtVal = cleanText(typeEl?.getAttribute('codeListValue') || typeEl?.textContent);
+            if (dVal || dtVal) {
+                resourceDates.push({ date: dVal, dateType: dtVal || 'publication' });
+            }
+        }
+    }
+    if (resourceDates.length === 0) {
+        const idInfoEls = rootEl.getElementsByTagName('identificationInfo');
+        if (idInfoEls.length > 0) {
+            const dEl = idInfoEls[0].getElementsByTagName('Date')[0] || idInfoEls[0].getElementsByTagName('DateTime')[0];
+            const dVal = cleanText(dEl?.textContent);
+            if (dVal) resourceDates.push({ date: dVal, dateType: 'publication' });
+        }
+    }
+
+    const pubDate = resourceDates.find((d) => d.dateType.toLowerCase().includes('pub'));
+    const createDate = resourceDates.find((d) => d.dateType.toLowerCase().includes('crea') || d.dateType.toLowerCase().includes('cria'));
+    const primaryDate = pubDate || createDate || resourceDates[0];
+    const resourceDate = primaryDate?.date || '';
+    const resourceDateType = primaryDate?.dateType || '';
+
     return {
         identifier,
         title,
@@ -148,6 +208,11 @@ export function extractSemanticDataFromXml(xmlStringOrElement: string | Element)
         contacts,
         spatialRepresentation,
         scaleDenominator,
+        resourceDate,
+        resourceDateType,
+        resourceDates,
+        metadataDate,
+        metadataDateType,
         rawXmlSnippet: rawSnippet
     };
 }
@@ -175,6 +240,53 @@ function extractSemanticDataFallbackRegex(xml: string): ExtractedSemanticData {
         return results;
     };
 
+    const findMetadataDate = (): string => {
+        const dsMatch = xml.match(/<(?:[a-zA-Z0-9]+:)?dateStamp[^>]*>([\s\S]*?)<\/(?:[a-zA-Z0-9]+:)?dateStamp>/i);
+        if (dsMatch) {
+            const inner = dsMatch[1];
+            const dateMatch = inner.match(/<(?:[a-zA-Z0-9]+:)?(?:Date|DateTime)[^>]*>([^<]+)<\//i);
+            return cleanText(dateMatch ? dateMatch[1] : inner.replace(/<[^>]+>/g, ' '));
+        }
+        const diMatch = xml.match(/<(?:[a-zA-Z0-9]+:)?dateInfo[^>]*>([\s\S]*?)<\/(?:[a-zA-Z0-9]+:)?dateInfo>/i);
+        if (diMatch) {
+            const inner = diMatch[1];
+            const dateMatch = inner.match(/<(?:[a-zA-Z0-9]+:)?(?:Date|DateTime)[^>]*>([^<]+)<\//i);
+            return cleanText(dateMatch ? dateMatch[1] : '');
+        }
+        return '';
+    };
+
+    const findResourceDates = (): Array<{ date: string; dateType: string }> => {
+        const dates: Array<{ date: string; dateType: string }> = [];
+        const citMatch = xml.match(/<(?:[a-zA-Z0-9]+:)?(?:citation|CI_Citation)[^>]*>([\s\S]*?)<\/(?:[a-zA-Z0-9]+:)?(?:citation|CI_Citation)>/i);
+        if (citMatch) {
+            const innerCit = citMatch[1];
+            const dateBlockRegex = /<(?:[a-zA-Z0-9]+:)?CI_Date[^>]*>([\s\S]*?)<\/(?:[a-zA-Z0-9]+:)?CI_Date>/gi;
+            let m: RegExpExecArray | null;
+            while ((m = dateBlockRegex.exec(innerCit)) !== null) {
+                const block = m[1];
+                const dMatch = block.match(/<(?:[a-zA-Z0-9]+:)?(?:Date|DateTime)[^>]*>([^<]+)<\//i);
+                const d = cleanText(dMatch ? dMatch[1] : '');
+                const cMatch = block.match(/codeListValue="([^"]+)"/i);
+                let dt = cMatch ? cleanText(cMatch[1]) : '';
+                if (!dt) {
+                    const dtMatch = block.match(/<(?:[a-zA-Z0-9]+:)?CI_DateTypeCode[^>]*>([^<]+)<\//i);
+                    dt = cleanText(dtMatch ? dtMatch[1] : '');
+                }
+                if (d || dt) dates.push({ date: d, dateType: dt });
+            }
+            if (dates.length === 0) {
+                const dMatch = innerCit.match(/<(?:[a-zA-Z0-9]+:)?(?:Date|DateTime)[^>]*>([^<]+)<\//i);
+                if (dMatch) dates.push({ date: cleanText(dMatch[1]), dateType: '' });
+            }
+        }
+        return dates;
+    };
+
+    const resDates = findResourceDates();
+    const primaryResDate = resDates.find((d) => d.dateType.toLowerCase().includes('pub')) || resDates.find((d) => d.dateType.toLowerCase().includes('crea')) || resDates[0];
+    const metaDate = findMetadataDate();
+
     return {
         identifier: findFirstTag('fileIdentifier'),
         title: findFirstTag('title'),
@@ -186,6 +298,11 @@ function extractSemanticDataFallbackRegex(xml: string): ExtractedSemanticData {
         contacts: [],
         spatialRepresentation: findFirstTag('MD_SpatialRepresentationTypeCode'),
         scaleDenominator: findFirstTag('denominator'),
+        resourceDate: primaryResDate?.date || '',
+        resourceDateType: primaryResDate?.dateType || '',
+        resourceDates: resDates,
+        metadataDate: metaDate,
+        metadataDateType: metaDate ? 'publication' : '',
         rawXmlSnippet: xml.slice(0, 4000)
     };
 }
@@ -277,12 +394,158 @@ export function evaluateMetadataHeuristically(
     const dimClareza: MGBSemanticDimensionScore = {
         id: 'clareza',
         name: 'Compreensão e Clareza Descritiva',
-        weight: 30,
+        weight: 25,
         score: Math.min(100, Math.round(clarezaScore)),
         feedback: clarezaScore >= 80 ? 'Título e resumo com excelente qualidade descritiva.' : 'Melhorar a riqueza descritiva do título e do resumo.'
     };
 
-    // --- 2. Dimensão: Finalidade e Aplicabilidade (20%) ---
+    // --- 2. Dimensão: Referência Temporal e Ciclo de Vida (15%) ---
+    let temporalScore = 0;
+    const resDate = (data.resourceDate || '').trim();
+    const resDateType = (data.resourceDateType || '').trim();
+    const metaDate = (data.metadataDate || '').trim();
+    const metaDateType = (data.metadataDateType || '').trim();
+
+    // Elemento 11: Valor da data do recurso
+    let resDateStatus: 'adequado' | 'parcial' | 'inadequado' = 'inadequado';
+    let resDateCritique = '';
+    let resDateSuggestion = '';
+
+    if (!resDate) {
+        resDateCritique = 'A data de referência temporal do recurso (criação, publicação ou revisão) não foi informada.';
+        resDateSuggestion = 'Informar a data temporal do recurso segundo o padrão ISO 8601 (ex: "2025-01-15" ou "2025").';
+        priorityImprovements.push('Declarar a data de referência temporal do recurso (elemento 11 do MGB).');
+    } else {
+        const isIsoFormat = /^\d{4}(-\d{2}(-\d{2})?)?/.test(resDate);
+        if (isIsoFormat) {
+            resDateStatus = 'adequado';
+            temporalScore += 35;
+            resDateCritique = `Data do recurso informada e válida (${resDate}).`;
+            strengths.push(`Data do recurso documentada (${resDate}).`);
+        } else {
+            resDateStatus = 'parcial';
+            temporalScore += 20;
+            resDateCritique = `Data do recurso informada ("${resDate}"), porém em formato não estritamente ISO 8601.`;
+            resDateSuggestion = 'Padronizar a data no formato ISO 8601 (AAAA-MM-DD ou AAAA).';
+        }
+    }
+
+    const snippetResDates = (data.resourceDates && data.resourceDates.length > 0)
+        ? data.resourceDates.map((d) => `${d.dateType || 'data'}: ${d.date}`).join(' | ')
+        : resDate;
+
+    elementEvaluations.push({
+        elementId: 11,
+        elementName: 'Valor da data do recurso (MD_Identification > CI_Citation > CI_Date)',
+        status: resDateStatus,
+        critique: resDateCritique,
+        currentSnippet: snippetResDates || '(não informada)',
+        suggestedImprovement: resDateSuggestion || undefined
+    });
+
+    // Elemento 12: Tipo da data do recurso
+    let resTypeStatus: 'adequado' | 'parcial' | 'inadequado' = 'inadequado';
+    let resTypeCritique = '';
+    let resTypeSuggestion = '';
+
+    const validDateTypes = ['creation', 'publication', 'revision', 'criação', 'publicação', 'revisão'];
+    if (!resDateType) {
+        resTypeCritique = 'O tipo da data do recurso não foi especificado (criação, publicação ou revisão).';
+        resTypeSuggestion = 'Especificar se a data corresponde à criação (creation), publicação (publication) ou revisão (revision) do dado.';
+        priorityImprovements.push('Especificar o tipo de data do recurso no elemento 12 (creation, publication ou revision).');
+    } else if (validDateTypes.some((t) => resDateType.toLowerCase().includes(t))) {
+        resTypeStatus = 'adequado';
+        temporalScore += 25;
+        resTypeCritique = `Tipo de data do recurso explicitado como "${resDateType}".`;
+        strengths.push(`Tipo de data do recurso devidamente classificado (${resDateType}).`);
+    } else {
+        resTypeStatus = 'parcial';
+        temporalScore += 15;
+        resTypeCritique = `Tipo de data "${resDateType}" não é o padrão recomendado pelo MGB/ISO (creation, publication ou revision).`;
+        resTypeSuggestion = 'Adotar um dos valores padrão da lista de códigos ISO CI_DateTypeCode: creation, publication ou revision.';
+    }
+
+    if (data.resourceDates && data.resourceDates.length > 1) {
+        strengths.push(`Múltiplas datas do recurso registradas em CI_Citation (${data.resourceDates.map((d) => `${d.dateType}: ${d.date}`).join(', ')}).`);
+    }
+
+    elementEvaluations.push({
+        elementId: 12,
+        elementName: 'Tipo da data do recurso (CI_DateTypeCode)',
+        status: resTypeStatus,
+        critique: resTypeCritique,
+        currentSnippet: (data.resourceDates && data.resourceDates.length > 0)
+            ? data.resourceDates.map((d) => d.dateType).filter(Boolean).join(', ')
+            : (resDateType || '(não informado)'),
+        suggestedImprovement: resTypeSuggestion || undefined
+    });
+
+    // Elemento 7: Valor da data do metadado
+    let metaDateStatus: 'adequado' | 'parcial' | 'inadequado' = 'inadequado';
+    let metaDateCritique = '';
+    let metaDateSuggestion = '';
+
+    if (!metaDate) {
+        metaDateCritique = 'A data de publicação ou elaboração do metadado (dateStamp) não foi encontrada.';
+        metaDateSuggestion = 'Informar a data do metadado (dateStamp) no formato ISO 8601 (AAAA-MM-DD).';
+        priorityImprovements.push('Preencher a data do metadado (elemento 7 do MGB / dateStamp).');
+    } else {
+        metaDateStatus = 'adequado';
+        temporalScore += 25;
+        metaDateCritique = `Data do metadado informada no registro (${metaDate}).`;
+        strengths.push(`Data de publicação do metadado registrada (${metaDate}).`);
+    }
+
+    elementEvaluations.push({
+        elementId: 7,
+        elementName: 'Valor da data do metadado',
+        status: metaDateStatus,
+        critique: metaDateCritique,
+        currentSnippet: metaDate || '(não informada)',
+        suggestedImprovement: metaDateSuggestion || undefined
+    });
+
+    // Elemento 8: Tipo da data do metadado
+    let metaTypeStatus: 'adequado' | 'parcial' | 'inadequado' = metaDate ? 'adequado' : 'inadequado';
+    elementEvaluations.push({
+        elementId: 8,
+        elementName: 'Tipo da data do metadado',
+        status: metaTypeStatus,
+        critique: metaDate
+            ? `Tipo de data do metadado identificado (${metaDateType || 'publicação / dateStamp'}).`
+            : 'Tipo da data do metadado ausente.',
+        currentSnippet: metaDateType || (metaDate ? 'Implícito (dateStamp / publicação)' : '(ausente)'),
+        suggestedImprovement: metaDate ? undefined : 'Especificar o evento da data do metadado (ex: publication).'
+    });
+    if (metaDate) temporalScore += 10;
+
+    // Coerência Temporal entre recurso e metadado
+    const matchYearRes = resDate.match(/\b(19\d\d|20\d\d)\b/);
+    const matchYearMeta = metaDate.match(/\b(19\d\d|20\d\d)\b/);
+    if (matchYearRes && matchYearMeta) {
+        const yearRes = parseInt(matchYearRes[1], 10);
+        const yearMeta = parseInt(matchYearMeta[1], 10);
+        if (yearMeta >= yearRes) {
+            temporalScore += 5;
+            strengths.push(`Coerência cronológica confirmada: metadado (${yearMeta}) posterior ou contemporâneo aos dados (${yearRes}).`);
+        } else {
+            // Inconsistência: metadado datado antes da criação do dado
+            temporalScore = Math.max(0, temporalScore - 20);
+            priorityImprovements.push(`Ajustar inconsistência temporal: a data do metadado (${yearMeta}) é anterior à data do recurso (${yearRes}).`);
+        }
+    }
+
+    const dimTemporal: MGBSemanticDimensionScore = {
+        id: 'temporal',
+        name: 'Referência Temporal e Ciclo de Vida',
+        weight: 15,
+        score: Math.min(100, Math.round(temporalScore)),
+        feedback: temporalScore >= 80
+            ? 'Datas do recurso e do metadado claras, consistentes e com tipologia definida.'
+            : 'Completar ou padronizar as datas do recurso (criação/publicação) e a data do metadado.'
+    };
+
+    // --- 3. Dimensão: Finalidade e Aplicabilidade (15%) ---
     let finalidadeScore = 0;
     const purpLen = (data.purpose || '').trim().length;
     let purpStatus: 'adequado' | 'parcial' | 'inadequado' = 'inadequado';
@@ -318,12 +581,12 @@ export function evaluateMetadataHeuristically(
     const dimFinalidade: MGBSemanticDimensionScore = {
         id: 'finalidade',
         name: 'Finalidade e Aplicabilidade',
-        weight: 20,
+        weight: 15,
         score: Math.min(100, finalidadeScore),
         feedback: finalidadeScore >= 80 ? 'Aplicações e objetivos do recurso bem fundamentados.' : 'Documentar explicitamente o objetivo e o público-alvo dos dados.'
     };
 
-    // --- 3. Dimensão: Indexação e Descoberta Temática (20%) ---
+    // --- 4. Dimensão: Indexação e Descoberta Temática (15%) ---
     let indexacaoScore = 0;
     const kwCount = data.keywords.length;
     let kwStatus: 'adequado' | 'parcial' | 'inadequado' = 'inadequado';
@@ -378,12 +641,12 @@ export function evaluateMetadataHeuristically(
     const dimIndexacao: MGBSemanticDimensionScore = {
         id: 'indexacao',
         name: 'Indexação e Descoberta Temática',
-        weight: 20,
+        weight: 15,
         score: Math.min(100, Math.round(indexacaoScore)),
         feedback: indexacaoScore >= 80 ? 'Excelente indexação para localização em geoportais.' : 'Incrementar palavras-chave e vocabulários controlados.'
     };
 
-    // --- 4. Dimensão: Qualidade e Linhagem dos Dados (20%) ---
+    // --- 5. Dimensão: Qualidade e Linhagem dos Dados (20%) ---
     let linhagemScore = 0;
     const lineageText = data.lineage.join(' ');
     const linLen = lineageText.trim().length;
@@ -445,7 +708,7 @@ export function evaluateMetadataHeuristically(
         feedback: linhagemScore >= 80 ? 'Ótimo histórico e transparência de processamento.' : 'Complementar etapas de controle de qualidade e fontes na linhagem.'
     };
 
-    // --- 5. Dimensão: Responsabilidade e Contatos (10%) ---
+    // --- 6. Dimensão: Responsabilidade e Contatos (10%) ---
     let respScore = 0;
     const hasOrg = data.contacts.some((c) => Boolean(c.organization));
     const hasEmail = data.contacts.some((c) => Boolean(c.email && c.email.includes('@')));
@@ -482,11 +745,12 @@ export function evaluateMetadataHeuristically(
 
     // Cálculo da Nota Geral Ponderada (0 a 100)
     const weightedScore = Math.round(
-        (dimClareza.score * 0.3) +
-        (dimFinalidade.score * 0.2) +
-        (dimIndexacao.score * 0.2) +
-        (dimLinhagem.score * 0.2) +
-        (dimResponsabilidade.score * 0.1)
+        (dimClareza.score * 0.25) +
+        (dimTemporal.score * 0.15) +
+        (dimFinalidade.score * 0.15) +
+        (dimIndexacao.score * 0.15) +
+        (dimLinhagem.score * 0.20) +
+        (dimResponsabilidade.score * 0.10)
     );
 
     let rating: MGBAIEvaluationRating = 'Insuficiente';
@@ -520,7 +784,7 @@ export function evaluateMetadataHeuristically(
         score: weightedScore,
         rating,
         summaryFeedback,
-        dimensions: [dimClareza, dimFinalidade, dimIndexacao, dimLinhagem, dimResponsabilidade],
+        dimensions: [dimClareza, dimTemporal, dimFinalidade, dimIndexacao, dimLinhagem, dimResponsabilidade],
         elementEvaluations,
         strengths: strengths.slice(0, 4),
         priorityImprovements: priorityImprovements.slice(0, 4),

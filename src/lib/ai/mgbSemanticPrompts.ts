@@ -17,17 +17,21 @@ Você deve avaliar os elementos no contexto do Quadro MGB aplicável:
 - Quadro 87: Conjunto mínimo de elementos obrigatórios para descrever serviços web sem recursos acoplados (16 elementos).
 
 Critérios de pontuação semântica (0 a 100 pontos):
-1. Compreensão e Clareza Descritiva (Peso 30%):
-   - Título (elemento 10): Deve ser expressivo e contextualizado. Evitar códigos internos soltos sem significado público.
+1. Compreensão e Clareza Descritiva (Peso 25%):
+   - Título (elemento 10): Deve ser expressivo e contextualizado. Evitar códigos internos soltos sem significado público. Entender que alguns produtos fazem parte de outros, casos em que a abreviação é útil para entender o produto. Exemplo: BC250 - Aglomerado Rural - 1:250 000 - 2025. O título responde: O que é? → Aglomerado Rural; Em qual produto? → BC250; Em qual escala? → 1:250.000; Qual versão? → 2025.
    - Resumo (elemento 13): DEVE descrever o que é o recurso, abrangência geográfica, finalidade/metodologia e período temporal. Reprove resumos lacônicos como "Dados em shapefile" ou meras repetições do título.
-2. Finalidade e Aplicabilidade (Peso 20%):
+2. Referência Temporal e Ciclo de Vida (Peso 15%):
+   - Data do Recurso e Tipo de Data (elementos 11 e 12 - pacote Informação de Identificação, classe MD_Identification / MD_DataIdentification, elemento de metadado CI_Citation, classe associada CI_Date): Deve indicar a data de referência temporal do recurso (criação/creation, publicação/publication ou revisão/revision). Quando houver mais de uma data em CI_Citation (ex: data de criação e data de publicação), avaliar a completude do ciclo de vida. O tipo de evento deve ser explícito (preferencialmente publication ou creation) e o formato deve seguir a ISO 8601 (AAAA-MM-DD ou AAAA).
+   - Data do Metadado e Tipo de Data (elementos 7 e 8 - classe raiz MD_Metadata, dateStamp ou dateInfo): Deve indicar a data de publicação, criação ou atualização da ficha de metadados (dateStamp ou dateInfo).
+   - Coerência Temporal e Atualidade: A data de publicação do metadado NÃO deve ser anterior à data de criação/publicação do recurso. Verificar se as datas são plausíveis, se o produto não está excessivamente desatualizado sem indicação de revisão e se os tipos de data refletem o estágio real do ciclo de vida dos dados na INDE.
+3. Finalidade e Aplicabilidade (Peso 15%):
    - Elemento 14 (Finalidade): Justificativa para a produção dos dados e casos de uso recomendados ou restrições.
-3. Indexação e Descoberta Temática (Peso 20%):
+4. Indexação e Descoberta Temática (Peso 15%):
    - Palavras-chave (elemento 17): Pelo menos 3 a 5 palavras-chave relevantes, vocabulares controlados (quando cabível) e ausência de ruído.
    - Categoria Temática (elemento 21, quando aplicável): Coerência com a taxonomia oficial ISO 19115 topicCategory.
-4. Qualidade e Linhagem dos Dados (Peso 20%):
-   - Linhagem / Histórico (elemento 15): Descrição detalhada dos insumos utilizados, sensores/satélites, datas de imageamento/coleta, softwares, procedimentos de validação e normas de referência.
-5. Responsabilidade e Contatos (Peso 10%):
+5. Qualidade e Linhagem dos Dados (Peso 20%):
+   - Linhagem / Histórico (elemento 15): Descrição detalhada dos insumos utilizados, sensores/satélites, datas de imageamento/coleta, softwares, procedimentos de validação e normas de referência. Etapas de processo e insumos descritos enriquecem a pontuação.
+6. Responsabilidade e Contatos (Peso 10%):
    - Contato do metadado (elemento 6) e Ponto de contato do recurso (elemento 19): Identificação de organização, papel funcional e e-mail institucional válido.
 
 FORMATO DE RESPOSTA OBRIGATÓRIO:
@@ -37,9 +41,10 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido (sem tags markdown de código e se
   "rating": "Excelente" | "Bom" | "Regular" | "Insuficiente", // Excelente (90-100), Bom (75-89), Regular (50-74), Insuficiente (<50)
   "summaryFeedback": "string em português com síntese crítica e executiva da auditoria",
   "dimensions": [
-    { "id": "clareza", "name": "Compreensão e Clareza Descritiva", "weight": 30, "score": number, "feedback": "string" },
-    { "id": "finalidade", "name": "Finalidade e Aplicabilidade", "weight": 20, "score": number, "feedback": "string" },
-    { "id": "indexacao", "name": "Indexação e Descoberta Temática", "weight": 20, "score": number, "feedback": "string" },
+    { "id": "clareza", "name": "Compreensão e Clareza Descritiva", "weight": 25, "score": number, "feedback": "string" },
+    { "id": "temporal", "name": "Referência Temporal e Ciclo de Vida", "weight": 15, "score": number, "feedback": "string" },
+    { "id": "finalidade", "name": "Finalidade e Aplicabilidade", "weight": 15, "score": number, "feedback": "string" },
+    { "id": "indexacao", "name": "Indexação e Descoberta Temática", "weight": 15, "score": number, "feedback": "string" },
     { "id": "linhagem", "name": "Qualidade e Linhagem dos Dados", "weight": 20, "score": number, "feedback": "string" },
     { "id": "responsabilidade", "name": "Responsabilidade e Contatos", "weight": 10, "score": number, "feedback": "string" }
   ],
@@ -70,15 +75,30 @@ export function buildSemanticPrompt(
         contacts?: Array<{ organization?: string; email?: string; role?: string }>;
         spatialRepresentation?: string;
         scaleDenominator?: string;
+        resourceDate?: string;
+        resourceDateType?: string;
+        resourceDates?: Array<{ date: string; dateType: string }>;
+        metadataDate?: string;
+        metadataDateType?: string;
         rawXmlSnippet?: string;
     },
     quadroId: MGBEffectiveQuadroId
 ): string {
+    const formattedResourceDates = (metadataSummary.resourceDates && metadataSummary.resourceDates.length > 0)
+        ? metadataSummary.resourceDates.map((d) => `  * ${d.dateType || 'data'}: ${d.date || 'N/D'}`).join('\n')
+        : `  * ${metadataSummary.resourceDateType || 'data'}: ${metadataSummary.resourceDate || '(Não informada)'}`;
+
     return `Por favor, audite e avalie semanticamente o seguinte metadado geoespacial sob as regras do Quadro ${quadroId} do Perfil MGB 2.0 (INDE/IBGE):
 
 IDENTIFICAÇÃO:
 - Identificador: ${metadataSummary.identifier || 'Não informado'}
 - Título do recurso: ${metadataSummary.title || 'Não informado'}
+
+REFERÊNCIA TEMPORAL E DATAS (MD_IDENTIFICATION > CI_CITATION > CI_DATE & MD_METADATA > DATESTAMP):
+- Datas do recurso (CI_Citation > CI_Date - criação, publicação ou revisão):
+${formattedResourceDates}
+- Data de publicação/registro do metadado (elemento 7 - dateStamp): ${metadataSummary.metadataDate || '(Não informada)'}
+- Tipo da data do metadado (elemento 8): ${metadataSummary.metadataDateType || '(Não informado)'}
 
 CONTEÚDO TEXTUAL:
 - Resumo (Abstract):

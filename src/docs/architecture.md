@@ -44,7 +44,7 @@ Responsável por:
 - modelos, prompts e orquestração do Agente de IA para avaliação semântica do Perfil MGB 2.0;
 - construção de instruções normativas especializadas para os Quadros 84, 85, 86 e 87;
 - motor de avaliação estruturada com suporte a provedores LLM (Gemini / OpenAI / Ollama) e motor heurístico de fallback determinístico;
-- cálculo de notas de qualidade semântica (0 a 100), pareceres analíticos por dimensão e geração de propostas de melhoria textual por elemento;
+- cálculo de notas de qualidade semântica (0 a 100), pareceres analíticos estruturados em 6 dimensões ponderadas (clareza descritiva, referência temporal e ciclo de vida, finalidade, indexação, linhagem e contatos), com validação das datas do recurso e do metadado e coerência cronológica;
 - geração de relatórios de auditoria em PDF estilizados via `jsPDF` (`src/lib/ai/mgbPdfReport.ts`).
 
 ### `src/lib/request`

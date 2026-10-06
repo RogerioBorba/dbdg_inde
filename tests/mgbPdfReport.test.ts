@@ -13,9 +13,10 @@ const SAMPLE_EVALUATION: MGBSemanticEvaluation = {
     rating: 'Bom',
     summaryFeedback: 'O metadado apresenta boa qualidade semântica geral, com adequada descrição de feições e linhagem metodológica detalhada.',
     dimensions: [
-        { id: 'clareza', name: 'Compreensão e Clareza Descritiva', weight: 30, score: 90, feedback: 'Excelente riqueza descritiva.' },
-        { id: 'finalidade', name: 'Finalidade e Aplicabilidade', weight: 20, score: 85, feedback: 'Objetivos claros.' },
-        { id: 'indexacao', name: 'Indexação e Descoberta Temática', weight: 20, score: 95, feedback: 'Palavras-chave padronizadas.' },
+        { id: 'clareza', name: 'Compreensão e Clareza Descritiva', weight: 25, score: 90, feedback: 'Excelente riqueza descritiva.' },
+        { id: 'temporal', name: 'Referência Temporal e Ciclo de Vida', weight: 15, score: 95, feedback: 'Datas do recurso e do metadado consistentes e válidas.' },
+        { id: 'finalidade', name: 'Finalidade e Aplicabilidade', weight: 15, score: 85, feedback: 'Objetivos claros.' },
+        { id: 'indexacao', name: 'Indexação e Descoberta Temática', weight: 15, score: 95, feedback: 'Palavras-chave padronizadas.' },
         { id: 'linhagem', name: 'Qualidade e Linhagem dos Dados', weight: 20, score: 85, feedback: 'Histórico metodológico satisfatório.' },
         { id: 'responsabilidade', name: 'Responsabilidade e Contatos', weight: 10, score: 90, feedback: 'Contatos institucionais completos.' }
     ],

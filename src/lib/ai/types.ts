@@ -8,6 +8,7 @@ import type { MGBEffectiveQuadroId, MGBQuadroId } from '$lib/ogc/csw/mgb/mgbConf
 
 export type MGBSemanticDimensionKey =
     | 'clareza'
+    | 'temporal'
     | 'finalidade'
     | 'indexacao'
     | 'linhagem'
