@@ -13,8 +13,8 @@ export class LayerOL {
     zIndex: number;
     metadata?: any;
     url: string | null;
-    constructor(name: string , type: any, layer: any, visiable: boolean, opacity: number, zIndex: number, metadata: any, url: string) {
-      this.className = this.constructor.name;
+    constructor(name: string , type: any, layer: any, visiable: boolean, opacity: number, zIndex: number, metadata: any, url: string, className?: string) {
+      this.className = className || 'LayerOL';
       this.id = uuid();
       this.name = name;
       this.type = type;
@@ -33,7 +33,7 @@ export class WMSLayerOL extends LayerOL {
  styles: IWMSStyle[];
   constructor(iwmsLayer: IWMSLayer, url: string) {
     const aName = iwmsLayer.name || 'Sem nome';
-    super(aName, 'WMS', null, true, 1, -1, iwmsLayer.metadataURLs[0], url);
+    super(aName, 'WMS', null, true, 1, -1, iwmsLayer.metadataURLs[0], url, 'WMSLayerOL');
     this.title = iwmsLayer.title || iwmsLayer.name || 'Sem nome e título';
     this.styles = iwmsLayer.styles; //.flatMap( style => style.legendURLs).map(legendIRL => legendIRL.href)
   }
@@ -44,7 +44,7 @@ export class WFSLayerOL extends LayerOL {
   constructor(iwfsLayer: IFeatureType, url: string) {
     const aName = iwfsLayer.name || 'Sem nome';
     const metadata_url = iwfsLayer.metadataURLs && iwfsLayer.metadataURLs.length > 0 ? iwfsLayer.metadataURLs[0] : null;
-    super(aName, 'WFS', null, true, 1, -1, metadata_url, url);
+    super(aName, 'WFS', null, true, 1, -1, metadata_url, url, 'WFSLayerOL');
     this.title = iwfsLayer.title || iwfsLayer.name || 'Sem nome e título';
   }
 };

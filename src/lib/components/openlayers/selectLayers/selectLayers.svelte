@@ -2,8 +2,9 @@
   import { preventDefault } from '$lib/components/svelte_util/util';
   import { layerManager } from '$lib/shared/openlayers/shared.svelte';
   import { flip } from 'svelte/animate';
-  import { LayerOL } from '../layerOL';
-  
+  import type { LayerOL, WMSLayerOL, WFSLayerOL } from '../layerOL';
+  import SelectedWMSLayerOL from './SelectedWMSLayerOL.svelte';
+  import SelectedWFSLayerOL from './SelectedWFSLayerOL.svelte';
   
   // Estado reativo com TypeScript
   let hovering: number | null = null;
@@ -74,9 +75,11 @@
     ondragover={handleDragOver}
     ondragenter={() => hovering = index}
     class:is-active={hovering === index}>
-    {#await import(`./Selected${layerOL.className}.svelte`) then Module}
-                  <Module.default layerOL={layerOL} />
-    {/await}
+    {#if layerOL.type === 'WMS' || layerOL.className === 'WMSLayerOL'}
+      <SelectedWMSLayerOL layerOL={layerOL as WMSLayerOL} />
+    {:else if layerOL.type === 'WFS' || layerOL.className === 'WFSLayerOL'}
+      <SelectedWFSLayerOL layerOL={layerOL as WFSLayerOL} />
+    {/if}
   </div>
 {/each}
 

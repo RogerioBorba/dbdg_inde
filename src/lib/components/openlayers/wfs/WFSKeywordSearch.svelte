@@ -5,7 +5,7 @@
     import { preventDefault } from '$lib/components/svelte_util/util';
     import { onMount } from 'svelte';
     import WFSCapabilityLayer from './WFSCapabilityLayer.svelte';
-    import { hasWFSGetCapabilities, matchesFeatureTypeKeywords, parseSearchTerms, type SearchOperator } from './wfsSearch';
+    import { hasWFSGetCapabilities, matchesFeatureTypeKeywords, parseSearchTerms, sortWFSResults, type SearchOperator } from './wfsSearch';
 
     type Catalog = { id: number; descricao: string; iri: string };
     type Result = { catalog: Catalog; featureType: IFeatureType };
@@ -19,19 +19,8 @@
     let processing = $state(false);
     let feedback = $state('');
     let loadingCatalogs = $state(true);
+    let currentSearchRun = 0;
     const allSelected = $derived(catalogs.length > 0 && selectedCatalogs.length === catalogs.length);
-
-    async function searchCatalog(catalog: Catalog, terms: string[]): Promise<Result[]> {
-        try {
-            const response = await get(catalog.iri);
-            const featureTypes = iWFSFeatureTypes(await response.text());
-            return featureTypes
-                .filter((featureType) => featureType.name && matchesFeatureTypeKeywords(featureType, terms, operator))
-                .map((featureType) => ({ catalog, featureType }));
-        } finally {
-            processed += 1;
-        }
-    }
 
     async function search() {
         feedback = '';
@@ -41,14 +30,40 @@
         processing = true;
         processed = 0;
         results = [];
+        const searchRun = ++currentSearchRun;
+
         try {
-            const settled = await Promise.allSettled(selectedCatalogs.map((catalog) => searchCatalog(catalog, terms)));
-            results = settled.flatMap((result) => result.status === 'fulfilled' ? result.value : []);
+            const promises = selectedCatalogs.map(async (catalog) => {
+                try {
+                    const response = await get(catalog.iri);
+                    const xml = await response.text();
+                    if (searchRun !== currentSearchRun) return;
+
+                    const featureTypes = iWFSFeatureTypes(xml);
+                    const matched = featureTypes
+                        .filter((featureType) => featureType.name && matchesFeatureTypeKeywords(featureType, terms, operator))
+                        .map((featureType) => ({ catalog, featureType }));
+
+                    if (matched.length > 0 && searchRun === currentSearchRun) {
+                        results = sortWFSResults([...results, ...matched]);
+                    }
+                } finally {
+                    if (searchRun === currentSearchRun) {
+                        processed += 1;
+                    }
+                }
+            });
+
+            const settled = await Promise.allSettled(promises);
+            if (searchRun !== currentSearchRun) return;
+
             const failures = settled.filter((result) => result.status === 'rejected').length;
             if (failures) feedback = `${failures} catálogo(s) não puderam ser processados.`;
             else if (!results.length) feedback = 'Nenhuma feição encontrada para as palavras-chave informadas.';
         } finally {
-            processing = false;
+            if (searchRun === currentSearchRun) {
+                processing = false;
+            }
         }
     }
 

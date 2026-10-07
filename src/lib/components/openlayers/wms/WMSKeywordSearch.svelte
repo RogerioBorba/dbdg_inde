@@ -8,8 +8,17 @@
     import { WMSLayerOL } from '../layerOL';
     import { onMount } from 'svelte';
 
+    import {
+        hasWMSAvailable,
+        hasWMSGetCapabilities,
+        flattenLayers,
+        matchesLayerKeywords,
+        parseSearchTerms,
+        sortWMSResults,
+        type SearchOperator
+    } from './wmsSearch';
+
     type CatalogOption = { id: number; descricao: string; iri: string };
-    type SearchOperator = 'OR' | 'AND';
     type SearchResult = {
         catalog: CatalogOption;
         layer: IWMSLayer;
@@ -24,84 +33,26 @@
     let processedCatalogCount = $state(0);
     let isProcessing = $state(false);
     let feedbackMessage = $state('');
+    let currentSearchRun = 0;
 
     const allCatalogsSelected = $derived(
         catalogOptions.length > 0 && selectedCatalogs.length === catalogOptions.length
     );
 
-    const searchTerms = $derived.by(() =>
-        keywordsInput
-            .split(/[\n,;]+/)
-            .map((term) => normalize(term))
-            .filter(Boolean)
-    );
-
-    function normalize(value: string): string {
-        return value.trim().toLowerCase();
-    }
-
     function newCatalogOption(obj: IGeoservicoDescricao, index: number): CatalogOption {
         return { id: index, descricao: obj.descricao, iri: obj.wmsGetCapabilities };
     }
 
-    function hasWMSAvailable(catalog: IGeoservicoDescricao & { wmsAvailable?: boolean }): boolean {
-        return Boolean(catalog.wmsAvalaible ?? catalog.wmsAvailable);
-    }
-
-    function flattenLayers(layers: IWMSLayer[]): IWMSLayer[] {
-        const flattened: IWMSLayer[] = [];
-
-        function visit(layer: IWMSLayer) {
-            flattened.push(layer);
-            for (const child of layer.layers ?? []) {
-                visit(child);
-            }
-        }
-
-        for (const layer of layers) {
-            visit(layer);
-        }
-
-        return flattened;
-    }
-
-    function matchesLayerKeywords(layer: IWMSLayer, terms: string[], operator: SearchOperator): boolean {
-        const normalizedKeywords = (layer.keywords ?? []).map(normalize).filter(Boolean);
-        if (normalizedKeywords.length === 0) return false;
-
-        const predicate = (term: string) => normalizedKeywords.some((keyword) => keyword.includes(term));
-        return operator === 'AND' ? terms.every(predicate) : terms.some(predicate);
-    }
-
-    async function fetchMatchesForCatalog(catalog: CatalogOption): Promise<SearchResult[]> {
-        try {
-            const response = await get(catalog.iri);
-            const xmlText = await response.text();
-            const layers = iWMSCapabilities(xmlText).capability.layers;
-            const matchedLayers = flattenLayers(layers).filter((layer) => {
-                const hasName = layer.name !== undefined && layer.name.trim().length > 0;
-                return hasName && matchesLayerKeywords(layer, searchTerms, searchOperator);
-            });
-
-            return matchedLayers.map((layer) => ({
-                catalog,
-                layer,
-                capabilitiesUrl: catalog.iri
-            }));
-        } finally {
-            processedCatalogCount += 1;
-        }
-    }
-
     async function btnSearchClicked() {
         feedbackMessage = '';
+        const terms = parseSearchTerms(keywordsInput);
 
         if (selectedCatalogs.length === 0) {
-            feedbackMessage = 'Escolha pelo menos um catalogo.';
+            feedbackMessage = 'Escolha pelo menos um catálogo.';
             return;
         }
 
-        if (searchTerms.length === 0) {
+        if (terms.length === 0) {
             feedbackMessage = 'Informe ao menos uma palavra-chave.';
             return;
         }
@@ -109,19 +60,49 @@
         isProcessing = true;
         processedCatalogCount = 0;
         results = [];
+        const searchRun = ++currentSearchRun;
 
         try {
-            const settled = await Promise.allSettled(selectedCatalogs.map((catalog) => fetchMatchesForCatalog(catalog)));
-            results = settled.flatMap((item) => item.status === 'fulfilled' ? item.value : []);
+            const promises = selectedCatalogs.map(async (catalog) => {
+                try {
+                    const response = await get(catalog.iri);
+                    const xmlText = await response.text();
+                    if (searchRun !== currentSearchRun) return;
+
+                    const layers = iWMSCapabilities(xmlText).capability.layers;
+                    const matchedLayers = flattenLayers(layers).filter((layer) => {
+                        const hasName = layer.name !== undefined && layer.name.trim().length > 0;
+                        return hasName && matchesLayerKeywords(layer, terms, searchOperator);
+                    });
+
+                    if (matchedLayers.length > 0 && searchRun === currentSearchRun) {
+                        const newResults: SearchResult[] = matchedLayers.map((layer) => ({
+                            catalog,
+                            layer,
+                            capabilitiesUrl: catalog.iri
+                        }));
+                        results = sortWMSResults([...results, ...newResults]);
+                    }
+                } finally {
+                    if (searchRun === currentSearchRun) {
+                        processedCatalogCount += 1;
+                    }
+                }
+            });
+
+            const settled = await Promise.allSettled(promises);
+            if (searchRun !== currentSearchRun) return;
 
             const failedCount = settled.filter((item) => item.status === 'rejected').length;
             if (failedCount > 0) {
-                feedbackMessage = `${failedCount} catalogo(s) nao puderam ser processados.`;
+                feedbackMessage = `${failedCount} catálogo(s) não puderam ser processados.`;
             } else if (results.length === 0) {
                 feedbackMessage = 'Nenhuma camada encontrada para os termos informados.';
             }
         } finally {
-            isProcessing = false;
+            if (searchRun === currentSearchRun) {
+                isProcessing = false;
+            }
         }
     }
 
@@ -164,11 +145,11 @@
             const response = await fetch('/api/inde/catalogos-servicos');
             const data: IGeoservicoDescricao[] = await response.json();
             catalogOptions = data
-                .filter((catalog) => hasWMSAvailable(catalog) && catalog.wmsGetCapabilities)
+                .filter((catalog) => hasWMSAvailable(catalog) && hasWMSGetCapabilities(catalog))
                 .map((catalog, index) => newCatalogOption(catalog, index + 1));
         } catch (error) {
             console.error('Failed to fetch catalogos_servicos:', error);
-            feedbackMessage = 'Nao foi possivel carregar os catalogos.';
+            feedbackMessage = 'Não foi possível carregar os catálogos.';
         }
     });
 </script>
@@ -182,7 +163,7 @@
             checked={allCatalogsSelected}
             onchange={toggleAllCatalogs}
         />
-        <label for="selecionar-todos-wms-keyword">Selecionar todos os catalogos</label>
+        <label for="selecionar-todos-wms-keyword">Selecionar todos os catálogos</label>
     </div>
 
     <select
@@ -200,7 +181,7 @@
         class="mt-3 w-full rounded-lg border border-gray-300 p-2 focus:outline-none"
         rows="4"
         bind:value={keywordsInput}
-        placeholder="Informe uma palavra-chave por linha ou separadas por virgula"
+        placeholder="Informe uma palavra-chave por linha ou separadas por vírgula"
     ></textarea>
 
     <div class="mt-3 flex flex-wrap items-center gap-4">
@@ -220,12 +201,12 @@
             Buscar camadas
         </button>
         <span class="text-xs text-gray-600">
-            Catalogos processados: {processedCatalogCount}/{selectedCatalogs.length}
+            Catálogos processados: {processedCatalogCount}/{selectedCatalogs.length}
         </span>
     </div>
 
     {#if isProcessing}
-        <p class="mt-3 text-center text-blue-600 animate-pulse">Processando catalogos...</p>
+        <p class="mt-3 text-center text-blue-600 animate-pulse">Processando catálogos...</p>
     {/if}
 
     {#if feedbackMessage}
@@ -234,7 +215,7 @@
 </form>
 
 <div class="mt-4 space-y-2">
-    {#each results as result, index (`${result.catalog.id}-${result.layer.name}-${index}`)}
+    {#each results as result (`${result.catalog.id}-${result.layer.name ?? result.layer.title}`)}
         <div class="rounded-lg border border-gray-200 bg-white p-3 text-sm shadow-sm">
             <div class="flex items-start justify-between gap-2">
                 <div class="min-w-0">
