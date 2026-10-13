@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { get } from '$lib/request/get';
-    import MGBAIEvaluationModal from '$lib/components/ogc/csw/MGBAIEvaluationModal.svelte';
+    import { get } from '#lib/request/get.js';
+    import MGBAIEvaluationModal from '#lib/components/ogc/csw/MGBAIEvaluationModal.svelte';
 
     interface Props {
         sourceLink?: string;

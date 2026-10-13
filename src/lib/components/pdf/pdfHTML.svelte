@@ -1,6 +1,6 @@
 
 <script lang="ts">
-    import {bodyToPDF} from '$lib/components/pdf/gerarPDF'
+    import {bodyToPDF} from '#lib/components/pdf/gerarPDF.js'
     /**
      * @type {any}
      */

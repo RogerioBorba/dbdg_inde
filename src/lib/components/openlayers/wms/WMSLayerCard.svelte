@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { IWMSStyle } from "$lib/ogc/wms/wmsCapabilities";
+    import type { IWMSStyle } from "#lib/ogc/wms/wmsCapabilities.js";
 
     let {wmsLayer} = $props();
     let metadados = $state(wmsLayer.metadataURLs);

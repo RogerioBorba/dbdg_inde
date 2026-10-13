@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { preventDefault } from '$lib/components/svelte_util/util';
-  import { layerManager } from '$lib/shared/openlayers/shared.svelte';
+  import { preventDefault } from '#lib/components/svelte_util/util.js';
+  import { layerManager } from '#lib/shared/openlayers/shared.svelte.js';
   import { flip } from 'svelte/animate';
   import type { LayerOL, WMSLayerOL, WFSLayerOL } from '../layerOL';
   import SelectedWMSLayerOL from './SelectedWMSLayerOL.svelte';

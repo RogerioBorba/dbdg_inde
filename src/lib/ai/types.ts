@@ -4,7 +4,7 @@
  * em conformidade com o Perfil MGB 2.0 (Perfil de Metadados Geoespaciais do Brasil).
  */
 
-import type { MGBEffectiveQuadroId, MGBQuadroId } from '$lib/ogc/csw/mgb/mgbConformance';
+import type { MGBEffectiveQuadroId, MGBQuadroId } from '#lib/ogc/csw/mgb/mgbConformance.js';
 
 export type MGBSemanticDimensionKey =
     | 'clareza'

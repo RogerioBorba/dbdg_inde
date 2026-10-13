@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { listToCSV } from '$lib/components/csv/gerarCSV';
-    import Navbar from '$lib/components/navbar/navbar.svelte';
-    import { dataToPdf } from '$lib/components/pdf/gerarPDF';
-    import { preventDefault } from '$lib/components/svelte_util/util';
-    import type { IGeoservicoDescricao } from '$lib/inde';
-    import { capabilities, type IWCSCoverageDescription } from '$lib/ogc/wcs/wcsCapabilities';
-    import { get } from '$lib/request/get';
+    import { listToCSV } from '#lib/components/csv/gerarCSV.js';
+    import Navbar from '#lib/components/navbar/navbar.svelte';
+    import { dataToPdf } from '#lib/components/pdf/gerarPDF.js';
+    import { preventDefault } from '#lib/components/svelte_util/util.js';
+    import type { IGeoservicoDescricao } from '#lib/inde/index.js';
+    import { capabilities, type IWCSCoverageDescription } from '#lib/ogc/wcs/wcsCapabilities.js';
+    import { get } from '#lib/request/get.js';
     import { FileSpreadsheet, FileText } from 'lucide-svelte';
     import { onMount } from 'svelte';
     let selectedItems = $state<{id: number, descricao: string, iri: string}[]>([]);

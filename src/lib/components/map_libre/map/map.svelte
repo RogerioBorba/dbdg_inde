@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import maplibregl from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
-  import {mapper} from "$lib/shared/map_libre/shared.svelte";
+  import {mapper} from "#lib/shared/map_libre/shared.svelte.js";
   import { addBaseLayer, Osm } from '../map_libre';
 
   /**

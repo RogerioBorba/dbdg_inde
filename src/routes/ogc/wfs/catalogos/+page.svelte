@@ -1,10 +1,10 @@
 <script lang="ts">
-    import Navbar from '$lib/components/navbar/navbar.svelte'
-    import { preventDefault } from '$lib/components/svelte_util/util';
-    import type { IGeoservicoDescricao } from '$lib/inde/catalogos/ICatalogoGeoservico';
+    import Navbar from '#lib/components/navbar/navbar.svelte'
+    import { preventDefault } from '#lib/components/svelte_util/util.js';
+    import type { IGeoservicoDescricao } from '#lib/inde/catalogos/ICatalogoGeoservico.js';
     import { onMount } from 'svelte';
-    import type { OGCProcessRecord } from '$lib/ogc/commom/OGCRecord';
-    import CatalogCard from '$lib/components/ogc/wfs/CatalogCard.svelte';
+    import type { OGCProcessRecord } from '#lib/ogc/commom/OGCRecord.js';
+    import CatalogCard from '#lib/components/ogc/wfs/CatalogCard.svelte';
     interface Props {id: number, descricao: string, iri: string};
     let selectedItems = $state<Props[]>([]);
     let selectedCatalogs = $state<Props[]>([]);

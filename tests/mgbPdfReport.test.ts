@@ -1,8 +1,8 @@
 // tests/mgbPdfReport.test.ts
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { generateMGBSemanticPdfReport } from '../src/lib/ai/mgbPdfReport';
-import type { MGBSemanticEvaluation } from '../src/lib/ai/types';
+import { generateMGBSemanticPdfReport } from '../src/lib/ai/mgbPdfReport.ts';
+import type { MGBSemanticEvaluation } from '../src/lib/ai/types.ts';
 
 const SAMPLE_EVALUATION: MGBSemanticEvaluation = {
     metadataId: 'test-uuid-1234',

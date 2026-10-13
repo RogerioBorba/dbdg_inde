@@ -1,5 +1,5 @@
 <script lang="ts">
-    import * as Tabs from '$lib/components/ui/tabs';
+    import * as Tabs from '#lib/components/ui/tabs/index.js';
     import BaseWFS from './BaseWFS.svelte';
     import WFSKeywordSearch from './WFSKeywordSearch.svelte';
     import WFSBoundingBoxSearch from './WFSBoundingBoxSearch.svelte';

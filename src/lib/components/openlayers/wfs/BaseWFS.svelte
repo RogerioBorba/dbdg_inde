@@ -1,12 +1,12 @@
 <script lang="ts">
-    import type { IGeoservicoDescricao } from '$lib/inde';
-    import {get} from '$lib/request/get';
-    import {iWFSFeatureTypes} from '$lib/ogc/wfs/wfsCapabilities';
-    import type {IFeatureType, IWFSGetCapabilities} from '$lib/ogc/wfs/wfsCapabilities';
+    import type { IGeoservicoDescricao } from '#lib/inde/index.js';
+    import {get} from '#lib/request/get.js';
+    import {iWFSFeatureTypes} from '#lib/ogc/wfs/wfsCapabilities.js';
+    import type {IFeatureType, IWFSGetCapabilities} from '#lib/ogc/wfs/wfsCapabilities.js';
 	import { error } from '@sveltejs/kit';
     import { onMount } from 'svelte';
     import WFSCapabilityLayer from './WFSCapabilityLayer.svelte';
-   // import WFSFeatureItem from '$lib/components/openlayers/wfs/WFSCapabilityLayer.svelte';
+   // import WFSFeatureItem from '#lib/components/openlayers/wfs/WFSCapabilityLayer.svelte';
     
     let promise = $state<undefined | null | Promise<number>| number>(null);
     type IDTEXTIRI = { id: number; text: string; iri: string };

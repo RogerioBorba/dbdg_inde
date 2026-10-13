@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mapper_ol } from '$lib/shared/openlayers/shared.svelte';
+    import { mapper_ol } from '#lib/shared/openlayers/shared.svelte.js';
     import { onMount } from 'svelte';
     import TileLayer from 'ol/layer/Tile.js';
     import XYZ from 'ol/source/XYZ.js';

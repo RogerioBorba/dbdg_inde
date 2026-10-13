@@ -1,9 +1,9 @@
 <script lang="ts">
-    import {layerManager, mapper_ol} from '$lib/shared/openlayers/shared.svelte';
-    import type { IFeatureType, IMetadataUrl} from '$lib/ogc/wfs/wfsCapabilities';
-    import {preventDefault} from '$lib/components/svelte_util/util';
-    import { get } from '$lib/request/get';
-    //import {metadataLink} from '$lib/store/storeVisualizadorMetadata'
+    import {layerManager, mapper_ol} from '#lib/shared/openlayers/shared.svelte.js';
+    import type { IFeatureType, IMetadataUrl} from '#lib/ogc/wfs/wfsCapabilities.js';
+    import {preventDefault} from '#lib/components/svelte_util/util.js';
+    import { get } from '#lib/request/get.js';
+    //import {metadataLink} from '#lib/store/storeVisualizadorMetadata'
     
     import { Fill, Stroke, Style } from 'ol/style';
     import CircleStyle from 'ol/style/Circle';
@@ -12,11 +12,11 @@
     
     //import WfsModal from './WFSModal.svelte';
     
-    //import {hiddenDraw} from '$lib/store/storeBoudingBox';
+    //import {hiddenDraw} from '#lib/store/storeBoudingBox';
     import proj4 from 'proj4'
     import type { FacadeOL } from '../facade_openlayers';
     import { WFSLayer } from './wfsLayer';
-    import { featureCounted } from '$lib/ogc/wfs/wfsFeature';
+    import { featureCounted } from '#lib/ogc/wfs/wfsFeature.js';
     import type VectorImageLayer from 'ol/layer/VectorImage';
     import  { WFSLayerOL } from '../layerOL';
 

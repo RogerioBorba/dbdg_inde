@@ -1,9 +1,9 @@
 <!-- src/lib/components/ogc/csw/MGBAIEvaluationModal.svelte -->
 <script lang="ts">
     import { onMount } from 'svelte';
-    import type { MGBSemanticEvaluation, MGBAIEvaluationRequest, MGBAIEvaluationResponse } from '$lib/ai/types';
-    import type { MGBQuadroId } from '$lib/ogc/csw/mgb/mgbConformance';
-    import { downloadMGBSemanticPdfReport } from '$lib/ai/mgbPdfReport';
+    import type { MGBSemanticEvaluation, MGBAIEvaluationRequest, MGBAIEvaluationResponse } from '#lib/ai/types.js';
+    import type { MGBQuadroId } from '#lib/ogc/csw/mgb/mgbConformance.js';
+    import { downloadMGBSemanticPdfReport } from '#lib/ai/mgbPdfReport.js';
 
     interface Props {
         isOpen: boolean;
@@ -33,18 +33,57 @@
 
     // Configurações de Provedor
     let showSettings = $state(false);
-    let selectedProvider = $state<'heuristic' | 'gemini' | 'openai'>('heuristic');
+    let selectedProvider = $state<'auto' | 'heuristic' | 'gemini' | 'openai'>('auto');
     let customApiKey = $state('');
+    let serverHasGemini = $state(false);
+    let serverHasOpenAi = $state(false);
     let copiedElementId = $state<number | null>(null);
 
     let ratingBadge = $derived(evaluation ? getRatingBadgeClasses(evaluation.rating) : null);
 
-    onMount(() => {
+    let keyMismatchWarning = $derived.by(() => {
+        const trimmed = customApiKey.trim();
+        if (!trimmed) return '';
+        if (selectedProvider === 'openai' && (trimmed.startsWith('AQ.') || trimmed.startsWith('AIza'))) {
+            return 'A chave informada pertence ao Google Gemini (inicia com AQ./AIza...). Chaves da OpenAI / ChatGPT iniciam com "sk-". Para usar o ChatGPT, insira sua chave da OpenAI ou alterne o motor para Google Gemini.';
+        }
+        if (selectedProvider === 'gemini' && trimmed.startsWith('sk-')) {
+            return 'A chave informada pertence à OpenAI / ChatGPT (inicia com "sk-"). Chaves do Google Gemini iniciam com "AIza..." ou "AQ.". Alterne o motor para OpenAI ou informe sua chave do Google Gemini.';
+        }
+        return '';
+    });
+
+    onMount(async () => {
         if (typeof window !== 'undefined') {
             const savedKey = localStorage.getItem('dbdg_ai_api_key');
-            const savedProv = localStorage.getItem('dbdg_ai_provider') as 'heuristic' | 'gemini' | 'openai';
+            const savedProv = localStorage.getItem('dbdg_ai_provider') as 'auto' | 'heuristic' | 'gemini' | 'openai';
             if (savedKey) customApiKey = savedKey;
             if (savedProv) selectedProvider = savedProv;
+
+            // Se a chave salva no localStorage for do Gemini e o motor for OpenAI, descarta para usar a do .env
+            if (savedKey && (savedKey.startsWith('AQ.') || savedKey.startsWith('AIza')) && savedProv === 'openai') {
+                customApiKey = '';
+                localStorage.removeItem('dbdg_ai_api_key');
+            }
+            if (savedKey && savedKey.startsWith('sk-') && savedProv === 'gemini') {
+                customApiKey = '';
+                localStorage.removeItem('dbdg_ai_api_key');
+            }
+
+            try {
+                const res = await fetch('/api/ai/avaliar-metadado');
+                if (res.ok) {
+                    const info = await res.json();
+                    serverHasGemini = Boolean(info.hasGemini);
+                    serverHasOpenAi = Boolean(info.hasOpenAi);
+                    // Se o usuário ainda não escolheu um provedor fixo no navegador e há chave no .env, assume Gemini
+                    if (!savedProv && serverHasGemini) {
+                        selectedProvider = 'gemini';
+                    }
+                }
+            } catch {
+                // Silencioso
+            }
         }
     });
 
@@ -60,6 +99,15 @@
         errorMessage = '';
 
         try {
+            // Evita enviar chave incompatível cruzada (ex: chave Gemini enviada para OpenAI)
+            let effectiveApiKey = customApiKey.trim();
+            if (selectedProvider === 'openai' && (effectiveApiKey.startsWith('AQ.') || effectiveApiKey.startsWith('AIza'))) {
+                effectiveApiKey = ''; // Permite usar OPENAI_API_KEY do servidor (.env) em vez de enviar a chave errada
+            }
+            if (selectedProvider === 'gemini' && effectiveApiKey.startsWith('sk-')) {
+                effectiveApiKey = ''; // Permite usar GEMINI_API_KEY do servidor (.env) em vez de enviar a chave errada
+            }
+
             const payload: MGBAIEvaluationRequest = {
                 metadataId,
                 catalogIri,
@@ -67,7 +115,7 @@
                 metadataXml: rawXml || undefined,
                 quadroId,
                 provider: selectedProvider,
-                apiKey: customApiKey || undefined
+                apiKey: effectiveApiKey || undefined
             };
 
             const response = await fetch('/api/ai/avaliar-metadado', {
@@ -94,7 +142,21 @@
 
     function saveSettingsAndReevaluate() {
         if (typeof window !== 'undefined') {
-            localStorage.setItem('dbdg_ai_api_key', customApiKey.trim());
+            let keyToSave = customApiKey.trim();
+            // Se pertencer ao outro provedor, limpa para não interferir
+            if (selectedProvider === 'openai' && (keyToSave.startsWith('AQ.') || keyToSave.startsWith('AIza'))) {
+                keyToSave = '';
+                customApiKey = '';
+            }
+            if (selectedProvider === 'gemini' && keyToSave.startsWith('sk-')) {
+                keyToSave = '';
+                customApiKey = '';
+            }
+            if (keyToSave) {
+                localStorage.setItem('dbdg_ai_api_key', keyToSave);
+            } else {
+                localStorage.removeItem('dbdg_ai_api_key');
+            }
             localStorage.setItem('dbdg_ai_provider', selectedProvider);
         }
         showSettings = false;
@@ -263,25 +325,55 @@
                                 bind:value={selectedProvider}
                                 class="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
                             >
-                                <option value="heuristic">Especialista MGB Heurístico (Integrado, sem necessidade de chave)</option>
-                                <option value="gemini">Google Gemini API (gemini-1.5-flash / gemini-2.0)</option>
-                                <option value="openai">OpenAI / Compatível (GPT-4o mini)</option>
+                                <option value="auto">Automático {serverHasGemini ? '(Google Gemini detectado no .env)' : ''}</option>
+                                <option value="gemini">Google Gemini API (gemini-flash-lite) {serverHasGemini ? '✓ (.env configurado)' : ''}</option>
+                                <option value="openai">OpenAI / Compatível (GPT-4o mini) {serverHasOpenAi ? '✓ (.env configurado)' : ''}</option>
+                                <option value="heuristic">Especialista MGB Heurístico (Apenas regras locais)</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300" for="api-key-input">
-                                Chave de API (Opcional):
-                            </label>
+                            <div class="flex items-center justify-between">
+                                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300" for="api-key-input">
+                                    Chave de API (Opcional):
+                                </label>
+                                {#if customApiKey}
+                                    <button
+                                        type="button"
+                                        onclick={() => (customApiKey = '')}
+                                        class="text-[11px] font-semibold text-rose-600 hover:underline dark:text-rose-400"
+                                        title="Limpar chave informada manualmente para usar a chave configurada no .env"
+                                    >
+                                        Limpar (usar .env)
+                                    </button>
+                                {/if}
+                            </div>
                             <input
                                 id="api-key-input"
                                 type="password"
                                 bind:value={customApiKey}
-                                placeholder={selectedProvider === 'heuristic' ? 'Não necessária para motor heurístico' : 'Cole sua chave de API'}
+                                placeholder={selectedProvider === 'heuristic'
+                                    ? 'Não necessária para motor heurístico'
+                                    : ((selectedProvider === 'gemini' && serverHasGemini) ||
+                                       (selectedProvider === 'openai' && serverHasOpenAi) ||
+                                       (selectedProvider === 'auto' && (serverHasGemini || serverHasOpenAi)))
+                                        ? 'Chave carregada automaticamente do arquivo .env'
+                                        : 'Cole sua chave de API (sk-...)'}
                                 disabled={selectedProvider === 'heuristic'}
                                 class="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 disabled:bg-slate-100 disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
                             />
                         </div>
                     </div>
+
+                    {#if keyMismatchWarning}
+                        <div class="mt-3 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/70 dark:text-amber-200">
+                            <span class="text-sm">⚠️</span>
+                            <div>
+                                <span class="font-bold">Atenção ao formato da chave:</span>
+                                <div>{keyMismatchWarning}</div>
+                            </div>
+                        </div>
+                    {/if}
+
                     <div class="mt-3 flex justify-end gap-2">
                         <button
                             onclick={() => (showSettings = false)}
@@ -354,7 +446,15 @@
                             {/if}
 
                             <p class="mt-3 text-[11px] text-slate-500 dark:text-slate-400">
-                                Motor: <span class="font-semibold text-slate-700 dark:text-slate-300 capitalize">{evaluation.provider === 'heuristic' ? 'Especialista MGB Heurístico' : evaluation.provider}</span>
+                                Motor: <span class="font-semibold text-slate-700 dark:text-slate-300">
+                                    {#if evaluation.provider === 'gemini'}
+                                        Google Gemini ({evaluation.model || 'gemini-flash-lite'})
+                                    {:else if evaluation.provider === 'openai'}
+                                        OpenAI ({evaluation.model || 'gpt-4o-mini'})
+                                    {:else}
+                                        Especialista MGB Heurístico
+                                    {/if}
+                                </span>
                             </p>
                         </div>
 

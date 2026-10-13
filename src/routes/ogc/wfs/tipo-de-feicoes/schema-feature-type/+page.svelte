@@ -1,11 +1,11 @@
 <script lang="ts">
-    import Navbar from '$lib/components/navbar/navbar.svelte';
-    import { listToCSV } from '$lib/components/csv/gerarCSV';
-    import { dataToPdf } from '$lib/components/pdf/gerarPDF';
-    import { preventDefault } from '$lib/components/svelte_util/util';
+    import Navbar from '#lib/components/navbar/navbar.svelte';
+    import { listToCSV } from '#lib/components/csv/gerarCSV.js';
+    import { dataToPdf } from '#lib/components/pdf/gerarPDF.js';
+    import { preventDefault } from '#lib/components/svelte_util/util.js';
     import { FileSpreadsheet, FileText } from 'lucide-svelte';
-    import { wfsFeatureTypesData } from '$lib/shared/ogc/wfs/shared.svelte';
-    import { get } from '$lib/request/get';
+    import { wfsFeatureTypesData } from '#lib/shared/ogc/wfs/shared.svelte.js';
+    import { get } from '#lib/request/get.js';
     import type { PageData } from './$types';
     import { onMount } from 'svelte';
 

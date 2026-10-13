@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {dataToPdf} from '$lib/components/pdf/gerarPDF'
+    import {dataToPdf} from '#lib/components/pdf/gerarPDF.js'
     /**
      * @type {Array<object>}
      */

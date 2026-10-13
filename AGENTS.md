@@ -4,7 +4,7 @@ Orientações para agentes de IA que trabalham neste repositório.
 
 ## Visão geral
 
-O DBDG INDE é uma aplicação web de consulta, análise e visualização de geosserviços da INDE. A aplicação usa SvelteKit 2, Svelte 5, TypeScript, Tailwind CSS 4, shadcn-svelte, lucide-svelte, OpenLayers, MapLibre GL e deck.gl.
+O DBDG INDE é uma aplicação web de consulta, análise e visualização de geosserviços da INDE. A aplicação usa SvelteKit 3, Svelte 5, TypeScript, Tailwind CSS 4, shadcn-svelte, lucide-svelte, OpenLayers, MapLibre GL e deck.gl.
 
 Antes de alterar comportamento relevante, consulte:
 
@@ -40,7 +40,7 @@ Antes de concluir uma mudança de código, execute pelo menos `npm run check`. P
 ## Convenções de implementação
 
 - Escreva código TypeScript estrito; não introduza `any` sem uma justificativa concreta.
-- Use o alias `$lib` para imports internos quando ele tornar a dependência mais clara.
+- Use o alias `#lib` para imports internos quando ele tornar a dependência mais clara.
 - Em Svelte, prefira os recursos idiomáticos do Svelte 5, incluindo runes (`$state`, `$derived` e `$effect`) quando houver estado reativo.
 - Mantenha componentes pequenos e coesos. Extraia parsing, filtragem, transformação e construção de URLs para módulos TypeScript testáveis.
 - Não duplique regras entre OpenLayers e MapLibre. Coloque comportamento independente do renderizador em módulos compartilhados.

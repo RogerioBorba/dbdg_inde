@@ -1,9 +1,9 @@
 <script lang="ts">
-    import Navbar from '$lib/components/navbar/navbar.svelte';
-    import { preventDefault } from '$lib/components/svelte_util/util';
-    import type { IGeoservicoDescricao } from '$lib/inde';
+    import Navbar from '#lib/components/navbar/navbar.svelte';
+    import { preventDefault } from '#lib/components/svelte_util/util.js';
+    import type { IGeoservicoDescricao } from '#lib/inde/index.js';
     import { onMount } from 'svelte';
-    import WFSFeatureTypesCard from '$lib/components/ogc/wfs/WFSFeatureTypesCard.svelte';
+    import WFSFeatureTypesCard from '#lib/components/ogc/wfs/WFSFeatureTypesCard.svelte';
 
     interface IdDescricaoIRI {
         id: number;

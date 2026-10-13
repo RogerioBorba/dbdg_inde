@@ -1,12 +1,12 @@
 <script lang="ts">
-    import WCSCoverageCard from '$lib/components/ogc/wcs/WCSCoverageCard.svelte';
+    import WCSCoverageCard from '#lib/components/ogc/wcs/WCSCoverageCard.svelte';
     import { onMount } from 'svelte';
-    import { counterWCS } from '$lib/shared/ogc/wcs/shared.svelte';
-    import CsvWcs from '$lib/components/csv/csvWCS.svelte';
-    import PdfJsObject from '$lib/components/pdf/pdfJSObject.svelte';
-    import type { IWCSCoverageDescription, IWCSMetadataURL } from '$lib/ogc/wcs/wcsCapabilities';
-    import type { ICSVLayer } from '$lib/components/csv/icsv';
-    import { loadCoverageDetails } from '$lib/ogc/wcs/wcsDescribeCoverage';
+    import { counterWCS } from '#lib/shared/ogc/wcs/shared.svelte.js';
+    import CsvWcs from '#lib/components/csv/csvWCS.svelte';
+    import PdfJsObject from '#lib/components/pdf/pdfJSObject.svelte';
+    import type { IWCSCoverageDescription, IWCSMetadataURL } from '#lib/ogc/wcs/wcsCapabilities.js';
+    import type { ICSVLayer } from '#lib/components/csv/icsv.js';
+    import { loadCoverageDetails } from '#lib/ogc/wcs/wcsDescribeCoverage.js';
 
     let wcsCoverages = $state<IWCSCoverageDescription[]>([]);
     let textEntered = $state('');

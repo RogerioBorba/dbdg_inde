@@ -1,5 +1,5 @@
-import type { IFeatureType } from '$lib/ogc/wfs/wfsCapabilities';
-import type { IWMSLayer, IWMSStyle } from '$lib/ogc/wms/wmsCapabilities';
+import type { IFeatureType } from '#lib/ogc/wfs/wfsCapabilities.js';
+import type { IWMSLayer, IWMSStyle } from '#lib/ogc/wms/wmsCapabilities.js';
 import { v4 as uuid } from 'uuid';
 
 export class LayerOL {

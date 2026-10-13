@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
-  import { mapper_ol } from '$lib/shared/openlayers/shared.svelte';
-  import { FacadeOL } from '$lib/components/openlayers/facade_openlayers';
+  import { mapper_ol } from '#lib/shared/openlayers/shared.svelte.js';
+  import { FacadeOL } from '#lib/components/openlayers/facade_openlayers.js';
 
   let west = '-74.0';
   let south = '-34.0';

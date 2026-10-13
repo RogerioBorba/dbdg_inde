@@ -1,5 +1,5 @@
 <script lang="ts">
-    import * as Tabs from '$lib/components/ui/tabs';
+    import * as Tabs from '#lib/components/ui/tabs/index.js';
     import BaseWFS from './BaseWFS.svelte';
 </script>
     

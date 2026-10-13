@@ -1,10 +1,10 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import Navbar from '$lib/components/navbar/navbar.svelte';
-    import { listToCSV } from '$lib/components/csv/gerarCSV';
-    import { dataToPdf } from '$lib/components/pdf/gerarPDF';
-    import { get } from '$lib/request/get';
-    import type { CSWCatalog } from '$lib/ogc/csw/CSWCatalog';
+    import Navbar from '#lib/components/navbar/navbar.svelte';
+    import { listToCSV } from '#lib/components/csv/gerarCSV.js';
+    import { dataToPdf } from '#lib/components/pdf/gerarPDF.js';
+    import { get } from '#lib/request/get.js';
+    import type { CSWCatalog } from '#lib/ogc/csw/CSWCatalog.js';
 
     const PAGE_SIZE = 20;
     const LINK_TIMEOUT_MS = 15000;

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { IWCSCoverageDescription } from "$lib/ogc/wcs/wcsCapabilities";
-    import { loadCoverageDetails, type IWCSCoverageDetails } from "$lib/ogc/wcs/wcsDescribeCoverage";
+    import type { IWCSCoverageDescription } from "#lib/ogc/wcs/wcsCapabilities.js";
+    import { loadCoverageDetails, type IWCSCoverageDetails } from "#lib/ogc/wcs/wcsDescribeCoverage.js";
     import { onMount } from "svelte";
 
     let {

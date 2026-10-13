@@ -1,4 +1,4 @@
-import type {IWFSGetCapabilities, IFeatureType} from '$lib/ogc/wfs/wfsCapabilities';
+import type {IWFSGetCapabilities, IFeatureType} from '#lib/ogc/wfs/wfsCapabilities.js';
 
 export const counterWFS = $state<
 {   totalLayers: number,  

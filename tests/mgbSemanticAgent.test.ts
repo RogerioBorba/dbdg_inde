@@ -4,8 +4,8 @@ import test from 'node:test';
 import {
     extractSemanticDataFromXml,
     evaluateMetadataHeuristically
-} from '../src/lib/ai/mgbSemanticEvaluator';
-import { buildSemanticPrompt, MGB_AI_SYSTEM_PROMPT } from '../src/lib/ai/mgbSemanticPrompts';
+} from '../src/lib/ai/mgbSemanticEvaluator.ts';
+import { buildSemanticPrompt, MGB_AI_SYSTEM_PROMPT } from '../src/lib/ai/mgbSemanticPrompts.ts';
 
 // XML de teste representativo de um metadado completo do IBGE (BC250 Aglomerado Rural)
 const SAMPLE_IBGE_BC250_XML = `<?xml version="1.0" encoding="UTF-8"?>

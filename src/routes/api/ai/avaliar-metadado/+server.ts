@@ -1,13 +1,74 @@
-// src/routes/api/ai/avaliar-metadado/+server.ts
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { evaluateMetadataSemantics } from '$lib/ai/mgbSemanticEvaluator';
-import type { MGBAIEvaluationRequest, MGBAIEvaluationResponse } from '$lib/ai/types';
-import { get } from '$lib/request/get';
+import { GEMINI_API_KEY, AI_API_KEY, OPENAI_API_KEY } from '$app/env/private';
+import { evaluateMetadataSemantics } from '#lib/ai/mgbSemanticEvaluator.js';
+import type { MGBAIEvaluationRequest, MGBAIEvaluationResponse } from '#lib/ai/types.js';
+import { get } from '#lib/request/get.js';
+
+import fs from 'node:fs';
+import path from 'node:path';
 
 function buildGetRecordByIdUrl(baseIri: string, id: string): string {
     const baseUrl = baseIri.split('?')[0];
     return `${baseUrl}?service=CSW&version=2.0.2&request=GetRecordById&elementSetName=full&outputSchema=csw:IsoRecord&id=${encodeURIComponent(id)}`;
 }
+
+function getEnvKeys(): { geminiKey?: string; openAiKey?: string } {
+    let geminiKey = GEMINI_API_KEY || AI_API_KEY || process.env.GEMINI_API_KEY || process.env.AI_API_KEY;
+    let openAiKey = OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+
+    // Se alguma das chaves não estiver no ambiente de memória (ex: servidor Vite não foi reiniciado após editar .env),
+    // lê diretamente o arquivo .env do disco
+    if (!geminiKey || !openAiKey) {
+        try {
+            const possiblePaths = [
+                path.resolve(process.cwd(), '.env'),
+                path.resolve('c:/desenv/AI-projetos/dbdg_inde/.env'),
+                path.resolve('c:/desenv/node-des/sveltekit-dev/dbdg_inde/.env')
+            ];
+            for (const p of possiblePaths) {
+                if (fs.existsSync(p)) {
+                    const content = fs.readFileSync(p, 'utf-8');
+                    for (const line of content.split(/\r?\n/)) {
+                        const trimmed = line.trim();
+                        if (!trimmed || trimmed.startsWith('#')) continue;
+                        const match = trimmed.match(/^([A-Za-z0-9_]+)\s*=\s*(.*)$/);
+                        if (match) {
+                            const k = match[1];
+                            let v = match[2].trim();
+                            // Remove aspas envolventes se houver
+                            if (v.startsWith('"') && v.endsWith('"') || v.startsWith("'") && v.endsWith("'")) {
+                                v = v.slice(1, -1);
+                            }
+                            if ((k === 'GEMINI_API_KEY' || k === 'AI_API_KEY') && !geminiKey) {
+                                geminiKey = v;
+                            }
+                            if (k === 'OPENAI_API_KEY' && !openAiKey) {
+                                openAiKey = v;
+                            }
+                        }
+                    }
+                    if (geminiKey && openAiKey) break;
+                }
+            }
+        } catch (e) {
+            console.warn('Erro ao ler .env do disco:', e);
+        }
+    }
+
+    // Limpa eventuais aspas residuais
+    if (geminiKey) geminiKey = geminiKey.replace(/^["']|["']$/g, '').trim();
+    if (openAiKey) openAiKey = openAiKey.replace(/^["']|["']$/g, '').trim();
+
+    return { geminiKey, openAiKey };
+}
+
+export const GET: RequestHandler = async () => {
+    const { geminiKey, openAiKey } = getEnvKeys();
+    return json({
+        hasGemini: Boolean(geminiKey),
+        hasOpenAi: Boolean(openAiKey)
+    });
+};
 
 export const POST: RequestHandler = async ({ request }) => {
     try {
@@ -55,9 +116,8 @@ export const POST: RequestHandler = async ({ request }) => {
             }
         }
 
-        // Chaves de ambiente do servidor (opcionais)
-        const geminiKey = process.env.GEMINI_API_KEY || process.env.AI_API_KEY;
-        const openAiKey = process.env.OPENAI_API_KEY;
+        // Chaves de ambiente do servidor (resolvidas dinamicamente com fallback no .env do disco)
+        const { geminiKey, openAiKey } = getEnvKeys();
 
         const evaluation = await evaluateMetadataSemantics(reqData, {
             geminiKey,

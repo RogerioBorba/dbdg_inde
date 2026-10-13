@@ -5,7 +5,7 @@ import {
   MGB_QUADROS_INFO,
   evaluateMGBRecord,
   detectMetadataScope
-} from '../src/lib/ogc/csw/mgb/mgbConformance';
+} from '../src/lib/ogc/csw/mgb/mgbConformance.ts';
 
 test('getRulesForQuadro retorna a quantidade correta de elementos obrigatórios por quadro', () => {
   const rules84 = getRulesForQuadro('84');

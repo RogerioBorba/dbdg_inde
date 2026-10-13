@@ -1,7 +1,7 @@
 // src/lib/map/layerManager.ts
 import type { Map } from 'ol';
-import type { LayerOL } from '$lib/components/openlayers/layerOL';
-import { layerManager } from '$lib/shared/openlayers/shared.svelte';
+import type { LayerOL } from '#lib/components/openlayers/layerOL.js';
+import { layerManager } from '#lib/shared/openlayers/shared.svelte.js';
 
 export function addOLLayer(map: Map, entry: LayerOL) {
   map.addLayer(entry.layer);

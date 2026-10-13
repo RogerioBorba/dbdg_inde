@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { MGBEvaluationResult } from '$lib/ogc/csw/mgb/mgbConformance';
-    import MGBAIEvaluationModal from '$lib/components/ogc/csw/MGBAIEvaluationModal.svelte';
+    import type { MGBEvaluationResult } from '#lib/ogc/csw/mgb/mgbConformance.js';
+    import MGBAIEvaluationModal from '#lib/components/ogc/csw/MGBAIEvaluationModal.svelte';
 
     interface Props {
         identifier: string;

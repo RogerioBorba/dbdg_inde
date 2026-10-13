@@ -1,17 +1,17 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import Navbar from '$lib/components/navbar/navbar.svelte';
-    import CSWCatalogSelector from '$lib/components/ogc/csw/CSWCatalogSelector.svelte';
-    import MGBMetadataCard from '$lib/components/ogc/csw/MGBMetadataCard.svelte';
-    import { catalogos_csw, type ICatalogoCSW } from '$lib/inde/catalogos/ICatalogoGeoservico';
-    import type { CSWCatalog } from '$lib/ogc/csw/CSWCatalog';
-    import { get } from '$lib/request/get';
+    import Navbar from '#lib/components/navbar/navbar.svelte';
+    import CSWCatalogSelector from '#lib/components/ogc/csw/CSWCatalogSelector.svelte';
+    import MGBMetadataCard from '#lib/components/ogc/csw/MGBMetadataCard.svelte';
+    import { catalogos_csw, type ICatalogoCSW } from '#lib/inde/catalogos/ICatalogoGeoservico.js';
+    import type { CSWCatalog } from '#lib/ogc/csw/CSWCatalog.js';
+    import { get } from '#lib/request/get.js';
     import {
         evaluateMGBRecord,
         MGB_QUADROS_INFO,
         type MGBQuadroId,
         type MGBEvaluationResult
-    } from '$lib/ogc/csw/mgb/mgbConformance';
+    } from '#lib/ogc/csw/mgb/mgbConformance.js';
 
     const PAGE_SIZE = 20;
 

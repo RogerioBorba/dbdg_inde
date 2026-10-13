@@ -4,7 +4,7 @@
  * baseado no Perfil MGB 2.0 (Perfil de Metadados Geoespaciais do Brasil / INDE).
  */
 
-import type { MGBEffectiveQuadroId } from '$lib/ogc/csw/mgb/mgbConformance';
+import type { MGBEffectiveQuadroId } from '#lib/ogc/csw/mgb/mgbConformance.js';
 
 export const MGB_AI_SYSTEM_PROMPT = `Você é um Agente Especialista e Auditor Sênior de Metadados Geoespaciais da INDE (Infraestrutura Nacional de Dados Espaciais), com profundo conhecimento das normas ISO 19115:2003, ISO 19139 e do manual do Perfil MGB 2.0 (Perfil de Metadados Geoespaciais do Brasil, publicado pelo IBGE/INDE - liv101802.pdf).
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { CSWCatalog } from '$lib/ogc/csw/CSWCatalog';
+    import type { CSWCatalog } from '#lib/ogc/csw/CSWCatalog.js';
 
     let {
         items = [],

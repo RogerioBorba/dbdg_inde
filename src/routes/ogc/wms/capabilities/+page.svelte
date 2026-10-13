@@ -1,11 +1,11 @@
 <script lang="ts">
-    import WMSLayerCard from '$lib/components/openlayers/wms/WMSLayerCard.svelte';
+    import WMSLayerCard from '#lib/components/openlayers/wms/WMSLayerCard.svelte';
     import { onMount } from 'svelte';
-    import { counterWMS } from '$lib/shared/ogc/wms/shared.svelte';
-    import CsvWms from '$lib/components/csv/csvWMS.svelte';
-    import PdfJsObject from '$lib/components/pdf/pdfJSObject.svelte';
-    import type { IWMSLayer,  IWMSMetadataURL } from '$lib/ogc/wms/wmsCapabilities';
-    import type { ICSVLayer } from '$lib/components/csv/icsv';
+    import { counterWMS } from '#lib/shared/ogc/wms/shared.svelte.js';
+    import CsvWms from '#lib/components/csv/csvWMS.svelte';
+    import PdfJsObject from '#lib/components/pdf/pdfJSObject.svelte';
+    import type { IWMSLayer,  IWMSMetadataURL } from '#lib/ogc/wms/wmsCapabilities.js';
+    import type { ICSVLayer } from '#lib/components/csv/icsv.js';
 
     let wmsLayers = $state<IWMSLayer[]>([]);
     let textEntered = $state('');

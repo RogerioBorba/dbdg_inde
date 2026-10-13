@@ -1,5 +1,5 @@
 import type { PageLoad } from './$types';
-import type { CatalogoINDE } from '$lib/types/inde'; // ou caminho que preferir
+import type { CatalogoINDE } from '#lib/types/inde'; // ou caminho que preferir
 export const load: PageLoad = async () => {
     try {
         const res = await fetch("https://inde.gov.br/api/catalogo/get");

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { CatalogoINDE } from '$lib/types/inde'; // ou caminho que preferir
+    import type { CatalogoINDE } from '#lib/types/inde'; // ou caminho que preferir
 
     let { data }: { data: { catalogos_inde: CatalogoINDE[] } } = $props();
     

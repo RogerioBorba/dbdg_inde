@@ -1,8 +1,8 @@
 <script lang="ts">
-    import type { IGeoservicoDescricao } from '$lib/inde';
-    import type {IWMSLayer} from '$lib/ogc/wms/wmsCapabilities';
-    import {iWMSLayers} from '$lib/ogc/wms/wmsCapabilities';
-    import {get} from '$lib/request/get';
+    import type { IGeoservicoDescricao } from '#lib/inde/index.js';
+    import type {IWMSLayer} from '#lib/ogc/wms/wmsCapabilities.js';
+    import {iWMSLayers} from '#lib/ogc/wms/wmsCapabilities.js';
+    import {get} from '#lib/request/get.js';
     import { error } from '@sveltejs/kit';
     import { onMount } from 'svelte';
     import WMSTreeView from './WMSTreeView.svelte';

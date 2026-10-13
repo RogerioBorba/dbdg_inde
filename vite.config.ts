@@ -10,10 +10,7 @@ export default defineConfig({
 		sveltekit({
 			adapter: adapter(),
 			preprocess: vitePreprocess(),
-			inspector: true,
-			alias: {
-				$lib: 'src/lib'
-			}
+			inspector: true
 		})
 	]
 });

@@ -1,10 +1,10 @@
 <script lang="ts">
-    import type { IGeoservicoDescricao } from '$lib/inde';
-    import type { IWMSBoundingBox, IWMSLayer, IWMSMetadataURL } from '$lib/ogc/wms/wmsCapabilities';
-    import { iWMSCapabilities } from '$lib/ogc/wms/wmsCapabilities';
-    import { get } from '$lib/request/get';
-    import { preventDefault } from '$lib/components/svelte_util/util';
-    import { layerManager, mapper_ol } from '$lib/shared/openlayers/shared.svelte';
+    import type { IGeoservicoDescricao } from '#lib/inde/index.js';
+    import type { IWMSBoundingBox, IWMSLayer, IWMSMetadataURL } from '#lib/ogc/wms/wmsCapabilities.js';
+    import { iWMSCapabilities } from '#lib/ogc/wms/wmsCapabilities.js';
+    import { get } from '#lib/request/get.js';
+    import { preventDefault } from '#lib/components/svelte_util/util.js';
+    import { layerManager, mapper_ol } from '#lib/shared/openlayers/shared.svelte.js';
     import { WMSLayerOL } from '../layerOL';
     import { FacadeOL } from '../facade_openlayers';
     import { onDestroy, onMount } from 'svelte';

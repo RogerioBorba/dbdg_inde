@@ -1,11 +1,11 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import Map from "$lib/components/map_libre/map/map.svelte"
-    import Sidebar from "$lib/components/sidebar/sidebar.svelte";
-    import BaseTiles from "$lib/components/map_libre/baseTile/baseTiles.svelte";
-    import ExpansionPanel from "$lib/components/expansionpanel/ExpansionPanel.svelte";
-    import TabWMS from "$lib/components/map_libre/wms/TabWMS.svelte";
-    import TabWFS from "$lib/components/map_libre/wfs/TabWFS.svelte";
+    import Map from "#lib/components/map_libre/map/map.svelte"
+    import Sidebar from "#lib/components/sidebar/sidebar.svelte";
+    import BaseTiles from "#lib/components/map_libre/baseTile/baseTiles.svelte";
+    import ExpansionPanel from "#lib/components/expansionpanel/ExpansionPanel.svelte";
+    import TabWMS from "#lib/components/map_libre/wms/TabWMS.svelte";
+    import TabWFS from "#lib/components/map_libre/wfs/TabWFS.svelte";
 
     onMount( async ()  => {});
 </script>

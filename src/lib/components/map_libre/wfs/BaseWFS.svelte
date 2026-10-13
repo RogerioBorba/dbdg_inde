@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { IGeoservicoDescricao } from '$lib/inde';
-    import {get} from '$lib/request/get';
+    import type { IGeoservicoDescricao } from '#lib/inde/index.js';
+    import {get} from '#lib/request/get.js';
     import {iWFSFeatureTypes} from '../../../ogc/wfs/wfsCapabilities';
     import type {IFeatureType, IWFSGetCapabilities} from '../../../ogc/wfs/wfsCapabilities';
 	import { error } from '@sveltejs/kit';

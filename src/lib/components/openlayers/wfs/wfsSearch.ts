@@ -1,5 +1,5 @@
-import type { IBoundingBox, IFeatureType } from '$lib/ogc/wfs/wfsCapabilities';
-import type { IGeoservicoDescricao } from '$lib/inde';
+import type { IBoundingBox, IFeatureType } from '#lib/ogc/wfs/wfsCapabilities.js';
+import type { IGeoservicoDescricao } from '#lib/inde/index.js';
 
 export type SearchOperator = 'OR' | 'AND';
 export type GeographicBounds = { west: number; south: number; east: number; north: number };

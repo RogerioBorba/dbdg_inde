@@ -1,7 +1,7 @@
 <script lang="ts">
-    import * as Tabs from '$lib/components/ui/tabs';
-    import BoundingBoxCoordinates from "$lib/components/openlayers/boundingBox/BoundingBoxCoordinates.svelte";
-    import FeatureInfo from '$lib/components/openlayers/featureInfo/FeatureInfo.svelte';
+    import * as Tabs from '#lib/components/ui/tabs/index.js';
+    import BoundingBoxCoordinates from "#lib/components/openlayers/boundingBox/BoundingBoxCoordinates.svelte";
+    import FeatureInfo from '#lib/components/openlayers/featureInfo/FeatureInfo.svelte';
 </script>
     
 <Tabs.Root value="bbox">

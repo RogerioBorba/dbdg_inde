@@ -1,7 +1,7 @@
 <script lang="ts">
-    import type { WFSLayerOL } from '$lib/components/openlayers/layerOL';
-    import { preventDefault, stopPropagation } from '$lib/components/svelte_util/util';
-    import { layerManager, mapper_ol } from '$lib/shared/openlayers/shared.svelte';
+    import type { WFSLayerOL } from '#lib/components/openlayers/layerOL.js';
+    import { preventDefault, stopPropagation } from '#lib/components/svelte_util/util.js';
+    import { layerManager, mapper_ol } from '#lib/shared/openlayers/shared.svelte.js';
     let {layerOL} = $props<{layerOL: WFSLayerOL}>();
  
     function btnClearClicked() {

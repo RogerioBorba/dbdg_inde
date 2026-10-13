@@ -1,9 +1,9 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { jsPDF } from 'jspdf';
-    import Navbar from '$lib/components/navbar/navbar.svelte';
-    import { get } from '$lib/request/get';
-    import type { CSWCatalog } from '$lib/ogc/csw/CSWCatalog';
+    import Navbar from '#lib/components/navbar/navbar.svelte';
+    import { get } from '#lib/request/get.js';
+    import type { CSWCatalog } from '#lib/ogc/csw/CSWCatalog.js';
 
     const PAGE_SIZE = 30;
 

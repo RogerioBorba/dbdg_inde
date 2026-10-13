@@ -1,5 +1,5 @@
-import type { IWMSLayer } from '$lib/ogc/wms/wmsCapabilities';
-import type { IGeoservicoDescricao } from '$lib/inde';
+import type { IWMSLayer } from '#lib/ogc/wms/wmsCapabilities.js';
+import type { IGeoservicoDescricao } from '#lib/inde/index.js';
 
 export type SearchOperator = 'OR' | 'AND';
 

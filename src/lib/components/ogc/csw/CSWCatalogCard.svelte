@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { Spinner } from '$lib/components/ui/spinner';
+    import { Spinner } from '#lib/components/ui/spinner/index.js';
     import { goto } from '$app/navigation';
     import { fade } from 'svelte/transition'
     import { onMount } from 'svelte';
-    import { get } from "$lib/request/get";
-    import { preventDefault } from '$lib/components/svelte_util/util';
-    import type { CSWCatalog } from '$lib/ogc/csw/CSWCatalog';
+    import { get } from "#lib/request/get.js";
+    import { preventDefault } from '#lib/components/svelte_util/util.js';
+    import type { CSWCatalog } from '#lib/ogc/csw/CSWCatalog.js';
     let { catalog, onMetadaddoProcessado }: 
     {catalog: CSWCatalog, onMetadaddoProcessado?: (record: any) => void} = $props();
     let tempoRequisicao = $state(0);

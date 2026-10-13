@@ -1,4 +1,4 @@
-import type { IFeatureType, IMetadataUrl } from "$lib/ogc/wfs/wfsCapabilities";
+import type { IFeatureType, IMetadataUrl } from "#lib/ogc/wfs/wfsCapabilities.js";
 
 export class WFSLayer {
   static readonly GEOJSON_CRS = "EPSG:4326";

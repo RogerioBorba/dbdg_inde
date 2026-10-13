@@ -1,9 +1,9 @@
 <script lang="ts">
-    import Navbar from '$lib/components/navbar/navbar.svelte';
-    import { preventDefault } from '$lib/components/svelte_util/util';
-    import CSWCatalogSelector from '$lib/components/ogc/csw/CSWCatalogSelector.svelte';
-    import { catalogos_csw, type ICatalogoCSW } from '$lib/inde/catalogos/ICatalogoGeoservico';
-    import type { CSWCatalog } from '$lib/ogc/csw/CSWCatalog';
+    import Navbar from '#lib/components/navbar/navbar.svelte';
+    import { preventDefault } from '#lib/components/svelte_util/util.js';
+    import CSWCatalogSelector from '#lib/components/ogc/csw/CSWCatalogSelector.svelte';
+    import { catalogos_csw, type ICatalogoCSW } from '#lib/inde/catalogos/ICatalogoGeoservico.js';
+    import type { CSWCatalog } from '#lib/ogc/csw/CSWCatalog.js';
 
     let selectedItems: CSWCatalog[] = $state([]);
     let selectedCatalogs: CSWCatalog[] = $state([]);

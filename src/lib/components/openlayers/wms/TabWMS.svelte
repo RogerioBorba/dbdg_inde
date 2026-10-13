@@ -1,5 +1,5 @@
 <script lang="ts">
-    import * as Tabs from '$lib/components/ui/tabs';
+    import * as Tabs from '#lib/components/ui/tabs/index.js';
     import BaseWMS from './BaseWMS.svelte';
     import WMSBoundingBoxSearch from './WMSBoundingBoxSearch.svelte';
     import WMSKeywordSearch from './WMSKeywordSearch.svelte';

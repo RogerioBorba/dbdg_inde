@@ -1,14 +1,14 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { FileSpreadsheet, FileText } from 'lucide-svelte';
-    import { listToCSV } from '$lib/components/csv/gerarCSV';
-    import Navbar from '$lib/components/navbar/navbar.svelte';
-    import { dataToPdf } from '$lib/components/pdf/gerarPDF';
-    import { preventDefault } from '$lib/components/svelte_util/util';
-    import CSWCatalogSelector from '$lib/components/ogc/csw/CSWCatalogSelector.svelte';
-    import type { CSWCatalog } from '$lib/ogc/csw/CSWCatalog';
-    import { catalogos_csw, type ICatalogoCSW } from '$lib/inde/catalogos/ICatalogoGeoservico';
-    import { get } from '$lib/request/get';
+    import { listToCSV } from '#lib/components/csv/gerarCSV.js';
+    import Navbar from '#lib/components/navbar/navbar.svelte';
+    import { dataToPdf } from '#lib/components/pdf/gerarPDF.js';
+    import { preventDefault } from '#lib/components/svelte_util/util.js';
+    import CSWCatalogSelector from '#lib/components/ogc/csw/CSWCatalogSelector.svelte';
+    import type { CSWCatalog } from '#lib/ogc/csw/CSWCatalog.js';
+    import { catalogos_csw, type ICatalogoCSW } from '#lib/inde/catalogos/ICatalogoGeoservico.js';
+    import { get } from '#lib/request/get.js';
 
     const PAGE_SIZE = 30;
 

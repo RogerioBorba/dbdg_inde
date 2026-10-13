@@ -1,6 +1,6 @@
 <script lang="ts">
-  import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
-  import { buttonVariants } from "$lib/components/ui/button";
+  import * as DropdownMenu from "#lib/components/ui/dropdown-menu/index.js";
+  import { buttonVariants } from "#lib/components/ui/button/index.js";
   import { ChevronDown, Menu, X } from "lucide-svelte";
 
   let mobileMenuOpen = $state(false);

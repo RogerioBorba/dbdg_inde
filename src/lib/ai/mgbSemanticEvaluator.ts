@@ -10,15 +10,15 @@ import {
     MGB_QUADROS_INFO,
     type MGBEffectiveQuadroId,
     type MGBQuadroId
-} from '$lib/ogc/csw/mgb/mgbConformance';
-import { MGB_AI_SYSTEM_PROMPT, buildSemanticPrompt } from './mgbSemanticPrompts';
+} from '#lib/ogc/csw/mgb/mgbConformance.js';
+import { MGB_AI_SYSTEM_PROMPT, buildSemanticPrompt } from './mgbSemanticPrompts.ts';
 import type {
     MGBAIEvaluationRating,
     MGBAIEvaluationRequest,
     MGBElementSemanticEvaluation,
     MGBSemanticDimensionScore,
     MGBSemanticEvaluation
-} from './types';
+} from './types.ts';
 
 export interface ExtractedSemanticData {
     identifier: string;
@@ -799,9 +799,18 @@ export function evaluateMetadataHeuristically(
 async function callGeminiApi(
     prompt: string,
     apiKey: string,
-    modelName = 'gemini-1.5-flash'
+    modelName = 'gemini-flash-lite-latest'
 ): Promise<MGBSemanticEvaluation> {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+    const cleanKey = apiKey.replace(/^["']|["']$/g, '').trim();
+
+    // Modelos com alta disponibilidade, priorizando versões Lite que não sofrem saturação de demanda
+    const candidateModels = [
+        modelName,
+        'gemini-flash-lite-latest',
+        'gemini-3.5-flash-lite',
+        'gemini-flash-latest',
+        'gemini-3.8-flash'
+    ].filter((m, i, arr) => m && arr.indexOf(m) === i);
 
     const payload = {
         system_instruction: {
@@ -819,30 +828,55 @@ async function callGeminiApi(
         }
     };
 
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    });
+    let lastError: Error | null = null;
+    for (const model of candidateModels) {
+        // Redireciona modelos obsoletos 1.5 e 2.0 para flash-lite
+        const effectiveModel = (model.includes('1.5') || model.includes('2.0')) ? 'gemini-flash-lite-latest' : model;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${effectiveModel}:generateContent?key=${cleanKey}`;
 
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Falha na API Gemini (${response.status}): ${errText}`);
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                const json = await response.json();
+                const candidateText = json.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!candidateText) {
+                    throw new Error('Nenhuma resposta de texto retornada pelo Gemini.');
+                }
+
+                const cleanCandidate = candidateText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+                const parsed = JSON.parse(cleanCandidate);
+                return {
+                    ...parsed,
+                    provider: 'gemini',
+                    model: effectiveModel,
+                    evaluatedAt: new Date().toISOString()
+                };
+            }
+
+            const errText = await response.text();
+            // Se for 503 (sobrecarga) ou 404 (obsoleto), tenta o próximo modelo da lista
+            if (response.status === 503 || response.status === 404) {
+                console.warn(`Modelo Gemini ${effectiveModel} retornou ${response.status}. Tentando modelo de contingência...`);
+                lastError = new Error(`Modelo ${effectiveModel} indisponível (${response.status}): ${errText}`);
+                continue;
+            }
+
+            throw new Error(`Falha na API Gemini (${response.status}): ${errText}`);
+        } catch (err) {
+            if (err instanceof Error && (err.message.includes('503') || err.message.includes('404'))) {
+                lastError = err;
+                continue;
+            }
+            throw err;
+        }
     }
 
-    const json = await response.json();
-    const candidateText = json.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!candidateText) {
-        throw new Error('Nenhuma resposta de texto retornada pelo Gemini.');
-    }
-
-    const parsed = JSON.parse(candidateText);
-    return {
-        ...parsed,
-        provider: 'gemini',
-        model: modelName,
-        evaluatedAt: new Date().toISOString()
-    };
+    throw lastError || new Error('Não foi possível conectar a nenhum dos modelos disponíveis do Google Gemini.');
 }
 
 /**
@@ -854,6 +888,7 @@ async function callOpenAiApi(
     endpoint = 'https://api.openai.com/v1',
     modelName = 'gpt-4o-mini'
 ): Promise<MGBSemanticEvaluation> {
+    const cleanKey = apiKey.replace(/^["']|["']$/g, '').trim();
     const url = `${endpoint.replace(/\/+$/, '')}/chat/completions`;
 
     const payload = {
@@ -870,13 +905,16 @@ async function callOpenAiApi(
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`
+            Authorization: `Bearer ${cleanKey}`
         },
         body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
         const errText = await response.text();
+        if (response.status === 429 && (errText.includes('insufficient_quota') || errText.includes('credit_balance_exhausted'))) {
+            throw new Error('Sua conta OpenAI está sem saldo de créditos (insufficient_quota). A API paga da OpenAI requer créditos pré-pagos cadastrados em https://platform.openai.com/settings/organization/billing/. Enquanto não houver créditos na OpenAI, utilize o motor Google Gemini nas configurações.');
+        }
         throw new Error(`Falha na API OpenAI (${response.status}): ${errText}`);
     }
 
@@ -933,33 +971,58 @@ export async function evaluateMetadataSemantics(
     const geminiKey = req.apiKey || envKeys?.geminiKey || (typeof process !== 'undefined' ? process.env?.GEMINI_API_KEY : '');
     const openAiKey = (req.provider === 'openai' ? req.apiKey : '') || envKeys?.openAiKey || (typeof process !== 'undefined' ? process.env?.OPENAI_API_KEY : '');
 
-    // Se usuário solicitou especificamente heurístico ou nenhuma chave fornecida
-    if (req.provider === 'heuristic' || (!geminiKey && !openAiKey)) {
+    // Se o usuário selecionou explicitamente heurístico
+    if (req.provider === 'heuristic') {
         return evaluateMetadataHeuristically(extracted, effectiveQuadro);
     }
 
-    // Se tiver Gemini Key e provedor for auto ou gemini
-    if ((req.provider === 'gemini' || req.provider === 'auto' || !req.provider) && geminiKey) {
+    // Se o usuário selecionou explicitamente Gemini
+    if (req.provider === 'gemini') {
+        if (!geminiKey) {
+            throw new Error('Chave da API Gemini não encontrada. Configure GEMINI_API_KEY no arquivo .env ou informe sua chave nas configurações do modal (ícone ⚙️).');
+        }
+        if (geminiKey.startsWith('sk-')) {
+            throw new Error('A chave informada pertence à OpenAI / ChatGPT (inicia com "sk-"), mas o motor selecionado é o Google Gemini. Alterne o motor para "OpenAI / Compatível" ou informe uma chave válida do Google Gemini (obtida no Google AI Studio).');
+        }
+        const prompt = buildSemanticPrompt(extracted, effectiveQuadro);
+        return await callGeminiApi(prompt, geminiKey, req.modelName);
+    }
+
+    // Se o usuário selecionou explicitamente OpenAI
+    if (req.provider === 'openai') {
+        if (!openAiKey) {
+            throw new Error('Chave da API OpenAI não encontrada. Configure OPENAI_API_KEY no arquivo .env ou informe sua chave nas configurações do modal (ícone ⚙️).');
+        }
+        if (openAiKey.startsWith('AQ.') || openAiKey.startsWith('AIza')) {
+            throw new Error('A chave informada pertence ao Google Gemini (inicia com "AQ." ou "AIza"), mas o motor selecionado é o OpenAI / ChatGPT. Para usar o ChatGPT, informe uma chave válida da OpenAI (iniciada em "sk-", obtida em platform.openai.com/api-keys) ou alterne o motor para "Google Gemini API".');
+        }
+        const prompt = buildSemanticPrompt(extracted, effectiveQuadro);
+        return await callOpenAiApi(prompt, openAiKey, req.apiEndpoint, req.modelName);
+    }
+
+    // Modo 'auto' ou provedor não especificado
+    if (geminiKey) {
         try {
             const prompt = buildSemanticPrompt(extracted, effectiveQuadro);
             return await callGeminiApi(prompt, geminiKey, req.modelName);
         } catch (err) {
-            console.warn('Falha na chamada Gemini, utilizando fallback heurístico:', err);
-            return evaluateMetadataHeuristically(extracted, effectiveQuadro);
+            console.warn('Falha na chamada Gemini em modo automático, utilizando fallback heurístico:', err);
+            const heur = evaluateMetadataHeuristically(extracted, effectiveQuadro);
+            heur.summaryFeedback += ` (Nota: A chamada ao Gemini falhou [${err instanceof Error ? err.message : String(err)}]; avaliação realizada pelo motor heurístico local).`;
+            return heur;
         }
     }
 
-    // Se tiver OpenAI Key e provedor for openai
-    if (req.provider === 'openai' && openAiKey) {
+    if (openAiKey) {
         try {
             const prompt = buildSemanticPrompt(extracted, effectiveQuadro);
             return await callOpenAiApi(prompt, openAiKey, req.apiEndpoint, req.modelName);
         } catch (err) {
-            console.warn('Falha na chamada OpenAI, utilizando fallback heurístico:', err);
+            console.warn('Falha na chamada OpenAI em modo automático, utilizando fallback heurístico:', err);
             return evaluateMetadataHeuristically(extracted, effectiveQuadro);
         }
     }
 
-    // Padrão: Heurístico
+    // Padrão sem chave: Heurístico
     return evaluateMetadataHeuristically(extracted, effectiveQuadro);
 }

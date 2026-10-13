@@ -16,6 +16,8 @@
 	},
 	"imports": {
 		"#lib": "./src/lib/index.ts",
+		"#lib/*.svelte.js": "./src/lib/*.svelte.ts",
+		"#lib/*.js": "./src/lib/*.ts",
 		"#lib/*": "./src/lib/*"
 	},
 	"devDependencies": {
@@ -29,8 +31,8 @@
 		"@typescript-eslint/parser": "^8.70.0",
 		"eslint": "^10.10.0",
 		"eslint-plugin-svelte": "^3.23.0",
-		"svelte": "^5.56.7",
-		"svelte-check": "^4.6.0",
+		"svelte": "^5.57.1",
+		"svelte-check": "^4.7.5",
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.70.0",
 		"vite": "^8.3.0"

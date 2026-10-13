@@ -1,4 +1,4 @@
-import type { IWCSGetCapabilities } from '$lib/ogc/wcs/wcsCapabilities';
+import type { IWCSGetCapabilities } from '#lib/ogc/wcs/wcsCapabilities.js';
 
 export const counterWCS = $state<{
     totalCoverages: number;
