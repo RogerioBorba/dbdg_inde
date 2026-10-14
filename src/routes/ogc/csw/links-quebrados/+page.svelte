@@ -1,8 +1,10 @@
 <script lang="ts">
+    import { onMount } from 'svelte';
     import Navbar from '#lib/components/navbar/navbar.svelte';
     import { preventDefault } from '#lib/components/svelte_util/util.js';
     import CSWCatalogSelector from '#lib/components/ogc/csw/CSWCatalogSelector.svelte';
-    import { catalogos_csw, type ICatalogoCSW } from '#lib/inde/catalogos/ICatalogoGeoservico.js';
+    import LinksQuebradosCard from '#lib/components/ogc/csw/LinksQuebradosCard.svelte';
+    import { catalogos_csw } from '#lib/inde/catalogos/ICatalogoGeoservico.js';
     import type { CSWCatalog } from '#lib/ogc/csw/CSWCatalog.js';
 
     let selectedItems: CSWCatalog[] = $state([]);
@@ -14,12 +16,12 @@
     let disableButtonAddNewCatalog = $derived(nameCatalog.length === 0 || adressCatalog.length === 0);
     let nextCatalogId = 1;
 
-    function toCSWCatalog(obj: ICatalogoCSW): CSWCatalog {
+    function toCSWCatalog(obj: { descricao: string; cswGetCapabilities: string; noCentralCategoria?: string | null }): CSWCatalog {
         return {
             id: nextCatalogId++,
             descricao: obj.descricao,
             iri: obj.cswGetCapabilities,
-            noCentralCategoria: obj.noCentralCategoria
+            noCentralCategoria: obj.noCentralCategoria ?? null
         };
     }
 
@@ -51,6 +53,23 @@
         selectedCatalogs = [...kept, ...selectedItems];
     }
 
+    function readCatalogFromQuery(): CSWCatalog | null {
+        if (typeof window === 'undefined') return null;
+        const params = new URLSearchParams(window.location.search);
+        const descricao = params.get('descricao');
+        const iri = params.get('iri');
+        const noCentralCategoria = params.get('noCentralCategoria');
+
+        if (!descricao || !iri) return null;
+
+        return {
+            id: 0,
+            descricao,
+            iri,
+            noCentralCategoria
+        };
+    }
+
     function buildResultUrl(catalog: CSWCatalog): string {
         const params = new URLSearchParams({
             descricao: catalog.descricao,
@@ -64,9 +83,15 @@
         return `/ogc/csw/links-quebrados/result?${params.toString()}`;
     }
 
-    availableCatalogs = catalogos_csw
-        .filter((catalog) => Boolean(catalog.noCentralCategoria) || catalog.descricao.includes('IBGE'))
-        .map((catalog) => toCSWCatalog(catalog));
+    onMount(async () => {
+        availableCatalogs = catalogos_csw.map((catalog) => toCSWCatalog(catalog));
+
+        const queryCatalog = readCatalogFromQuery();
+        if (queryCatalog) {
+            selectedItems = [queryCatalog];
+            selectedCatalogs = [queryCatalog];
+        }
+    });
 </script>
 
 <Navbar brand="OGC/CSW Links Quebrados"></Navbar>
@@ -100,20 +125,8 @@
     </div>
 </form>
 
-<div class="m-2 grid grid-cols-1 gap-3 md:grid-cols-3">
+<div class="m-2 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
     {#each selectedCatalogs as catalog (catalog.id)}
-        <article class="rounded-md border border-gray-200 bg-white p-4 shadow-sm">
-            <h2 class="font-semibold text-gray-900">{catalog.descricao}</h2>
-            <p class="mt-1 break-all text-sm text-gray-600">{catalog.iri}</p>
-            {#if catalog.noCentralCategoria}
-                <p class="mt-1 text-sm text-gray-600">Categoria central: {catalog.noCentralCategoria}</p>
-            {/if}
-            <a
-                class="mt-3 inline-flex rounded bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-                href={buildResultUrl(catalog)}
-            >
-                Ver links quebrados
-            </a>
-        </article>
+        <LinksQuebradosCard {catalog} />
     {/each}
 </div>
