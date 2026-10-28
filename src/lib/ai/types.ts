@@ -47,7 +47,7 @@ export interface MGBSemanticEvaluation {
     elementEvaluations: MGBElementSemanticEvaluation[];
     strengths: string[];
     priorityImprovements: string[];
-    provider: 'gemini' | 'openai' | 'heuristic';
+    provider: 'gemini' | 'openai' | 'openrouter' | 'groq' | 'heuristic';
     model?: string;
     evaluatedAt: string;
 }
@@ -58,7 +58,7 @@ export interface MGBAIEvaluationRequest {
     catalogIri?: string;
     metadataUrl?: string;
     quadroId?: MGBQuadroId;
-    provider?: 'auto' | 'gemini' | 'openai' | 'heuristic';
+    provider?: 'auto' | 'gemini' | 'openai' | 'openrouter' | 'groq' | 'heuristic';
     apiKey?: string;
     apiEndpoint?: string;
     modelName?: string;

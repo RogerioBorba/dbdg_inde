@@ -880,7 +880,187 @@ async function callGeminiApi(
 }
 
 /**
- * Chamada a API OpenAI-compatível (ex: OpenAI, Ollama, Groq, etc.).
+ * Utilitário seguro para extrair e interpretar o JSON retornado por qualquer LLM,
+ * removendo eventuais blocos de raciocínio (<think>...</think>) e wrappers markdown (```json ... ```).
+ */
+function cleanJsonOutput(raw: string): any {
+    // Remove tags de raciocínio de modelos como DeepSeek R1 (<think>...</think>)
+    let cleaned = raw.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+    // Extrai bloco de markdown ```json ... ``` se houver
+    const jsonBlockMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    if (jsonBlockMatch) {
+        cleaned = jsonBlockMatch[1].trim();
+    } else {
+        // Encontra o primeiro '{' e o último '}'
+        const firstBrace = cleaned.indexOf('{');
+        const lastBrace = cleaned.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace > firstBrace) {
+            cleaned = cleaned.substring(firstBrace, lastBrace + 1).trim();
+        }
+    }
+    return JSON.parse(cleaned);
+}
+
+/**
+ * Chamada à API OpenRouter (openrouter.ai).
+ * Suporta ampla variedade de modelos gratuitos (:free) como Llama 3.3 70B, DeepSeek R1, Qwen 2.5, Gemini 2.0, etc.
+ */
+async function callOpenRouterApi(
+    prompt: string,
+    apiKey: string,
+    modelName = 'openrouter/free'
+): Promise<MGBSemanticEvaluation> {
+    const cleanKey = apiKey.replace(/^["']|["']$/g, '').trim();
+    const effectiveModel = modelName || 'openrouter/free';
+    const url = 'https://openrouter.ai/api/v1/chat/completions';
+
+    const buildPayload = (withResponseFormat: boolean) => ({
+        model: effectiveModel,
+        temperature: 0.2,
+        ...(withResponseFormat ? { response_format: { type: 'json_object' } } : {}),
+        messages: [
+            { role: 'system', content: MGB_AI_SYSTEM_PROMPT },
+            { role: 'user', content: prompt }
+        ]
+    });
+
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${cleanKey}`,
+        'HTTP-Referer': 'https://inde.gov.br',
+        'X-Title': 'DBDG INDE - Avaliador Semantico MGB'
+    };
+
+    let response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(buildPayload(true))
+    });
+
+    // Se o modelo OpenRouter falhar devido a response_format (alguns modelos gratuitos não suportam strict json_object), tenta sem ele
+    if (!response.ok && response.status === 400) {
+        const errPeek = await response.clone().text();
+        if (errPeek.includes('response_format') || errPeek.includes('structured') || errPeek.includes('schema') || errPeek.includes('support')) {
+            response = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(buildPayload(false))
+            });
+        }
+    }
+
+    // Se o modelo OpenRouter retornar 404 ("unavailable for free") ou 429 ("rate-limited upstream"),
+    // aciona contingência automática via "openrouter/free"
+    let modelUsed = effectiveModel;
+    if (!response.ok && (response.status === 404 || response.status === 429)) {
+        const errPeek = await response.clone().text();
+        if (errPeek.includes('unavailable for free') || errPeek.includes('rate-limited') || errPeek.includes('temporarily') || effectiveModel !== 'openrouter/free') {
+            console.warn(`Modelo ${effectiveModel} no OpenRouter retornou ${response.status}. Tentando contingência com openrouter/free...`);
+            const fallbackResponse = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    model: 'openrouter/free',
+                    temperature: 0.2,
+                    messages: [
+                        { role: 'system', content: MGB_AI_SYSTEM_PROMPT },
+                        { role: 'user', content: prompt }
+                    ]
+                })
+            });
+            if (fallbackResponse.ok) {
+                response = fallbackResponse;
+                modelUsed = 'openrouter/free';
+            }
+        }
+    }
+
+    if (!response.ok) {
+        const errText = await response.text();
+        if (response.status === 401) {
+            throw new Error('Chave da API OpenRouter inválida (401). Obtenha sua chave gratuita em https://openrouter.ai/settings/keys.');
+        }
+        if (response.status === 404) {
+            throw new Error(`O modelo gratuito solicitado (${effectiveModel}) está temporariamente indisponível no OpenRouter. Selecione "OpenRouter Free Router (openrouter/free)" nas configurações.`);
+        }
+        if (response.status === 429) {
+            throw new Error('Limite de taxa (rate limit) excedido no OpenRouter (429). Aguarde alguns segundos ou troque para "OpenRouter Free Router (openrouter/free)".');
+        }
+        throw new Error(`Falha na API OpenRouter (${response.status}): ${errText}`);
+    }
+
+    const json = await response.json();
+    const content = json.choices?.[0]?.message?.content;
+    if (!content) {
+        throw new Error(`Nenhuma resposta de texto retornada pelo modelo ${modelUsed} no OpenRouter.`);
+    }
+
+    const parsed = cleanJsonOutput(content);
+    return {
+        ...parsed,
+        provider: 'openrouter',
+        model: modelUsed,
+        evaluatedAt: new Date().toISOString()
+    };
+}
+
+/**
+ * Chamada à API Groq (groq.com).
+ * Provedor com inferência ultra-rápida e cota gratuita generosa para Llama 3.3 70B, etc.
+ */
+async function callGroqApi(
+    prompt: string,
+    apiKey: string,
+    modelName = 'llama-3.3-70b-versatile'
+): Promise<MGBSemanticEvaluation> {
+    const cleanKey = apiKey.replace(/^["']|["']$/g, '').trim();
+    const effectiveModel = modelName || 'llama-3.3-70b-versatile';
+    const url = 'https://api.groq.com/openai/v1/chat/completions';
+
+    const payload = {
+        model: effectiveModel,
+        temperature: 0.2,
+        response_format: { type: 'json_object' },
+        messages: [
+            { role: 'system', content: MGB_AI_SYSTEM_PROMPT },
+            { role: 'user', content: prompt }
+        ]
+    };
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${cleanKey}`
+        },
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        const errText = await response.text();
+        if (response.status === 401) {
+            throw new Error('Chave da API Groq inválida (401). Obtenha sua chave gratuita em https://console.groq.com/keys.');
+        }
+        throw new Error(`Falha na API Groq (${response.status}): ${errText}`);
+    }
+
+    const json = await response.json();
+    const content = json.choices?.[0]?.message?.content;
+    if (!content) {
+        throw new Error(`Nenhuma resposta retornada pelo Groq (${effectiveModel}).`);
+    }
+
+    const parsed = cleanJsonOutput(content);
+    return {
+        ...parsed,
+        provider: 'groq',
+        model: effectiveModel,
+        evaluatedAt: new Date().toISOString()
+    };
+}
+
+/**
+ * Chamada a API OpenAI-compatível (ex: OpenAI, Ollama, etc.).
  */
 async function callOpenAiApi(
     prompt: string,
@@ -913,7 +1093,7 @@ async function callOpenAiApi(
     if (!response.ok) {
         const errText = await response.text();
         if (response.status === 429 && (errText.includes('insufficient_quota') || errText.includes('credit_balance_exhausted'))) {
-            throw new Error('Sua conta OpenAI está sem saldo de créditos (insufficient_quota). A API paga da OpenAI requer créditos pré-pagos cadastrados em https://platform.openai.com/settings/organization/billing/. Enquanto não houver créditos na OpenAI, utilize o motor Google Gemini nas configurações.');
+            throw new Error('Sua conta OpenAI está sem saldo de créditos (insufficient_quota). A API paga da OpenAI requer créditos pré-pagos cadastrados em https://platform.openai.com/settings/organization/billing/. Enquanto não houver créditos na OpenAI, utilize o motor Google Gemini ou OpenRouter (:free) nas configurações.');
         }
         throw new Error(`Falha na API OpenAI (${response.status}): ${errText}`);
     }
@@ -924,7 +1104,7 @@ async function callOpenAiApi(
         throw new Error('Nenhuma resposta de texto retornada pela API compatível com OpenAI.');
     }
 
-    const parsed = JSON.parse(content);
+    const parsed = cleanJsonOutput(content);
     return {
         ...parsed,
         provider: 'openai',
@@ -938,7 +1118,7 @@ async function callOpenAiApi(
  */
 export async function evaluateMetadataSemantics(
     req: MGBAIEvaluationRequest,
-    envKeys?: { geminiKey?: string; openAiKey?: string }
+    envKeys?: { geminiKey?: string; openAiKey?: string; openRouterKey?: string; groqKey?: string }
 ): Promise<MGBSemanticEvaluation> {
     if (!req.metadataXml && !req.metadataUrl) {
         throw new Error('O XML ou a URL do metadado deve ser informada para avaliação.');
@@ -970,10 +1150,33 @@ export async function evaluateMetadataSemantics(
 
     const geminiKey = req.apiKey || envKeys?.geminiKey || (typeof process !== 'undefined' ? process.env?.GEMINI_API_KEY : '');
     const openAiKey = (req.provider === 'openai' ? req.apiKey : '') || envKeys?.openAiKey || (typeof process !== 'undefined' ? process.env?.OPENAI_API_KEY : '');
+    const openRouterKey = (req.provider === 'openrouter' ? req.apiKey : '') || envKeys?.openRouterKey || (typeof process !== 'undefined' ? process.env?.OPENROUTER_API_KEY : '');
+    const groqKey = (req.provider === 'groq' ? req.apiKey : '') || envKeys?.groqKey || (typeof process !== 'undefined' ? process.env?.GROQ_API_KEY : '');
 
     // Se o usuário selecionou explicitamente heurístico
     if (req.provider === 'heuristic') {
         return evaluateMetadataHeuristically(extracted, effectiveQuadro);
+    }
+
+    // Se o usuário selecionou explicitamente OpenRouter
+    if (req.provider === 'openrouter') {
+        if (!openRouterKey) {
+            throw new Error('Chave da API OpenRouter não encontrada. Configure OPENROUTER_API_KEY no arquivo .env ou informe sua chave nas configurações do modal (ícone ⚙️). Chaves gratuitas disponíveis em https://openrouter.ai/settings/keys.');
+        }
+        if (openRouterKey.startsWith('AQ.') || openRouterKey.startsWith('AIza')) {
+            throw new Error('A chave informada pertence ao Google Gemini (inicia com "AQ." ou "AIza"), mas o motor selecionado é o OpenRouter. As chaves do OpenRouter iniciam com "sk-or-".');
+        }
+        const prompt = buildSemanticPrompt(extracted, effectiveQuadro);
+        return await callOpenRouterApi(prompt, openRouterKey, req.modelName || 'openrouter/free');
+    }
+
+    // Se o usuário selecionou explicitamente Groq
+    if (req.provider === 'groq') {
+        if (!groqKey) {
+            throw new Error('Chave da API Groq não encontrada. Configure GROQ_API_KEY no arquivo .env ou informe sua chave nas configurações do modal (ícone ⚙️). Chaves gratuitas disponíveis em https://console.groq.com/keys.');
+        }
+        const prompt = buildSemanticPrompt(extracted, effectiveQuadro);
+        return await callGroqApi(prompt, groqKey, req.modelName);
     }
 
     // Se o usuário selecionou explicitamente Gemini
@@ -982,7 +1185,7 @@ export async function evaluateMetadataSemantics(
             throw new Error('Chave da API Gemini não encontrada. Configure GEMINI_API_KEY no arquivo .env ou informe sua chave nas configurações do modal (ícone ⚙️).');
         }
         if (geminiKey.startsWith('sk-')) {
-            throw new Error('A chave informada pertence à OpenAI / ChatGPT (inicia com "sk-"), mas o motor selecionado é o Google Gemini. Alterne o motor para "OpenAI / Compatível" ou informe uma chave válida do Google Gemini (obtida no Google AI Studio).');
+            throw new Error('A chave informada pertence à OpenAI / OpenRouter (inicia com "sk-"), mas o motor selecionado é o Google Gemini. Alterne o motor ou informe uma chave válida do Google Gemini (obtida no Google AI Studio).');
         }
         const prompt = buildSemanticPrompt(extracted, effectiveQuadro);
         return await callGeminiApi(prompt, geminiKey, req.modelName);
@@ -1006,10 +1209,25 @@ export async function evaluateMetadataSemantics(
             const prompt = buildSemanticPrompt(extracted, effectiveQuadro);
             return await callGeminiApi(prompt, geminiKey, req.modelName);
         } catch (err) {
-            console.warn('Falha na chamada Gemini em modo automático, utilizando fallback heurístico:', err);
-            const heur = evaluateMetadataHeuristically(extracted, effectiveQuadro);
-            heur.summaryFeedback += ` (Nota: A chamada ao Gemini falhou [${err instanceof Error ? err.message : String(err)}]; avaliação realizada pelo motor heurístico local).`;
-            return heur;
+            console.warn('Falha na chamada Gemini em modo automático:', err);
+        }
+    }
+
+    if (openRouterKey) {
+        try {
+            const prompt = buildSemanticPrompt(extracted, effectiveQuadro);
+            return await callOpenRouterApi(prompt, openRouterKey, req.modelName || 'openrouter/free');
+        } catch (err) {
+            console.warn('Falha na chamada OpenRouter em modo automático:', err);
+        }
+    }
+
+    if (groqKey) {
+        try {
+            const prompt = buildSemanticPrompt(extracted, effectiveQuadro);
+            return await callGroqApi(prompt, groqKey, req.modelName);
+        } catch (err) {
+            console.warn('Falha na chamada Groq em modo automático:', err);
         }
     }
 
@@ -1018,8 +1236,7 @@ export async function evaluateMetadataSemantics(
             const prompt = buildSemanticPrompt(extracted, effectiveQuadro);
             return await callOpenAiApi(prompt, openAiKey, req.apiEndpoint, req.modelName);
         } catch (err) {
-            console.warn('Falha na chamada OpenAI em modo automático, utilizando fallback heurístico:', err);
-            return evaluateMetadataHeuristically(extracted, effectiveQuadro);
+            console.warn('Falha na chamada OpenAI em modo automático:', err);
         }
     }
 

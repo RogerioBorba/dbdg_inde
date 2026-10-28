@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
     extractSemanticDataFromXml,
-    evaluateMetadataHeuristically
+    evaluateMetadataHeuristically,
+    evaluateMetadataSemantics
 } from '../src/lib/ai/mgbSemanticEvaluator.ts';
 import { buildSemanticPrompt, MGB_AI_SYSTEM_PROMPT } from '../src/lib/ai/mgbSemanticPrompts.ts';
 
@@ -263,4 +264,40 @@ test('buildSemanticPrompt e MGB_AI_SYSTEM_PROMPT contêm instruções normativas
     assert.ok(prompt.includes('REFERÊNCIA TEMPORAL E DATAS'));
     assert.ok(prompt.includes('2025-01-15'));
     assert.ok(prompt.includes('2025-05-20'));
+});
+
+test('evaluateMetadataSemantics valida adequadamente provedores OpenRouter e Groq', async () => {
+    // OpenRouter sem chave
+    await assert.rejects(
+        async () => {
+            await evaluateMetadataSemantics({
+                metadataXml: SAMPLE_IBGE_BC250_XML,
+                provider: 'openrouter'
+            }, {});
+        },
+        /Chave da API OpenRouter não encontrada/
+    );
+
+    // OpenRouter com chave Gemini por engano
+    await assert.rejects(
+        async () => {
+            await evaluateMetadataSemantics({
+                metadataXml: SAMPLE_IBGE_BC250_XML,
+                provider: 'openrouter',
+                apiKey: 'AQ.Ab8RN123456789'
+            }, {});
+        },
+        /A chave informada pertence ao Google Gemini/
+    );
+
+    // Groq sem chave
+    await assert.rejects(
+        async () => {
+            await evaluateMetadataSemantics({
+                metadataXml: SAMPLE_IBGE_BC250_XML,
+                provider: 'groq'
+            }, {});
+        },
+        /Chave da API Groq não encontrada/
+    );
 });

@@ -33,22 +33,63 @@
 
     // Configurações de Provedor
     let showSettings = $state(false);
-    let selectedProvider = $state<'auto' | 'heuristic' | 'gemini' | 'openai'>('auto');
+    let selectedProvider = $state<'auto' | 'heuristic' | 'gemini' | 'openai' | 'openrouter' | 'groq'>('auto');
+    let selectedModel = $state('');
+    let customModelName = $state('');
     let customApiKey = $state('');
+
     let serverHasGemini = $state(false);
     let serverHasOpenAi = $state(false);
+    let serverHasOpenRouter = $state(false);
+    let serverHasGroq = $state(false);
     let copiedElementId = $state<number | null>(null);
+
+    const OPENROUTER_FREE_MODELS = [
+        { id: 'openrouter/free', name: 'OpenRouter Free Router (Recomendado / Sempre Disponível)' },
+        { id: 'nvidia/nemotron-3-ultra-550b-a55b:free', name: 'NVIDIA Nemotron 3 Ultra 550B (Gratuito / Muito Potente)' },
+        { id: 'nvidia/nemotron-3.5-lightning:free', name: 'NVIDIA Nemotron 3.5 Lightning (Gratuito / Rápido)' },
+        { id: 'google/gemma-4-31b-it:free', name: 'Google Gemma 4 31B (Gratuito)' },
+        { id: 'google/gemma-4-26b-a4b-it:free', name: 'Google Gemma 4 26B (Gratuito)' },
+        { id: 'custom', name: 'Outro modelo do OpenRouter (digitar manualmente)...' }
+    ];
+
+    const GEMINI_MODELS = [
+        { id: 'gemini-flash-lite-latest', name: 'Gemini Flash Lite (Alta disponibilidade / Sem filas)' },
+        { id: 'gemini-flash-latest', name: 'Gemini Flash Latest' },
+        { id: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash' }
+    ];
+
+    const GROQ_MODELS = [
+        { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile (Gratuito / Ultra-rápido)' },
+        { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill 70B (Gratuito)' },
+        { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B (Gratuito)' }
+    ];
 
     let ratingBadge = $derived(evaluation ? getRatingBadgeClasses(evaluation.rating) : null);
 
     let keyMismatchWarning = $derived.by(() => {
         const trimmed = customApiKey.trim();
         if (!trimmed) return '';
+        if (selectedProvider === 'openrouter' && (trimmed.startsWith('AQ.') || trimmed.startsWith('AIza'))) {
+            return 'A chave informada pertence ao Google Gemini (inicia com AQ./AIza...). As chaves do OpenRouter iniciam com "sk-or-".';
+        }
+        if (selectedProvider === 'openrouter' && trimmed.startsWith('gsk_')) {
+            return 'A chave informada pertence ao Groq (inicia com gsk_...). As chaves do OpenRouter iniciam com "sk-or-".';
+        }
+        if (selectedProvider === 'gemini' && trimmed.startsWith('sk-or-')) {
+            return 'A chave informada pertence ao OpenRouter (inicia com "sk-or-"). Alterne o motor para OpenRouter.ai para utilizá-la.';
+        }
+        if (selectedProvider === 'gemini' && trimmed.startsWith('sk-')) {
+            return 'A chave informada pertence à OpenAI (inicia com "sk-"). Chaves do Google Gemini iniciam com "AIza..." ou "AQ.". Alterne o motor para OpenAI ou informe sua chave do Google Gemini.';
+        }
         if (selectedProvider === 'openai' && (trimmed.startsWith('AQ.') || trimmed.startsWith('AIza'))) {
             return 'A chave informada pertence ao Google Gemini (inicia com AQ./AIza...). Chaves da OpenAI / ChatGPT iniciam com "sk-". Para usar o ChatGPT, insira sua chave da OpenAI ou alterne o motor para Google Gemini.';
         }
-        if (selectedProvider === 'gemini' && trimmed.startsWith('sk-')) {
-            return 'A chave informada pertence à OpenAI / ChatGPT (inicia com "sk-"). Chaves do Google Gemini iniciam com "AIza..." ou "AQ.". Alterne o motor para OpenAI ou informe sua chave do Google Gemini.';
+        if (selectedProvider === 'openai' && trimmed.startsWith('sk-or-')) {
+            return 'A chave informada pertence ao OpenRouter (inicia com "sk-or-"). Alterne o motor para OpenRouter.ai.';
+        }
+        if (selectedProvider === 'groq' && !trimmed.startsWith('gsk_')) {
+            return 'Chaves da API Groq iniciam com "gsk_".';
         }
         return '';
     });
@@ -56,12 +97,17 @@
     onMount(async () => {
         if (typeof window !== 'undefined') {
             const savedKey = localStorage.getItem('dbdg_ai_api_key');
-            const savedProv = localStorage.getItem('dbdg_ai_provider') as 'auto' | 'heuristic' | 'gemini' | 'openai';
+            const savedProv = localStorage.getItem('dbdg_ai_provider') as 'auto' | 'heuristic' | 'gemini' | 'openai' | 'openrouter' | 'groq';
+            const savedModel = localStorage.getItem('dbdg_ai_model');
+            const savedCustomModel = localStorage.getItem('dbdg_ai_custom_model');
+
             if (savedKey) customApiKey = savedKey;
             if (savedProv) selectedProvider = savedProv;
+            if (savedModel) selectedModel = savedModel;
+            if (savedCustomModel) customModelName = savedCustomModel;
 
-            // Se a chave salva no localStorage for do Gemini e o motor for OpenAI, descarta para usar a do .env
-            if (savedKey && (savedKey.startsWith('AQ.') || savedKey.startsWith('AIza')) && savedProv === 'openai') {
+            // Se a chave salva no localStorage for incompatível com o motor, descarta para usar a do .env
+            if (savedKey && (savedKey.startsWith('AQ.') || savedKey.startsWith('AIza')) && (savedProv === 'openai' || savedProv === 'openrouter' || savedProv === 'groq')) {
                 customApiKey = '';
                 localStorage.removeItem('dbdg_ai_api_key');
             }
@@ -76,9 +122,16 @@
                     const info = await res.json();
                     serverHasGemini = Boolean(info.hasGemini);
                     serverHasOpenAi = Boolean(info.hasOpenAi);
-                    // Se o usuário ainda não escolheu um provedor fixo no navegador e há chave no .env, assume Gemini
-                    if (!savedProv && serverHasGemini) {
-                        selectedProvider = 'gemini';
+                    serverHasOpenRouter = Boolean(info.hasOpenRouter);
+                    serverHasGroq = Boolean(info.hasGroq);
+
+                    // Se o usuário ainda não escolheu um provedor fixo no navegador:
+                    if (!savedProv) {
+                        if (serverHasOpenRouter) {
+                            selectedProvider = 'openrouter';
+                        } else if (serverHasGemini) {
+                            selectedProvider = 'gemini';
+                        }
                     }
                 }
             } catch {
@@ -99,13 +152,31 @@
         errorMessage = '';
 
         try {
-            // Evita enviar chave incompatível cruzada (ex: chave Gemini enviada para OpenAI)
+            // Evita enviar chave incompatível cruzada
             let effectiveApiKey = customApiKey.trim();
-            if (selectedProvider === 'openai' && (effectiveApiKey.startsWith('AQ.') || effectiveApiKey.startsWith('AIza'))) {
-                effectiveApiKey = ''; // Permite usar OPENAI_API_KEY do servidor (.env) em vez de enviar a chave errada
+            if (selectedProvider === 'openrouter' && (effectiveApiKey.startsWith('AQ.') || effectiveApiKey.startsWith('AIza') || effectiveApiKey.startsWith('gsk_'))) {
+                effectiveApiKey = '';
             }
-            if (selectedProvider === 'gemini' && effectiveApiKey.startsWith('sk-')) {
-                effectiveApiKey = ''; // Permite usar GEMINI_API_KEY do servidor (.env) em vez de enviar a chave errada
+            if (selectedProvider === 'openai' && (effectiveApiKey.startsWith('AQ.') || effectiveApiKey.startsWith('AIza') || effectiveApiKey.startsWith('sk-or-') || effectiveApiKey.startsWith('gsk_'))) {
+                effectiveApiKey = '';
+            }
+            if (selectedProvider === 'gemini' && (effectiveApiKey.startsWith('sk-') || effectiveApiKey.startsWith('gsk_'))) {
+                effectiveApiKey = '';
+            }
+            if (selectedProvider === 'groq' && !effectiveApiKey.startsWith('gsk_')) {
+                effectiveApiKey = '';
+            }
+
+            // Determina o modelo efetivo conforme o provedor selecionado
+            let effectiveModelName: string | undefined = undefined;
+            if (selectedProvider === 'openrouter') {
+                effectiveModelName = selectedModel === 'custom' ? customModelName.trim() : (selectedModel || 'openrouter/free');
+            } else if (selectedProvider === 'gemini') {
+                effectiveModelName = selectedModel || 'gemini-flash-lite-latest';
+            } else if (selectedProvider === 'groq') {
+                effectiveModelName = selectedModel || 'llama-3.3-70b-versatile';
+            } else if (selectedProvider === 'openai') {
+                effectiveModelName = selectedModel || 'gpt-4o-mini';
             }
 
             const payload: MGBAIEvaluationRequest = {
@@ -115,7 +186,8 @@
                 metadataXml: rawXml || undefined,
                 quadroId,
                 provider: selectedProvider,
-                apiKey: effectiveApiKey || undefined
+                apiKey: effectiveApiKey || undefined,
+                modelName: effectiveModelName
             };
 
             const response = await fetch('/api/ai/avaliar-metadado', {
@@ -144,7 +216,11 @@
         if (typeof window !== 'undefined') {
             let keyToSave = customApiKey.trim();
             // Se pertencer ao outro provedor, limpa para não interferir
-            if (selectedProvider === 'openai' && (keyToSave.startsWith('AQ.') || keyToSave.startsWith('AIza'))) {
+            if (selectedProvider === 'openai' && (keyToSave.startsWith('AQ.') || keyToSave.startsWith('AIza') || keyToSave.startsWith('sk-or-'))) {
+                keyToSave = '';
+                customApiKey = '';
+            }
+            if (selectedProvider === 'openrouter' && (keyToSave.startsWith('AQ.') || keyToSave.startsWith('AIza') || keyToSave.startsWith('gsk_'))) {
                 keyToSave = '';
                 customApiKey = '';
             }
@@ -158,6 +234,8 @@
                 localStorage.removeItem('dbdg_ai_api_key');
             }
             localStorage.setItem('dbdg_ai_provider', selectedProvider);
+            if (selectedModel) localStorage.setItem('dbdg_ai_model', selectedModel);
+            if (customModelName) localStorage.setItem('dbdg_ai_custom_model', customModelName);
         }
         showSettings = false;
         evaluation = null;
@@ -325,8 +403,10 @@
                                 bind:value={selectedProvider}
                                 class="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
                             >
-                                <option value="auto">Automático {serverHasGemini ? '(Google Gemini detectado no .env)' : ''}</option>
-                                <option value="gemini">Google Gemini API (gemini-flash-lite) {serverHasGemini ? '✓ (.env configurado)' : ''}</option>
+                                <option value="auto">Automático {serverHasOpenRouter ? '(OpenRouter no .env)' : (serverHasGemini ? '(Gemini no .env)' : '')}</option>
+                                <option value="openrouter">OpenRouter.ai (Modelos Gratuitos :free) {serverHasOpenRouter ? '✓ (.env configurado)' : ''}</option>
+                                <option value="gemini">Google Gemini API (Gratuito / Alta disp.) {serverHasGemini ? '✓ (.env configurado)' : ''}</option>
+                                <option value="groq">Groq Cloud (Llama 3.3 70B - Gratuito) {serverHasGroq ? '✓ (.env configurado)' : ''}</option>
                                 <option value="openai">OpenAI / Compatível (GPT-4o mini) {serverHasOpenAi ? '✓ (.env configurado)' : ''}</option>
                                 <option value="heuristic">Especialista MGB Heurístico (Apenas regras locais)</option>
                             </select>
@@ -353,16 +433,113 @@
                                 bind:value={customApiKey}
                                 placeholder={selectedProvider === 'heuristic'
                                     ? 'Não necessária para motor heurístico'
-                                    : ((selectedProvider === 'gemini' && serverHasGemini) ||
-                                       (selectedProvider === 'openai' && serverHasOpenAi) ||
-                                       (selectedProvider === 'auto' && (serverHasGemini || serverHasOpenAi)))
-                                        ? 'Chave carregada automaticamente do arquivo .env'
-                                        : 'Cole sua chave de API (sk-...)'}
+                                    : (selectedProvider === 'openrouter' && serverHasOpenRouter)
+                                        ? 'Chave carregada do .env (OPENROUTER_API_KEY)'
+                                        : (selectedProvider === 'gemini' && serverHasGemini)
+                                            ? 'Chave carregada do .env (GEMINI_API_KEY)'
+                                            : (selectedProvider === 'groq' && serverHasGroq)
+                                                ? 'Chave carregada do .env (GROQ_API_KEY)'
+                                                : (selectedProvider === 'openai' && serverHasOpenAi)
+                                                    ? 'Chave carregada do .env (OPENAI_API_KEY)'
+                                                    : ((selectedProvider === 'auto') && (serverHasOpenRouter || serverHasGemini || serverHasGroq || serverHasOpenAi))
+                                                        ? 'Chave carregada automaticamente do arquivo .env'
+                                                        : selectedProvider === 'openrouter'
+                                                            ? 'Cole sua chave do OpenRouter (sk-or-...)'
+                                                            : selectedProvider === 'groq'
+                                                                ? 'Cole sua chave do Groq (gsk_...)'
+                                                                : 'Cole sua chave de API'}
                                 disabled={selectedProvider === 'heuristic'}
                                 class="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 disabled:bg-slate-100 disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
                             />
                         </div>
                     </div>
+
+                    <!-- Seletores Específicos por Provedor -->
+                    {#if selectedProvider === 'openrouter'}
+                        <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300" for="openrouter-model-select">
+                                    Modelo OpenRouter (Gratuito):
+                                </label>
+                                <select
+                                    id="openrouter-model-select"
+                                    bind:value={selectedModel}
+                                    class="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                                >
+                                    {#each OPENROUTER_FREE_MODELS as m}
+                                        <option value={m.id}>{m.name}</option>
+                                    {/each}
+                                </select>
+                            </div>
+                            {#if selectedModel === 'custom'}
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300" for="custom-model-input">
+                                        Identificador do Modelo no OpenRouter:
+                                    </label>
+                                    <input
+                                        id="custom-model-input"
+                                        type="text"
+                                        bind:value={customModelName}
+                                        placeholder="ex: nousresearch/hermes-3-llama-3.1-405b:free"
+                                        class="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                                    />
+                                </div>
+                            {:else}
+                                <div class="flex items-end">
+                                    <p class="text-[11px] text-slate-500">
+                                        💡 Todos os modelos rotulados com <span class="font-mono font-semibold text-emerald-600 dark:text-emerald-400">:free</span> no OpenRouter não consomem créditos. Obtenha sua chave gratuita em <a href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener noreferrer" class="font-medium text-indigo-600 underline dark:text-indigo-400">openrouter.ai/settings/keys</a>.
+                                    </p>
+                                </div>
+                            {/if}
+                        </div>
+                    {:else if selectedProvider === 'gemini'}
+                        <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300" for="gemini-model-select">
+                                    Modelo Google Gemini:
+                                </label>
+                                <select
+                                    id="gemini-model-select"
+                                    bind:value={selectedModel}
+                                    class="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                                >
+                                    {#each GEMINI_MODELS as m}
+                                        <option value={m.id}>{m.name}</option>
+                                    {/each}
+                                </select>
+                            </div>
+                            <div class="flex items-end">
+                                <p class="text-[11px] text-slate-500">
+                                    💡 O Google Gemini oferece quota gratuita pelo Google AI Studio. Obtenha sua chave em <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="font-medium text-indigo-600 underline dark:text-indigo-400">aistudio.google.com</a>.
+                                </p>
+                            </div>
+                        </div>
+                    {:else if selectedProvider === 'groq'}
+                        <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300" for="groq-model-select">
+                                    Modelo Groq (Inferência Ultra-rápida):
+                                </label>
+                                <select
+                                    id="groq-model-select"
+                                    bind:value={selectedModel}
+                                    class="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                                >
+                                    {#each GROQ_MODELS as m}
+                                        <option value={m.id}>{m.name}</option>
+                                    {/each}
+                                </select>
+                            </div>
+                            <div class="flex items-end">
+                                <p class="text-[11px] text-slate-500">
+                                    💡 O Groq é gratuito com limites generosos. Obtenha sua chave em <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" class="font-medium text-indigo-600 underline dark:text-indigo-400">console.groq.com/keys</a>.
+                                    {#if !serverHasGroq && serverHasOpenRouter}
+                                        <span class="block mt-1 font-medium text-amber-600 dark:text-amber-400">Dica: como você já possui a chave do OpenRouter configurada no seu .env, selecione o motor <strong>OpenRouter.ai</strong> para rodar modelos gratuitos imediatamente sem precisar cadastrar outra chave.</span>
+                                    {/if}
+                                </p>
+                            </div>
+                        </div>
+                    {/if}
 
                     {#if keyMismatchWarning}
                         <div class="mt-3 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/70 dark:text-amber-200">
@@ -449,6 +626,10 @@
                                 Motor: <span class="font-semibold text-slate-700 dark:text-slate-300">
                                     {#if evaluation.provider === 'gemini'}
                                         Google Gemini ({evaluation.model || 'gemini-flash-lite'})
+                                    {:else if evaluation.provider === 'openrouter'}
+                                        OpenRouter ({evaluation.model || 'Llama 3.3 70B'})
+                                    {:else if evaluation.provider === 'groq'}
+                                        Groq ({evaluation.model || 'llama-3.3-70b'})
                                     {:else if evaluation.provider === 'openai'}
                                         OpenAI ({evaluation.model || 'gpt-4o-mini'})
                                     {:else}

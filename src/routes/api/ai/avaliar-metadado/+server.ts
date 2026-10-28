@@ -12,13 +12,15 @@ function buildGetRecordByIdUrl(baseIri: string, id: string): string {
     return `${baseUrl}?service=CSW&version=2.0.2&request=GetRecordById&elementSetName=full&outputSchema=csw:IsoRecord&id=${encodeURIComponent(id)}`;
 }
 
-function getEnvKeys(): { geminiKey?: string; openAiKey?: string } {
-    let geminiKey = GEMINI_API_KEY || AI_API_KEY || process.env.GEMINI_API_KEY || process.env.AI_API_KEY;
-    let openAiKey = OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+function getEnvKeys(): { geminiKey?: string; openAiKey?: string; openRouterKey?: string; groqKey?: string } {
+    let geminiKey = process.env.GEMINI_API_KEY || process.env.AI_API_KEY;
+    let openAiKey = process.env.OPENAI_API_KEY;
+    let openRouterKey = process.env.OPENROUTER_API_KEY;
+    let groqKey = process.env.GROQ_API_KEY;
 
     // Se alguma das chaves não estiver no ambiente de memória (ex: servidor Vite não foi reiniciado após editar .env),
     // lê diretamente o arquivo .env do disco
-    if (!geminiKey || !openAiKey) {
+    if (!geminiKey || !openAiKey || !openRouterKey || !groqKey) {
         try {
             const possiblePaths = [
                 path.resolve(process.cwd(), '.env'),
@@ -36,7 +38,7 @@ function getEnvKeys(): { geminiKey?: string; openAiKey?: string } {
                             const k = match[1];
                             let v = match[2].trim();
                             // Remove aspas envolventes se houver
-                            if (v.startsWith('"') && v.endsWith('"') || v.startsWith("'") && v.endsWith("'")) {
+                            if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
                                 v = v.slice(1, -1);
                             }
                             if ((k === 'GEMINI_API_KEY' || k === 'AI_API_KEY') && !geminiKey) {
@@ -45,9 +47,15 @@ function getEnvKeys(): { geminiKey?: string; openAiKey?: string } {
                             if (k === 'OPENAI_API_KEY' && !openAiKey) {
                                 openAiKey = v;
                             }
+                            if (k === 'OPENROUTER_API_KEY' && !openRouterKey) {
+                                openRouterKey = v;
+                            }
+                            if (k === 'GROQ_API_KEY' && !groqKey) {
+                                groqKey = v;
+                            }
                         }
                     }
-                    if (geminiKey && openAiKey) break;
+                    if (geminiKey && openAiKey && openRouterKey && groqKey) break;
                 }
             }
         } catch (e) {
@@ -58,15 +66,19 @@ function getEnvKeys(): { geminiKey?: string; openAiKey?: string } {
     // Limpa eventuais aspas residuais
     if (geminiKey) geminiKey = geminiKey.replace(/^["']|["']$/g, '').trim();
     if (openAiKey) openAiKey = openAiKey.replace(/^["']|["']$/g, '').trim();
+    if (openRouterKey) openRouterKey = openRouterKey.replace(/^["']|["']$/g, '').trim();
+    if (groqKey) groqKey = groqKey.replace(/^["']|["']$/g, '').trim();
 
-    return { geminiKey, openAiKey };
+    return { geminiKey, openAiKey, openRouterKey, groqKey };
 }
 
 export const GET: RequestHandler = async () => {
-    const { geminiKey, openAiKey } = getEnvKeys();
+    const { geminiKey, openAiKey, openRouterKey, groqKey } = getEnvKeys();
     return json({
         hasGemini: Boolean(geminiKey),
-        hasOpenAi: Boolean(openAiKey)
+        hasOpenAi: Boolean(openAiKey),
+        hasOpenRouter: Boolean(openRouterKey),
+        hasGroq: Boolean(groqKey)
     });
 };
 
@@ -117,11 +129,13 @@ export const POST: RequestHandler = async ({ request }) => {
         }
 
         // Chaves de ambiente do servidor (resolvidas dinamicamente com fallback no .env do disco)
-        const { geminiKey, openAiKey } = getEnvKeys();
+        const { geminiKey, openAiKey, openRouterKey, groqKey } = getEnvKeys();
 
         const evaluation = await evaluateMetadataSemantics(reqData, {
             geminiKey,
-            openAiKey
+            openAiKey,
+            openRouterKey,
+            groqKey
         });
 
         return json({
