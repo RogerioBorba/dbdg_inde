@@ -1,13 +1,13 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import Map from "$lib/components/openlayers/map/map.svelte"
-    import Sidebar from "$lib/components/sidebar/sidebar.svelte";
-    import ExpansionPanel from "$lib/components/expansionpanel/ExpansionPanel.svelte";
-    import BaseTiles from "$lib/components/openlayers/baseTiles/baseTiles.svelte";
-    import TabWMS from "$lib/components/openlayers/wms/TabWMS.svelte";
-    import TabWFS from "$lib/components/openlayers/wfs/TabWFS.svelte";
-    import BaseSelectedLayer from '$lib/components/openlayers/selectLayers/selectLayers.svelte'
-    import TabTools from "$lib/components/openlayers/tabtools/TabTools.svelte";
+    import Map from "#lib/components/openlayers/map/map.svelte"
+    import Sidebar from "#lib/components/sidebar/sidebar.svelte";
+    import ExpansionPanel from "#lib/components/expansionpanel/ExpansionPanel.svelte";
+    import BaseTiles from "#lib/components/openlayers/baseTiles/baseTiles.svelte";
+    import TabWMS from "#lib/components/openlayers/wms/TabWMS.svelte";
+    import TabWFS from "#lib/components/openlayers/wfs/TabWFS.svelte";
+    import BaseSelectedLayer from '#lib/components/openlayers/selectLayers/selectLayers.svelte'
+    import TabTools from "#lib/components/openlayers/tabtools/TabTools.svelte";
 
     onMount( async ()  => {});
 </script>

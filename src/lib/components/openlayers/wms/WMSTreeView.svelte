@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { IWMSLayer, IWMSMetadataURL} from '$lib/ogc/wms/wmsCapabilities';
-    import { layerManager, mapper_ol } from '$lib/shared/openlayers/shared.svelte';
+    import type { IWMSLayer, IWMSMetadataURL} from '#lib/ogc/wms/wmsCapabilities.js';
+    import { layerManager, mapper_ol } from '#lib/shared/openlayers/shared.svelte.js';
     import { WMSLayerOL } from '../layerOL';
     import Self from './WMSTreeView.svelte';
     

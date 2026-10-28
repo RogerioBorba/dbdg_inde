@@ -4,9 +4,9 @@
   import type { EventsKey } from 'ol/events';
   import ImageWMS from 'ol/source/ImageWMS';
   import { unByKey } from 'ol/Observable';
-  import { get } from '$lib/request/get';
-  import type { WFSLayerOL, WMSLayerOL } from '$lib/components/openlayers/layerOL';
-  import { layerManager, mapper_ol } from '$lib/shared/openlayers/shared.svelte';
+  import { get } from '#lib/request/get.js';
+  import type { WFSLayerOL, WMSLayerOL } from '#lib/components/openlayers/layerOL.js';
+  import { layerManager, mapper_ol } from '#lib/shared/openlayers/shared.svelte.js';
 
   type PropertyValue = string | number | boolean | null;
 

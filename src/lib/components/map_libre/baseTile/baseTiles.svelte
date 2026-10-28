@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mapper } from '$lib/shared/map_libre/shared.svelte';
+    import { mapper } from '#lib/shared/map_libre/shared.svelte.js';
     import { onMount } from 'svelte';
     import { addBaseLayer, Osm, recordTileLayer, removeBaseLayer } from '../map_libre';
 

@@ -1,7 +1,7 @@
 <script lang="ts">
-    import Navbar from '$lib/components/navbar/navbar.svelte';
-    import { preventDefault } from '$lib/components/svelte_util/util';
-    import { get } from '$lib/request/get';
+    import Navbar from '#lib/components/navbar/navbar.svelte';
+    import { preventDefault } from '#lib/components/svelte_util/util.js';
+    import { get } from '#lib/request/get.js';
 
     const inputTitle = 'Link de metadados';
     const wfsProtocolFilter = '<Filter xmlns="http://www.opengis.net/ogc"><PropertyIsEqualTo><PropertyName>protocol</PropertyName><Literal>OGC:WFS</Literal></PropertyIsEqualTo></Filter>';

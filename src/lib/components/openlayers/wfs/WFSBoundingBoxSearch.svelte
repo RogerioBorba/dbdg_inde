@@ -1,9 +1,9 @@
 <script lang="ts">
-    import type { IGeoservicoDescricao } from '$lib/inde';
-    import { iWFSFeatureTypes, type IFeatureType } from '$lib/ogc/wfs/wfsCapabilities';
-    import { get } from '$lib/request/get';
-    import { preventDefault } from '$lib/components/svelte_util/util';
-    import { mapper_ol } from '$lib/shared/openlayers/shared.svelte';
+    import type { IGeoservicoDescricao } from '#lib/inde/index.js';
+    import { iWFSFeatureTypes, type IFeatureType } from '#lib/ogc/wfs/wfsCapabilities.js';
+    import { get } from '#lib/request/get.js';
+    import { preventDefault } from '#lib/components/svelte_util/util.js';
+    import { mapper_ol } from '#lib/shared/openlayers/shared.svelte.js';
     import { FacadeOL } from '../facade_openlayers';
     import { onDestroy, onMount } from 'svelte';
     import WFSCapabilityLayer from './WFSCapabilityLayer.svelte';

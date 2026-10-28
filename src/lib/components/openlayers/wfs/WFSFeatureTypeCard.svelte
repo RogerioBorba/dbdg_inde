@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { IMetadataUrl } from "$lib/ogc/wfs/wfsCapabilities";
+    import type { IMetadataUrl } from "#lib/ogc/wfs/wfsCapabilities.js";
 
     let { featureType } = $props();
     let metadados = $state(featureType.metadataURLs || []);

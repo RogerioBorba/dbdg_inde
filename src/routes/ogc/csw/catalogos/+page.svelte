@@ -1,12 +1,12 @@
 <script lang="ts">
 
-    import {catalogos_csw, type ICatalogoCSW} from '$lib/inde/catalogos/ICatalogoGeoservico';
-    import Navbar from '$lib/components/navbar/navbar.svelte';
+    import {catalogos_csw, type ICatalogoCSW} from '#lib/inde/catalogos/ICatalogoGeoservico.js';
+    import Navbar from '#lib/components/navbar/navbar.svelte';
     import { onMount } from 'svelte';
-    import { preventDefault } from '$lib/components/svelte_util/util';
-    import CSWCatalogCard from '$lib/components/ogc/csw/CSWCatalogCard.svelte';
-    import CSWCatalogSelector from '$lib/components/ogc/csw/CSWCatalogSelector.svelte';
-    import type { CSWCatalog } from '$lib/ogc/csw/CSWCatalog';
+    import { preventDefault } from '#lib/components/svelte_util/util.js';
+    import CSWCatalogCard from '#lib/components/ogc/csw/CSWCatalogCard.svelte';
+    import CSWCatalogSelector from '#lib/components/ogc/csw/CSWCatalogSelector.svelte';
+    import type { CSWCatalog } from '#lib/ogc/csw/CSWCatalog.js';
 
     let countMetadata =$state(0);
     let countProcessado = $state(0);

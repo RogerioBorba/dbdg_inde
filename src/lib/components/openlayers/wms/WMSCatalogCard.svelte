@@ -1,13 +1,13 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
-    import {countWMSLayers, iWMSCapabilities}from '$lib/ogc/wms/wmsCapabilities';
-    import type {IWMSCapabilities, IWMSLayer, IWMSLayerStats} from '$lib/ogc/wms/wmsCapabilities';
-    import { counterWMS } from '$lib/shared/ogc/wms/shared.svelte';
-    import type { OGCProcessRecord } from '$lib/ogc/commom/OGCRecord';
-    import { Spinner } from "flowbite-svelte";
+    import {countWMSLayers, iWMSCapabilities}from '#lib/ogc/wms/wmsCapabilities.js';
+    import type {IWMSCapabilities, IWMSLayer, IWMSLayerStats} from '#lib/ogc/wms/wmsCapabilities.js';
+    import { counterWMS } from '#lib/shared/ogc/wms/shared.svelte.js';
+    import type { OGCProcessRecord } from '#lib/ogc/commom/OGCRecord.js';
+    import { Spinner } from "#lib/components/ui/spinner/index.js";
     import { fade } from 'svelte/transition'
     import { onMount } from 'svelte';
-    import { get } from "$lib/request/get";
+    import { get } from "#lib/request/get.js";
     let wmsCapabilities: IWMSCapabilities;
     let { objIdDescricaoIri, onRecordCreated }: {objIdDescricaoIri: {id: number, descricao: string, iri: string}, onRecordCreated?: (record: OGCProcessRecord) => void} = $props();
     let tempoRequisicao = $state(0);

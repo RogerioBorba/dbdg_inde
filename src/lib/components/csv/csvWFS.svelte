@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { wfsToCSV } from '$lib/components/csv/gerarCSV'
+    import { wfsToCSV } from '#lib/components/csv/gerarCSV.js'
     import type { ICSVLayer } from './icsv';
     
      let { wfsArrayToCSV }: {wfsArrayToCSV: ICSVLayer[]} = $props();

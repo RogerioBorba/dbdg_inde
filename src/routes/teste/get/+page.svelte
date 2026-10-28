@@ -1,6 +1,6 @@
 ﻿<script lang="ts">
     import { onMount } from 'svelte';
-    import { get } from '$lib/request/get';
+    import { get } from '#lib/request/get.js';
 
     let status = $state('');
     let headers = $state('');

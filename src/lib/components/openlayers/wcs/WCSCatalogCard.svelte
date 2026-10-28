@@ -1,12 +1,12 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
-    import { capabilities, coverageStats, type IWCSCoverageDescription, type ICoverageStats, type IWCSGetCapabilities}from '$lib/ogc/wcs/wcsCapabilities';
-    import type { OGCProcessRecord } from '$lib/ogc/commom/OGCRecord';
-    import { Spinner } from "flowbite-svelte";
+    import { capabilities, coverageStats, type IWCSCoverageDescription, type ICoverageStats, type IWCSGetCapabilities}from '#lib/ogc/wcs/wcsCapabilities.js';
+    import type { OGCProcessRecord } from '#lib/ogc/commom/OGCRecord.js';
+    import { Spinner } from "#lib/components/ui/spinner/index.js";
     import { fade } from 'svelte/transition'
     import { onMount } from 'svelte';
-    import { get } from "$lib/request/get";
-    import { counterWCS } from '$lib/shared/ogc/wcs/shared.svelte';
+    import { get } from "#lib/request/get.js";
+    import { counterWCS } from '#lib/shared/ogc/wcs/shared.svelte.js';
     
     let ows_capabilities: IWCSGetCapabilities;
     let { objIdDescricaoIri, onRecordCreated }: {objIdDescricaoIri: {id: number, descricao: string, iri: string}, onRecordCreated?: (record: OGCProcessRecord) => void} = $props();

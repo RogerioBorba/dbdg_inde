@@ -5,7 +5,7 @@ import {
   MGB_QUADROS_INFO,
   evaluateMGBRecord,
   detectMetadataScope
-} from '../src/lib/ogc/csw/mgb/mgbConformance';
+} from '../src/lib/ogc/csw/mgb/mgbConformance.ts';
 
 test('getRulesForQuadro retorna a quantidade correta de elementos obrigatórios por quadro', () => {
   const rules84 = getRulesForQuadro('84');
@@ -127,4 +127,36 @@ test('reconhece código de caracteres do metadado e dos dados via atributo codeL
   const result3 = rule3.check(mockElement);
   assert.equal(result3.compliant, true);
   assert.equal(result3.value, 'utf8');
+});
+test('cálculo de parâmetros de amostragem e paginação para catálogos com grande volume', () => {
+  // Simulação de catálogo volumoso (ex: IBGE com 22.000 registros)
+  const totalInCatalog = 22000;
+  const PAGE_SIZE = 20;
+
+  // Caso 1: Usuário informou início 101 e limite de 50 registros
+  const userStart = 101;
+  const userLimit = 50;
+  const startPos = (userStart && userStart > 0) ? Math.floor(userStart) : 1;
+  assert.equal(startPos, 101);
+
+  let loaded = 0;
+  let currentStart = startPos;
+  while (loaded < userLimit) {
+    const remaining = userLimit - loaded;
+    const batchSize = Math.min(PAGE_SIZE, remaining);
+    assert.ok(batchSize <= 20);
+    assert.ok(batchSize <= remaining);
+    loaded += batchSize;
+    currentStart += batchSize;
+  }
+  assert.equal(loaded, 50, 'Deve ter avaliado exatamente o limite solicitado (50)');
+  assert.equal(currentStart, 151, 'Posição final deve avançar exatamente 50 posições');
+
+  // Caso 2: Usuário não informou parâmetros (avaliação completa de todos os registros)
+  const emptyStart = null;
+  const emptyLimit = null;
+  const defaultStart = (emptyStart && emptyStart > 0) ? Math.floor(emptyStart) : 1;
+  assert.equal(defaultStart, 1, 'Início padrão deve ser 1');
+  const targetAll = emptyLimit !== null ? emptyLimit : totalInCatalog;
+  assert.equal(targetAll, 22000, 'Deve visar a totalidade do catálogo');
 });

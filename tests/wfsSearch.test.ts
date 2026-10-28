@@ -6,7 +6,8 @@ import {
   hasWFSAvailable,
   hasWFSGetCapabilities,
   matchesFeatureTypeKeywords,
-  parseSearchTerms
+  parseSearchTerms,
+  sortWFSResults
 } from '../src/lib/components/openlayers/wfs/wfsSearch.ts';
 
 test('reconhece o campo de disponibilidade devolvido pela API da INDE', () => {
@@ -32,6 +33,26 @@ test('busca palavras-chave do FeatureType com operadores OU e E', () => {
   assert.equal(matchesFeatureTypeKeywords(featureType, terms, 'AND'), false);
 });
 
+test('ordena resultados WFS em ordem alfabética por título ou nome de camada', () => {
+  const items = [
+    { catalog: { descricao: 'IBGE' }, featureType: { name: 'camada_z', title: 'Zoológico' } },
+    { catalog: { descricao: 'ANA' }, featureType: { name: 'camada_a', title: 'Águas' } },
+    { catalog: { descricao: 'CPRM' }, featureType: { name: 'camada_b', title: 'Barragens' } },
+    { catalog: { descricao: 'DNIT' }, featureType: { name: 'camada_a2', title: 'Águas' } }
+  ];
+
+  const sorted = sortWFSResults(items);
+  assert.deepEqual(
+    sorted.map((item) => `${item.featureType.title} (${item.catalog.descricao})`),
+    [
+      'Águas (ANA)',
+      'Águas (DNIT)',
+      'Barragens (CPRM)',
+      'Zoológico (IBGE)'
+    ]
+  );
+});
+
 test('busca espacial inclui somente FeatureTypes contidos no retângulo', () => {
   const search = { west: -74, south: -34, east: -34, north: 6 };
   const inside = geographicBounds({ lowerCorner: [-50, -20], upperCorner: [-40, -10] });
@@ -42,3 +63,4 @@ test('busca espacial inclui somente FeatureTypes contidos no retângulo', () => 
   assert.equal(containsBounds(search, inside), true);
   assert.equal(containsBounds(search, crossing), false);
 });
+

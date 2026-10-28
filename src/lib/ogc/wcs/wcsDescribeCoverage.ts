@@ -265,4 +265,4 @@ export function loadCoverageDetails(
     return describeCoverage(await response.text());
   });
 }
-import { get } from '$lib/request/get';
+import { get } from '#lib/request/get.js';

@@ -1,6 +1,6 @@
 <script>
-    import {mapper_ol } from '$lib/shared/openlayers/shared.svelte';   
-    import {FacadeOL} from '$lib/components/openlayers/facade_openlayers';
+    import {mapper_ol } from '#lib/shared/openlayers/shared.svelte.js';   
+    import {FacadeOL} from '#lib/components/openlayers/facade_openlayers.js';
     import { onMount } from 'svelte';
     let camadaEscolhida = 'osm';
 

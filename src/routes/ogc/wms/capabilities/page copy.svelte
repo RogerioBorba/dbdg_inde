@@ -1,12 +1,12 @@
 <script lang="ts">
-    import WMSLayerCard from '$lib/components/openlayers/wms/WMSLayerCard.svelte';
+    import WMSLayerCard from '#lib/components/openlayers/wms/WMSLayerCard.svelte';
     import { onMount } from 'svelte';
-    import { counterWMS } from '$lib/shared/ogc/wms/shared.svelte';
-    import PdfHTML from "$lib/components/pdf/pdfHTML.svelte";   
-    import { NavUl, NavHamburger, NavLi } from 'flowbite-svelte';
-    import CsvWms from '$lib/components/csv/csvWMS.svelte';
-    import PdfJsObject from '$lib/components/pdf/pdfJSObject.svelte';
-    import type { IWMSCapabilities, IWMSLayer, iWMSLayers } from '$lib/ogc/wms/wmsCapabilities';
+    import { counterWMS } from '#lib/shared/ogc/wms/shared.svelte.js';
+    import PdfHTML from "#lib/components/pdf/pdfHTML.svelte";   
+    // import { NavUl, NavHamburger, NavLi } from 'flowbite-svelte';
+    import CsvWms from '#lib/components/csv/csvWMS.svelte';
+    import PdfJsObject from '#lib/components/pdf/pdfJSObject.svelte';
+    import type { IWMSCapabilities, IWMSLayer, iWMSLayers } from '#lib/ogc/wms/wmsCapabilities.js';
 
 
     let wmsLayers = $state<IWMSLayer[]>([]);
@@ -119,9 +119,7 @@
 <div>
     <div id="hideDiv" class="flex items-center">
         <div class="flex md:flex-row justify-start">
-            <NavUl class="order-1">
-                <NavLi href="/">Home</NavLi>
-            </NavUl>
+            <a href="/" class="order-1 text-blue-600 hover:underline px-2">Home</a>
         </div>
         <input class="m-1 p-1 w-1/4 mr-2" type="text" bind:value={textEntered} placeholder="Digite para filtrar">
         <div class="flex items-center">

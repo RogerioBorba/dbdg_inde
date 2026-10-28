@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import {mapper_ol} from '$lib/shared/openlayers/shared.svelte'
+  import {mapper_ol} from '#lib/shared/openlayers/shared.svelte.js'
   import { FacadeOL } from '../facade_openlayers';
 
   onMount(async () => {

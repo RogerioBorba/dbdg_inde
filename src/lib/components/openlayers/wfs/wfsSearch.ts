@@ -1,5 +1,5 @@
-import type { IBoundingBox, IFeatureType } from '$lib/ogc/wfs/wfsCapabilities';
-import type { IGeoservicoDescricao } from '$lib/inde';
+import type { IBoundingBox, IFeatureType } from '#lib/ogc/wfs/wfsCapabilities.js';
+import type { IGeoservicoDescricao } from '#lib/inde/index.js';
 
 export type SearchOperator = 'OR' | 'AND';
 export type GeographicBounds = { west: number; south: number; east: number; north: number };
@@ -53,3 +53,16 @@ export function containsBounds(search: GeographicBounds, candidate: GeographicBo
     return candidate.west >= search.west && candidate.east <= search.east
         && candidate.south >= search.south && candidate.north <= search.north;
 }
+
+export function sortWFSResults<T extends { featureType: Pick<IFeatureType, 'title' | 'name'>; catalog: { descricao: string } }>(
+    items: T[]
+): T[] {
+    return [...items].sort((a, b) => {
+        const titleA = a.featureType.title || a.featureType.name || '';
+        const titleB = b.featureType.title || b.featureType.name || '';
+        const comp = titleA.localeCompare(titleB, 'pt-BR', { sensitivity: 'base' });
+        if (comp !== 0) return comp;
+        return a.catalog.descricao.localeCompare(b.catalog.descricao, 'pt-BR', { sensitivity: 'base' });
+    });
+}
+

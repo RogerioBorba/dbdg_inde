@@ -1,11 +1,11 @@
 <script lang="ts">
-    import WFSFeatureTypeCard from '$lib/components/openlayers/wfs/WFSFeatureTypeCard.svelte';
+    import WFSFeatureTypeCard from '#lib/components/openlayers/wfs/WFSFeatureTypeCard.svelte';
     import { onMount } from 'svelte';
-    import { counterWFS } from '$lib/shared/ogc/wfs/shared.svelte';
-    import CsvWfs from '$lib/components/csv/csvWFS.svelte';
-    import PdfJsObject from '$lib/components/pdf/pdfJSObject.svelte';
-    import type { IFeatureType, IMetadataUrl } from '$lib/ogc/wfs/wfsCapabilities';
-    import type { ICSVLayer } from '$lib/components/csv/icsv';
+    import { counterWFS } from '#lib/shared/ogc/wfs/shared.svelte.js';
+    import CsvWfs from '#lib/components/csv/csvWFS.svelte';
+    import PdfJsObject from '#lib/components/pdf/pdfJSObject.svelte';
+    import type { IFeatureType, IMetadataUrl } from '#lib/ogc/wfs/wfsCapabilities.js';
+    import type { ICSVLayer } from '#lib/components/csv/icsv.js';
 
     let wfsFeatureTypes = $state<IFeatureType[]>([]);
     let textEntered = $state('');

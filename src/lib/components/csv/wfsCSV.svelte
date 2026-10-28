@@ -1,5 +1,5 @@
 <script>
-    import {wfsToCSV} from '$lib/component/csv/gerarCSV'
+    import {wfsToCSV} from '#lib/component/csv/gerarCSV'
     /**
      * @type {any}
      */

@@ -127,7 +127,7 @@ flowchart TD
 ### 5.2 Decisões Tecnológicas (Stack)
 - **Framework:** [SvelteKit 2](https://kit.svelte.dev/) + [Svelte 5](https://svelte.dev/) (usando Runes `$state`, `$derived`, `$effect`).
 - **Linguagem:** TypeScript 5 (tipagem estrita nos parsers e modelos de domínio).
-- **Estilização:** Tailwind CSS 4 + Flowbite Svelte + Flowbite Icons.
+- **Estilização:** Tailwind CSS 4 + shadcn-svelte + lucide-svelte.
 - **Visualização Cartográfica:** OpenLayers 10, MapLibre GL 5, deck.gl 9, Proj4.js.
 - **Relatórios:** jsPDF e exportadores CSV customizados.
 
@@ -180,9 +180,10 @@ flowchart TD
 | :--- | :--- | :--- | :--- |
 | **RF-021** | Varredura CSW | Executar buscas paginadas (`GetRecords`) em catálogos CSW da INDE. | `Implementado` |
 | **RF-022** | Parser ISO 19115 | Extrair e formatar identificador, título, resumo, palavras-chave, contatos, BBOX e distribuição. | `Implementado` |
-| **RF-023** | Diagnóstico de Links | Verificar a conectividade das URLs cadastradas nos registros de metadados, identificando erros 404/500. | `Implementado` |
-| **RF-024** | Conformidade Perfil MGB | Avaliação de conformidade dos metadados de uma instituição em relação ao Perfil MGB 2.0 (norma INDE). Possui detecção automática do escopo do metadado (`detectMetadataScope`) para seleção do quadro adequado: Quadro 84 (Não Geoespacial / Recursos em Geral - 15 elementos), Quadro 85 (Produtos Geoespaciais CDG/Séries - 20 elementos), Quadro 86 (CDG/Séries do SCN - 21 elementos) e Quadro 87 (Geosserviços Web sem recursos acoplados - 16 elementos). Suporta extração robusta de atributos de listas de códigos ISO 19139 (`codeListValue`), apresenta indicadores percentuais individuais, percentual global ponderado por tipo de produto e exportação de relatórios em CSV. | `Implementado` |
+| **RF-023** | Diagnóstico de Links | Diagnóstico de links quebrados nos metadados de qualquer instituição da INDE (Nó Central com filtro de categoria `_cat` ou Nós Locais autônomos). Exibe a contagem total prévia de metadados de cada instituição nos cartões (`LinksQuebradosCard`). Permite definir amostragem personalizada informando a partir de qual registro (`startPosition`) e a quantidade de registros a avaliar (`maxRecords`), além de atalhos rápidos (20, 50, 100, Todos). Aplica verificação híbrida e resiliente: tenta `HEAD` direto no navegador e, se bloqueado por CORS, encaminha para `/api/check-link`. O endpoint server-side aplica validação estrita anti-SSRF, envia headers simulando browser moderno (resolvendo redirecionamentos do portal `gov.br`), faz fallback inteligente de `HEAD` para `GET Range: bytes=0-0` em caso de erro `>= 400` (resolvendo falsos positivos de servidores ArcGIS WMS) e cancela o stream do corpo imediatamente após a leitura dos headers HTTP, garantindo baixo consumo de rede e sem baixar arquivos pesados. A tela de progresso inclui botão para cancelar o processamento a qualquer momento, preservando os registros obtidos e mantendo a exportação em CSV e PDF habilitada. | `Implementado` |
+| **RF-024** | Conformidade Perfil MGB | Avaliação de conformidade dos metadados de uma instituição em relação ao Perfil MGB 2.0 (norma INDE). Possui detecção automática do escopo do metadado (`detectMetadataScope`) para seleção do quadro adequado: Quadro 84 (Não Geoespacial / Recursos em Geral - 15 elementos), Quadro 85 (Produtos Geoespaciais CDG/Séries - 20 elementos), Quadro 86 (CDG/Séries do SCN - 21 elementos) e Quadro 87 (Geosserviços Web sem recursos acoplados - 16 elementos). Suporta extração robusta de atributos de listas de códigos ISO 19139 (`codeListValue`), apresenta indicadores percentuais individuais, percentual global ponderado por tipo de produto e exportação de relatórios em CSV. **Inclui suporte a amostragem e limitação de intervalo de registros para catálogos com alto volume de dados (ex: IBGE com mais de 20.000 registros), permitindo definir a posição inicial ('A partir de') e a quantidade máxima a avaliar, avaliando todo o catálogo se os campos permanecerem vazios.** | `Implementado` |
 | **RF-030** | Visualizador de Metadados Parametrizado | Rota de visualização dedicada (`/metadado?link=...` e `/visualizador/metadata?link=...`) alimentada pelo componente unificado `MetadataViewer.svelte`, permitindo a visualização em nova aba do documento completo de metadados ISO 19115 / CSW GetRecordById a partir de botões de ação nos cartões de conformidade (`MGBMetadataCard`). | `Implementado` |
+| **RF-031** | Avaliação Semântica por IA (Perfil MGB) | Agente inteligente que avalia o conteúdo semântico, coerência, clareza e rastreabilidade dos elementos de metadados segundo as regras do Perfil MGB 2.0 (Quadros 84, 85, 86 ou 87). Atribui nota de avaliação (0 a 100), conceito qualitativo (Excelente, Bom, Regular, Insuficiente), parecer analítico estruturado em 6 dimensões semânticas ponderadas — Compreensão e Clareza Descritiva (25%), Referência Temporal e Ciclo de Vida (15%), Finalidade e Aplicabilidade (15%), Indexação e Descoberta Temática (15%), Qualidade e Linhagem dos Dados (20%) e Responsabilidade e Contatos (10%) —, com auditoria dedicada das datas do recurso (criação, publicação ou revisão - elementos 11 e 12), da data de publicação do próprio metadado (elementos 7 e 8), conformidade ISO 8601 e coerência cronológica. Fornece diagnósticos individuais por elemento e sugestões acionáveis de redação e enriquecimento. Suporta múltiplos motores: OpenRouter.ai (ampla seleção de modelos gratuitos `:free` como Llama 3.3 70B, DeepSeek R1/V3, Qwen 2.5 Coder e Gemini 2.0), Google Gemini (Flash Lite / Flash / 3.8), Groq Cloud (Llama 3.3 70B ultra-rápido), OpenAI/compatíveis e motor heurístico local determinístico embutido (100% offline, sem dependência de chaves externas). Inclui exportação completa de relatório de auditoria em PDF via `jsPDF`. | `Implementado` |
 
 ### 6.7 Visualizador Cartográfico (WebGIS)
 | ID | Requisito | Descrição | Status |
@@ -231,17 +232,19 @@ flowchart TD
 │       ├── /catalogos                     (Seleção de nós CSW)
 │       ├── /conformidade-mgb              (Avaliação de conformidade MGB - Quadros 84, 85, 86 e 87)
 │       ├── /metadados                     (Navegação e busca em registros)
-│       ├── /links-quebrados               (Configuração de teste de links)
-│       └── /links-quebrados/result        (Resultado e diagnósticos)
+│       ├── /links-quebrados               (Configuração e amostragem de teste de links)
+│       └── /links-quebrados/result        (Resultado, progresso com cancelamento e diagnósticos)
 ├── /visualizador
 │   ├── /ol                                (Visualizador principal OpenLayers)
 │   ├── /metadata                          (Visualizador de documento ISO 19115 via ?link=...)
 │   └── /maplibre                          (Visualizador alternativo MapLibre GL)
 └── /api
     ├── /get                               (Proxy HTTP com controle de CORS e timeouts)
+    ├── /check-link                        (Verificação de links com proteção SSRF, fallback HEAD/GET e cancelamento de stream)
     ├── /get-json-response                 (Proxy e conversão de resposta JSON)
     ├── /get-xml-response                  (Proxy e entrega de payload XML)
-    └── /inde                              (Agregador e proxy da API de nós da INDE)
+    ├── /inde                              (Agregador e proxy da API de nós da INDE)
+    └── /ai/avaliar-metadado               (Agente IA para avaliação semântica e sugestões do Perfil MGB)
 ```
 
 ---

@@ -1,9 +1,9 @@
 <script lang="ts">
-    import Navbar from '$lib/components/navbar/navbar.svelte';
-    import { preventDefault } from '$lib/components/svelte_util/util';
-    import type { IGeoservicoDescricao } from '$lib/inde';
+    import Navbar from '#lib/components/navbar/navbar.svelte';
+    import { preventDefault } from '#lib/components/svelte_util/util.js';
+    import type { IGeoservicoDescricao } from '#lib/inde/index.js';
     import { onMount } from 'svelte';
-    import WFSFeatureTypesCard from '$lib/components/ogc/wfs/WFSFeatureTypesCard.svelte';
+    import WFSFeatureTypesCard from '#lib/components/ogc/wfs/WFSFeatureTypesCard.svelte';
 
     interface IdDescricaoIRI {
         id: number;
@@ -81,7 +81,7 @@
         <label for="instituicoes_multiple" class="mr-4">Escolha as instituições</label>
         <div>
             <input 
-                class="mr-1 rounded w-4 h-4 focus:outline-none border-gray-300" 
+                class="mr-1 rounded w-4 h-4 focus:outline-none border border-gray-300" 
                 type="checkbox" 
                 {checked}
                 onclick={isChecking} 
@@ -119,13 +119,13 @@
     <!-- Adicionar novo catálogo -->
     <div class="mt-2 w-full p1 flex flex-col md:flex-row gap-1">
         <input 
-            class="border-gray-300 focus:outline-none w-full rounded md:w-2/5" 
+            class="border border-gray-300 focus:outline-none w-full rounded md:w-2/5 p-2" 
             type="text" 
             bind:value={nameCatalog} 
             placeholder="Informe o nome do catálogo"
         > 
         <input 
-            class="border-gray-300 focus:outline-none rounded w-full md:w-2/5" 
+            class="border border-gray-300 focus:outline-none rounded w-full md:w-2/5 p-2" 
             type="text" 
             bind:value={adressCatalog} 
             placeholder="Informe o endereço/link WFS do GetCapabilities"

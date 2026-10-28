@@ -1,14 +1,14 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { FileCsvSolid, FilePdfSolid } from 'flowbite-svelte-icons';
-    import { listToCSV } from '$lib/components/csv/gerarCSV';
-    import Navbar from '$lib/components/navbar/navbar.svelte';
-    import { dataToPdf } from '$lib/components/pdf/gerarPDF';
-    import { preventDefault } from '$lib/components/svelte_util/util';
-    import CSWCatalogSelector from '$lib/components/ogc/csw/CSWCatalogSelector.svelte';
-    import type { CSWCatalog } from '$lib/ogc/csw/CSWCatalog';
-    import { catalogos_csw, type ICatalogoCSW } from '$lib/inde/catalogos/ICatalogoGeoservico';
-    import { get } from '$lib/request/get';
+    import { FileSpreadsheet, FileText } from 'lucide-svelte';
+    import { listToCSV } from '#lib/components/csv/gerarCSV.js';
+    import Navbar from '#lib/components/navbar/navbar.svelte';
+    import { dataToPdf } from '#lib/components/pdf/gerarPDF.js';
+    import { preventDefault } from '#lib/components/svelte_util/util.js';
+    import CSWCatalogSelector from '#lib/components/ogc/csw/CSWCatalogSelector.svelte';
+    import type { CSWCatalog } from '#lib/ogc/csw/CSWCatalog.js';
+    import { catalogos_csw, type ICatalogoCSW } from '#lib/inde/catalogos/ICatalogoGeoservico.js';
+    import { get } from '#lib/request/get.js';
 
     const PAGE_SIZE = 30;
 
@@ -291,7 +291,7 @@
                 onclick={preventDefault(btnPDFClicked)}
                 title="Gerar PDF com todas as palavras-chave"
             >
-                <FilePdfSolid class="h-6 w-6 text-red-500 shrink-0" />
+                <FileText class="h-6 w-6 text-red-500 shrink-0" />
             </button>
             <button
                 class="ml-2 focus:outline-none bg-grey-light hover:bg-grey font-bold rounded inline-flex items-center hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-200"
@@ -299,7 +299,7 @@
                 onclick={preventDefault(btnCSVClicked)}
                 title="Gerar CSV com todas as palavras-chave"
             >
-                <FileCsvSolid class="h-6 w-6 text-green-500 shrink-0" />
+                <FileSpreadsheet class="h-6 w-6 text-green-500 shrink-0" />
             </button>
         </div>
     </div>

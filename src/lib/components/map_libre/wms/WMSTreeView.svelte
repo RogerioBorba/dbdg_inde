@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { IWMSLayer } from '../../../ogc/wms/wmsCapabilities';;
-    import { mapper } from '$lib/shared/map_libre/shared.svelte';
+    import { mapper } from '#lib/shared/map_libre/shared.svelte.js';
     import Self from './WMSTreeView.svelte';
 
     let { wmsLayer, capabilitiesUrl } = $props<{

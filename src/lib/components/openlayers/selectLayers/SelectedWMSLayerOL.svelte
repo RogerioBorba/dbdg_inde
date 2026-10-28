@@ -1,8 +1,8 @@
 <script lang="ts">
-    import type { WMSLayerOL } from '$lib/components/openlayers/layerOL';
-    import { preventDefault, stopPropagation } from '$lib/components/svelte_util/util';
-    import { layerManager, mapper_ol } from '$lib/shared/openlayers/shared.svelte';
-    import type {IWMSLegendURL, IWMSStyle} from '$lib/ogc/wms/wmsCapabilities';
+    import type { WMSLayerOL } from '#lib/components/openlayers/layerOL.js';
+    import { preventDefault, stopPropagation } from '#lib/components/svelte_util/util.js';
+    import { layerManager, mapper_ol } from '#lib/shared/openlayers/shared.svelte.js';
+    import type {IWMSLegendURL, IWMSStyle} from '#lib/ogc/wms/wmsCapabilities.js';
     let {layerOL} = $props<{layerOL: WMSLayerOL}>();
     let titleLegenda = $state('Abrir Legenda');
     let hidden =$state('hidden');
@@ -38,7 +38,7 @@
     }
 
     function viewMetadata(metadataURL: string) {
-         const viewerUrl = `/metadado?link=${encodeURIComponent(metadataURL)}`;
+         const viewerUrl = `/visualizador/metadata?link=${encodeURIComponent(metadataURL)}`;
          window.open(viewerUrl, '_blank', 'noopener,noreferrer');
         
     }

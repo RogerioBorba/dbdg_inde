@@ -1,4 +1,4 @@
-import type {IWMSCapabilities} from '$lib/ogc/wms/wmsCapabilities';
+import type {IWMSCapabilities} from '#lib/ogc/wms/wmsCapabilities.js';
 export const counterWMS = $state<{ totalLayers: number,  totalLayersWithoutMetadata: number, totalWMSProcessado: number, countWMSProcessado: number, currentWMSCapability: IWMSCapabilities | null }>
 ({ totalLayers: 0, 
     totalLayersWithoutMetadata: 0, 

@@ -26,7 +26,7 @@ Responsável por:
 - páginas da aplicação e layouts;
 - orquestração e fluxo de tela;
 - carregamento de dados associado à navegação;
-- endpoints server-side (`src/routes/api/`), incluindo proxy transparente (`/api/get`), adaptadores de formato (`/get-json-response`, `/get-xml-response`) e integração INDE (`/api/inde/`).
+- endpoints server-side (`src/routes/api/`), incluindo proxy transparente (`/api/get`), verificador de conectividade de links com proteção SSRF e cancelamento de stream (`/api/check-link`), adaptadores de formato (`/get-json-response`, `/get-xml-response`), integração INDE (`/api/inde/`) e agente semântico de metadados (`/api/ai/avaliar-metadado`).
 
 ### `src/lib/components`
 Responsável por:
@@ -34,15 +34,24 @@ Responsável por:
 - blocos visuais compartilhados e encapsulamento de padrões de UI;
 - componentes cartográficos separados por renderizador (`openlayers/` e `map_libre/`);
 - componentes de metadados (`metadata/MetadataViewer.svelte` para renderização completa de documentos ISO 19115 / CSW);
-- componentes de geosserviços e CSW (`ogc/csw/MGBMetadataCard.svelte`, `CSWCatalogSelector.svelte`);
+- componentes de geosserviços e CSW (`ogc/csw/MGBMetadataCard.svelte`, `CSWCatalogSelector.svelte`, `LinksQuebradosCard.svelte`, `MGBAIEvaluationModal.svelte`);
 - geradores de saída no cliente (`pdf/` e `csv/`).
 
 Os componentes devem ser pequenos, coesos e semanticamente nomeados.
 
+### `src/lib/ai`
+Responsável por:
+- modelos, prompts e orquestração do Agente de IA para avaliação semântica do Perfil MGB 2.0;
+- construção de instruções normativas especializadas para os Quadros 84, 85, 86 e 87;
+- motor de avaliação estruturada com suporte a provedores LLM (Gemini / OpenAI / Ollama) e motor heurístico de fallback determinístico;
+- cálculo de notas de qualidade semântica (0 a 100), pareceres analíticos estruturados em 6 dimensões ponderadas (clareza descritiva, referência temporal e ciclo de vida, finalidade, indexação, linhagem e contatos), com validação das datas do recurso e do metadado e coerência cronológica;
+- geração de relatórios de auditoria em PDF estilizados via `jsPDF` (`src/lib/ai/mgbPdfReport.ts`).
+
 ### `src/lib/request`
 Responsável por:
 - comunicação HTTP compartilhada do lado do cliente;
-- centralização do redirecionamento para o proxy interno quando necessário.
+- centralização do redirecionamento para o proxy interno quando necessário;
+- estratégia híbrida e resiliente de verificação de links (`verificarLink.ts` no cliente e `verificarLinkRemoto.ts` no servidor), com verificação direta via `HEAD`, fallback CORS para `/api/check-link`, simulação de browser moderno, suporte a fallback `GET Range: bytes=0-0` para servidores OGC ArcGIS e cancelamento imediato de stream para não baixar arquivos volumosos.
 
 Evitar espalhar lógica de comunicação diretamente por páginas e componentes.
 
@@ -70,7 +79,8 @@ Responsável por:
 ### `src/lib/ogc`
 Responsável por:
 - modelos de domínio, parsers XML e construtores de requisição dos padrões OGC: WMS, WFS, WCS e CSW;
-- regras normativas e validador do Perfil MGB 2.0 da INDE (`src/lib/ogc/csw/mgb/mgbConformance.ts`), com suporte à detecção automática de escopo e avaliação dos Quadros 84, 85, 86 e 87.
+- regras normativas e validador do Perfil MGB 2.0 da INDE (`src/lib/ogc/csw/mgb/mgbConformance.ts`), com suporte à detecção automática de escopo e avaliação dos Quadros 84, 85, 86 e 87;
+- varredura paginada CSW (`GetRecords`) com suporte a amostragem configurável por intervalo ('A partir de' e quantidade máxima) para mitigar gargalos em catálogos de alto volume (>20.000 registros).
 
 ### `src/lib/types`
 Responsável por:

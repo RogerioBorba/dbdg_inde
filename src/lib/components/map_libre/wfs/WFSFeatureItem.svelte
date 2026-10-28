@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { IFeatureType } from '$lib/ogc/wfs/wfsFeature';
-  import { mapper } from '$lib/shared/map_libre/shared.svelte';
+  import type { IFeatureType } from '#lib/ogc/wfs/wfsFeature.js';
+  import { mapper } from '#lib/shared/map_libre/shared.svelte.js';
 
   let { feature, serviceUrl } = $props<{
     feature: IFeatureType;

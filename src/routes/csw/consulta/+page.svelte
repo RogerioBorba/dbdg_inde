@@ -1,8 +1,8 @@
 <script lang="ts">
-    import {get} from '$lib/request';
+    import {get} from '#lib/request/get.js';
     let title = $state('');
     function query() {
-      let s: string = `https://metadadosgeo.ibge.gov.br/geonetwork_ibge/srv/por/csw?service=CSW&version=2.0.2&request=GetRecords&resultType=results&elementSetName=full&constraintLanguage=CQL_TEXT&constraint_language_version=1.1.0&constraint=AnyText+LIKE '$title'`
+      let s: string = `https://metadadosgeo.ibge.gov.br/geonetwork_ibge/srv/por/csw?service=CSW&version=2.0.2&request=GetRecords&resultType=results&elementSetName=full&constraintLanguage=CQL_TEXT&constraint_language_version=1.1.0&constraint=AnyText+LIKE+'%25Atlas+de+Saneamento%25'`
     }
     function consultar() {
         // Lógica para consultar pelo título

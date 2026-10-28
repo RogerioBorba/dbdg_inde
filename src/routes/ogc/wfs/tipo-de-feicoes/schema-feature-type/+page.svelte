@@ -1,11 +1,11 @@
 <script lang="ts">
-    import Navbar from '$lib/components/navbar/navbar.svelte';
-    import { listToCSV } from '$lib/components/csv/gerarCSV';
-    import { dataToPdf } from '$lib/components/pdf/gerarPDF';
-    import { preventDefault } from '$lib/components/svelte_util/util';
-    import { FileCsvSolid, FilePdfSolid } from 'flowbite-svelte-icons';
-    import { wfsFeatureTypesData } from '$lib/shared/ogc/wfs/shared.svelte';
-    import { get } from '$lib/request/get';
+    import Navbar from '#lib/components/navbar/navbar.svelte';
+    import { listToCSV } from '#lib/components/csv/gerarCSV.js';
+    import { dataToPdf } from '#lib/components/pdf/gerarPDF.js';
+    import { preventDefault } from '#lib/components/svelte_util/util.js';
+    import { FileSpreadsheet, FileText } from 'lucide-svelte';
+    import { wfsFeatureTypesData } from '#lib/shared/ogc/wfs/shared.svelte.js';
+    import { get } from '#lib/request/get.js';
     import type { PageData } from './$types';
     import { onMount } from 'svelte';
 
@@ -195,7 +195,7 @@
                 onclick={preventDefault(() => btnPDFClicked())}
                 title="Exportar para PDF"
             >
-                <FilePdfSolid class="h-5 w-5" />
+                <FileText class="h-5 w-5" />
                 PDF
             </button>
             <button
@@ -203,7 +203,7 @@
                 onclick={preventDefault(() => btnCSVClicked())}
                 title="Exportar para CSV"
             >
-                <FileCsvSolid class="h-5 w-5" />
+                <FileSpreadsheet class="h-5 w-5" />
                 CSV
             </button>
         </div>

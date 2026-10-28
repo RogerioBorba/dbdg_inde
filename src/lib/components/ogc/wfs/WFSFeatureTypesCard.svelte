@@ -1,11 +1,11 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
-    import { capabilities, type IFeatureType, type IWFSGetCapabilities } from '$lib/ogc/wfs/wfsCapabilities';
-    import { wfsFeatureTypesData } from '$lib/shared/ogc/wfs/shared.svelte';
-    import { Spinner } from "flowbite-svelte";
+    import { capabilities, type IFeatureType, type IWFSGetCapabilities } from '#lib/ogc/wfs/wfsCapabilities.js';
+    import { wfsFeatureTypesData } from '#lib/shared/ogc/wfs/shared.svelte.js';
+    import { Spinner } from "#lib/components/ui/spinner/index.js";
     import { fade } from 'svelte/transition';
     import { onMount } from 'svelte';
-    import { get } from "$lib/request/get";
+    import { get } from "#lib/request/get.js";
 
     let ows_capabilities: IWFSGetCapabilities;
     let { objIdDescricaoIri }: { objIdDescricaoIri: { id: number; descricao: string; iri: string } } = $props();
