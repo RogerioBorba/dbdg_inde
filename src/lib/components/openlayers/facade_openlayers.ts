@@ -79,7 +79,7 @@ export class FacadeOL {
     boundingBoxLayer: VectorLayer<any> | null;
     drawInteraction: Draw | null;
 
-    constructor(id_map='id_map', coordinates_center=[-4331024.58685793, -1976355.8033415168], a_zoom_value = 4, a_baseLayer_name='OSM' ) {
+    constructor(id_map: string | HTMLElement = 'id_map', coordinates_center=[-4331024.58685793, -1976355.8033415168], a_zoom_value = 4, a_baseLayer_name='OSM' ) {
       this.map = new Map({ target: id_map,  controls:[]});
       this.view = new View({ center: coordinates_center, zoom: a_zoom_value});
     this.map.setView(this.view);
@@ -92,6 +92,24 @@ export class FacadeOL {
     this.boundingBoxLayer = null;
     this.drawInteraction = null;
   }
+  setTarget(target: string | HTMLElement | null | undefined) {
+    if (!this.map) return;
+    this.map.setTarget(target ?? undefined);
+    if (target) {
+      if (this.currentBaseLayerName !== 'none') {
+        if (!this.currentBaseLayer) {
+          this.currentBaseLayer = this.baseLayer(this.currentBaseLayerName || 'osm');
+        }
+        if (this.currentBaseLayer && !this.map.getLayers().getArray().includes(this.currentBaseLayer)) {
+          this.map.getLayers().insertAt(0, this.currentBaseLayer);
+          this.currentBaseLayer.setZIndex(0);
+        }
+      }
+      this.map.updateSize();
+      this.map.render();
+    }
+  }
+
   //returns a TileLayer based on name(a_baseLayer_name) or null
     baseLayer(a_baseLayer_name: string): TileLayer | null{
     // name: 'Wikimedia', value: 'wikimedia'}, {name: 'Nenhum', value: null}]

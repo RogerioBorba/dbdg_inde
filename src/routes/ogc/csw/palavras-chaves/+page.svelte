@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { FileSpreadsheet, FileText } from 'lucide-svelte';
+    import { FileSpreadsheet, FileText } from '@lucide/svelte';
     import { listToCSV } from '#lib/components/csv/gerarCSV.js';
     import Navbar from '#lib/components/navbar/navbar.svelte';
     import { dataToPdf } from '#lib/components/pdf/gerarPDF.js';
