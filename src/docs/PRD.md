@@ -127,7 +127,7 @@ flowchart TD
 ### 5.2 Decisões Tecnológicas (Stack)
 - **Framework:** [SvelteKit 2](https://kit.svelte.dev/) + [Svelte 5](https://svelte.dev/) (usando Runes `$state`, `$derived`, `$effect`).
 - **Linguagem:** TypeScript 5 (tipagem estrita nos parsers e modelos de domínio).
-- **Estilização:** Tailwind CSS 4 + shadcn-svelte + lucide-svelte.
+- **Estilização:** Tailwind CSS 4 + shadcn-svelte + @lucide/svelte.
 - **Visualização Cartográfica:** OpenLayers 10, MapLibre GL 5, deck.gl 9, Proj4.js.
 - **Relatórios:** jsPDF e exportadores CSV customizados.
 

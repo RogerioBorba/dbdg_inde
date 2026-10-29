@@ -6,7 +6,7 @@
     import type { IGeoservicoDescricao } from '#lib/inde/index.js';
     import { capabilities, type IWCSCoverageDescription } from '#lib/ogc/wcs/wcsCapabilities.js';
     import { get } from '#lib/request/get.js';
-    import { FileSpreadsheet, FileText } from 'lucide-svelte';
+    import { FileSpreadsheet, FileText } from '@lucide/svelte';
     import { onMount } from 'svelte';
     let selectedItems = $state<{id: number, descricao: string, iri: string}[]>([]);
     interface IdDescricaoIRI {id: number, descricao: string, iri: string};

@@ -2,20 +2,24 @@
     import {mapper_ol } from '#lib/shared/openlayers/shared.svelte.js';   
     import {FacadeOL} from '#lib/components/openlayers/facade_openlayers.js';
     import { onMount } from 'svelte';
-    let camadaEscolhida = 'osm';
+    let camadaEscolhida = $state('osm');
 
     /**
      * @param {{ currentTarget: { value: any; }; }} event
      */
     function onChangeBaseLayer(event) {
-        const baseLayerName = event.currentTarget.value
-        if (!mapper_ol.facadeOL) return ;
-        mapper_ol.facadeOL.setBaseLayer(baseLayerName)
+        const baseLayerName = event.currentTarget.value;
+        camadaEscolhida = baseLayerName;
+        if (!mapper_ol.facadeOL) return;
+        mapper_ol.facadeOL.setBaseLayer(baseLayerName);
     }
 
     onMount(async () => {
-        if (!mapper_ol.facadeOL) 
-         mapper_ol.facadeOL = new FacadeOL();  
+        if (!mapper_ol.facadeOL) {
+            mapper_ol.facadeOL = new FacadeOL();  
+        } else if (mapper_ol.facadeOL.currentBaseLayerName) {
+            camadaEscolhida = mapper_ol.facadeOL.currentBaseLayerName;
+        }
     });
 
 </script>
